@@ -272,24 +272,25 @@ git commit -m "feat: add uview compatibility core"
 
 **Interfaces:**
 - Consumes: public `ultra-ui` composables only.
-- Produces: Compose Navigation routes `button`, `icon`, `loading-icon`, `overlay`, `popup`, `cell`, `toast`, `tag`, and `modal`; a reusable Chinese demo section container; a local placeholder painter.
+- Produces: a Compose Navigation catalog shell that reserves the route identifiers `button`, `icon`, `loading-icon`, `overlay`, `popup`, `cell`, `toast`, `tag`, and `modal`; a reusable Chinese demo section container; a local placeholder painter. A route and catalog item are registered only by the task that implements its library component and page.
 
-- [ ] **Step 1: Write the catalog navigation test**
+- [ ] **Step 1: Write the empty-catalog test**
 
 ```kotlin
-@Test fun catalogShowsOnlyCompletedComponentRoutes() {
+@Test fun catalogShowsGroupsButNoUnimplementedComponentRoutes() {
     composeRule.setContent { SampleApp() }
     composeRule.onNodeWithText("Components A").assertExists()
-    composeRule.onNodeWithText("按钮").performClick()
-    composeRule.onNodeWithText("按钮类型").assertExists()
+    composeRule.onNodeWithText("Components B").assertExists()
+    composeRule.onNodeWithText("Components C").assertExists()
+    composeRule.onNodeWithText("按钮").assertDoesNotExist()
 }
 ```
 
 - [ ] **Step 2: Run the instrumentation test before creating the sample shell**
 
-Run: `./gradlew :sample:connectedDebugAndroidTest --tests net.lingyun.ultraui.android.sample.SampleCatalogTest`
+Run: `./gradlew :sample:connectedDebugAndroidTest`
 
-Expected: FAIL because `SampleApp` and its navigation routes do not exist.
+Expected: FAIL because `SampleApp` and its catalog shell do not exist.
 
 - [ ] **Step 3: Implement the empty catalog and shared page layout**
 
@@ -310,11 +311,11 @@ public fun DemoSection(title: String, content: @Composable ColumnScope.() -> Uni
 
 Add destinations only inside the component tasks that also add the corresponding library component and page. Use a white page background, the uview main/content/tips colors, and deterministic `demo_placeholder.xml` in every place where upstream uses an HTTP image.
 
-- [ ] **Step 4: Run the sample app and its initial navigation test**
+- [ ] **Step 4: Run the sample app and its initial catalog test**
 
-Run: `./gradlew :sample:assembleDebug :sample:connectedDebugAndroidTest --tests net.lingyun.ultraui.android.sample.SampleCatalogTest`
+Run: `./gradlew :sample:assembleDebug :sample:connectedDebugAndroidTest`
 
-Expected: PASS after the first completed page is registered; the catalog must not list an unimplemented page.
+Expected: PASS; the catalog exposes Components A/B/C grouping and lists no unimplemented page. Each component task adds its own route-click coverage when it registers a completed destination.
 
 - [ ] **Step 5: Commit the sample shell**
 
@@ -365,7 +366,7 @@ git commit -m "feat: add uview-style sample catalog shell"
 
 - [ ] **Step 2: Run the icon/loading tests and confirm they fail**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*IconPropsTest' --tests '*LoadingIconPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*IconBehaviorTest' --tests '*LoadingIconBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*IconPropsTest' --tests '*LoadingIconPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because the font asset, glyph catalog, props, and composables are absent.
 
@@ -428,7 +429,7 @@ git commit -m "feat: add icon and loading icon components"
 
 - [ ] **Step 2: Run the focused button suite before implementation**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPButtonPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*UPButtonBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPButtonPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because `UPButtonProps` and `UPButton` are missing.
 
@@ -493,7 +494,7 @@ git commit -m "feat: add uview-compatible button"
 
 - [ ] **Step 2: Run the tag tests and confirm they fail**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPTagPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*UPTagBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPTagPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because `UPTagProps` and `UPTag` are missing.
 
@@ -567,7 +568,7 @@ git commit -m "feat: add uview-compatible tag"
 
 - [ ] **Step 2: Run the layer behavior tests before implementation**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*OverlayPropsTest' --tests '*PopupPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*OverlayPopupBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*OverlayPropsTest' --tests '*PopupPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because the controlled overlay and popup APIs are absent.
 
@@ -640,7 +641,7 @@ git commit -m "feat: add overlay and popup components"
 
 - [ ] **Step 2: Run modal contract and behavior tests before implementation**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPModalPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*UPModalBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPModalPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because `UPModalProps` and `UPModal` are absent.
 
@@ -716,7 +717,7 @@ git commit -m "feat: add uview-compatible modal"
 
 - [ ] **Step 2: Run toast tests before implementation**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPToastControllerTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*UPToastBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPToastControllerTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because the toast controller and host do not exist.
 
@@ -785,7 +786,7 @@ git commit -m "feat: add uview-compatible toast host"
 
 - [ ] **Step 2: Run the focused cell tests before implementation**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPCellPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest --tests '*UPCellBehaviorTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*UPCellPropsTest' && ./gradlew :ultra-ui:connectedDebugAndroidTest`
 
 Expected: FAIL because the cell group, cell Props, and click-event type are absent.
 
@@ -852,7 +853,7 @@ git commit -m "feat: add uview-compatible cells"
 
 - [ ] **Step 2: Run the full contract and navigation tests before wiring all pages**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*FirstMilestoneApiContractTest' && ./gradlew :sample:connectedDebugAndroidTest --tests '*FirstMilestoneNavigationTest'`
+Run: `./gradlew :ultra-ui:testDebugUnitTest --tests '*FirstMilestoneApiContractTest' && ./gradlew :sample:connectedDebugAndroidTest`
 
 Expected: FAIL until every Props class, default, and sample route from Tasks 4 through 10 exists.
 
