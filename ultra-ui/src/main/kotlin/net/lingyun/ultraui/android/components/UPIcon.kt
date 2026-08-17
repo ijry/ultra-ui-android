@@ -301,10 +301,4 @@ private fun UPRawValue.displayTextOrNull(): String? = when (this) {
     else -> toString().takeIf(String::isNotEmpty)
 }
 
-@Composable
-private fun availableScreenWidth(): androidx.compose.ui.unit.Dp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
-    .takeIf { it > 0 }
-    ?.dp
-    ?: 750.dp
-
 private val IconLabelPositions: Set<String> = setOf("left", "right", "top", "bottom")
