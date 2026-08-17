@@ -489,28 +489,28 @@ git commit -m "feat: add uview selection components"
 @Composable fun UPCircleProgress(props: UPCircleProgressProps = UPCircleProgressProps(), diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None)
 ```
 
-- [ ] **Step 1: Write failing layout/progress tests.** Assert all defaults and invalid enum fallback, row gutter/justify/align, col span/offset/textAlign, grid gap, item name payload, line-progress clamping/fromRight, and circle progress clamping.
-- [ ] **Step 2: Run focused tests and verify missing-API failure.**
+- [x] **Step 1: Write failing layout/progress tests.** Assert all defaults and invalid enum fallback, row gutter/justify/align, col span/offset/textAlign, grid gap, item name payload, line-progress clamping/fromRight, and circle progress clamping.
+- [x] **Step 2: Run focused tests and verify missing-API failure.**
 
 ```bash
 ./gradlew :ultra-ui:testDebugUnitTest --tests 'net.lingyun.ultraui.android.components.UPLayoutProgressPropsTest' --console=plain
 ```
 
-- [ ] **Step 3: Implement layout/progress renderers.** Row maps `start|end|center|space-around|space-between|space-evenly`, col computes a 24-column width with offset, grid lays out children in `col` columns with optional border and `gap`, and item emits its raw `name`. Line progress paints inactive/active tracks with `fromRight` and optional text; circle progress uses a deterministic `Canvas` arc with clamped percentage and no animation in screenshots.
-- [ ] **Step 4: Run unit, compile, and connected behavior tests.**
+- [x] **Step 3: Implement layout/progress renderers.** Row maps `start|end|center|space-around|space-between|space-evenly`, col computes a 12-column width with offset, grid lays out children in `col` columns with optional border and `gap`, and item emits its raw `name`. Line progress paints inactive/active tracks with `fromRight` and optional text; circle progress uses a deterministic `Canvas` arc with clamped percentage and no animation in screenshots.
+- [x] **Step 4: Run unit, compile, and connected behavior tests.**
 
 ```bash
 ./gradlew :ultra-ui:testDebugUnitTest :ultra-ui:compileDebugKotlin :ultra-ui:connectedDebugAndroidTest --console=plain
 ```
 
 Behavior tests must check row/col measured placement, grid item click payload, percentage clamping, right-to-left fill and progress text visibility.
-- [ ] **Step 5: Add and validate deterministic screenshots.** Render a row with three columns, a bordered/gapped grid, line-progress at 0/50/100 and from-right, and circle-progress at 30/100.
+- [x] **Step 5: Add and validate deterministic screenshots.** Render a row with three columns, a bordered/gapped grid, line-progress at 0/50/100 and from-right, and circle-progress at 30/100.
 
 ```bash
 ./gradlew :ultra-ui:updateDebugScreenshotTest :ultra-ui:validateDebugScreenshotTest --console=plain
 ```
 
-- [ ] **Step 6: Commit the layout/progress batch.**
+- [x] **Step 6: Commit the layout/progress batch.**
 
 ```bash
 git add ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPRow* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPCol* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPGrid* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPLineProgress* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPCircleProgress* ultra-ui/src/test ultra-ui/src/androidTest ultra-ui/src/screenshotTest ultra-ui/src/screenshotTestDebug/reference
