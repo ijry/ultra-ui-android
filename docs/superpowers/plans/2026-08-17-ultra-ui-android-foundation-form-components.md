@@ -436,28 +436,28 @@ git commit -m "feat: add uview text input components"
 @Composable fun UPRadioGroup(props: UPRadioGroupProps = UPRadioGroupProps(), content: @Composable ColumnScope.() -> Unit, onInput: ((UPRawValue) -> Unit)? = null, onChange: ((UPRawValue) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None)
 ```
 
-- [ ] **Step 1: Write failing selection contract tests.** Assert switch active/inactive values and colors, rate count/gutter/minimum/icon defaults, number-box min/max/step, checkbox false normalization, group `modelValue`/`value` aliases, radio shape and `gap="10px"`.
-- [ ] **Step 2: Run focused tests and verify missing-API failure.**
+- [x] **Step 1: Write failing selection contract tests.** Assert switch active/inactive values and colors, rate count/gutter/minimum/icon defaults, number-box min/max/step, checkbox false normalization, group `modelValue`/`value` aliases, radio shape and `gap="10px"`.
+- [x] **Step 2: Run focused tests and verify missing-API failure.**
 
 ```bash
 ./gradlew :ultra-ui:testDebugUnitTest --tests 'net.lingyun.ultraui.android.components.UPSelectionPropsTest' --console=plain
 ```
 
-- [ ] **Step 3: Implement controlled selection components.** Switch uses a native Compose toggle visual but emits configured raw active/inactive values and reports async changes without changing state until the generated source updates Props. Rate supports tap/drag-compatible click targets, half values only when `allowHalf`, `minCount`, disabled/readonly and icon names. Number box clamps to min/max, normalizes integer/decimal length, emits plus/minus/overlimit and honors disabled plus/minus/input. Checkbox and radio use group-local composition state, preserve label/icon placement, border-bottom and shape, and emit raw names; groups expose row/column placement and keep their generated value contract.
-- [ ] **Step 4: Run unit, compile, and behavior tests.**
+- [x] **Step 3: Implement controlled selection components.** Switch uses a native Compose toggle visual but emits configured raw active/inactive values and reports async changes without changing state until the generated source updates Props. Rate supports tap/drag-compatible click targets, half values only when `allowHalf`, `minCount`, disabled/readonly and icon names. Number box clamps to min/max, normalizes integer/decimal length, emits plus/minus/overlimit and honors disabled plus/minus/input. Checkbox and radio use group-local composition state, preserve label/icon placement, border-bottom and shape, and emit raw names; groups expose row/column placement and keep their generated value contract.
+- [x] **Step 4: Run unit, compile, and behavior tests.**
 
 ```bash
 ./gradlew :ultra-ui:testDebugUnitTest :ultra-ui:compileDebugKotlin :ultra-ui:connectedDebugAndroidTest --console=plain
 ```
 
 Behavior tests must verify controlled switch async behavior, rate minimum/disabled behavior, number-box clamping and event order, checkbox group multi-selection, radio group single-selection, label-disabled suppression and `gap` measurement.
-- [ ] **Step 5: Add screenshots.** Cover active/inactive switch, three rate states, number-box limits, checkbox/radio shapes and group placements, using fixed props and no animations.
+- [x] **Step 5: Add screenshots.** Cover active/inactive switch, three rate states, number-box limits, checkbox/radio shapes and group placements, using fixed props and no animations.
 
 ```bash
 ./gradlew :ultra-ui:updateDebugScreenshotTest :ultra-ui:validateDebugScreenshotTest --console=plain
 ```
 
-- [ ] **Step 6: Commit the selection batch.**
+- [x] **Step 6: Commit the selection batch.**
 
 ```bash
 git add ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPSwitch* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPRate* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPNumberBox* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPCheckbox* ultra-ui/src/main/kotlin/net/lingyun/ultraui/android/components/UPRadio* ultra-ui/src/test ultra-ui/src/androidTest ultra-ui/src/screenshotTest ultra-ui/src/screenshotTestDebug/reference

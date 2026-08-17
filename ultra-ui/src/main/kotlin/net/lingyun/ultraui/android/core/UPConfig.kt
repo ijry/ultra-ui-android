@@ -595,18 +595,19 @@ public data class UPNumberBoxDefaults(
 
 public data class UPCheckboxDefaults(
     val name: UPRawValue = "",
-    val shape: String = "square",
-    val size: UPRawValue = 18,
+    // uview leaves visual props empty on the leaf so checkbox-group can inherit them.
+    val shape: String = "",
+    val size: UPRawValue = "",
     val checked: Boolean = false,
-    val disabled: Boolean = false,
-    val activeColor: String = "#2979ff",
-    val inactiveColor: String = "#c8c9cc",
-    val iconSize: UPRawValue = 12,
-    val iconColor: String = "#ffffff",
+    val disabled: UPRawValue = "",
+    val activeColor: String = "",
+    val inactiveColor: String = "",
+    val iconSize: UPRawValue = "",
+    val iconColor: String = "",
     val label: UPRawValue = "",
-    val labelSize: UPRawValue = 14,
-    val labelColor: String = "#303133",
-    val labelDisabled: Boolean = false,
+    val labelSize: UPRawValue = "",
+    val labelColor: String = "",
+    val labelDisabled: UPRawValue = "",
     val usedAlone: Boolean = false,
 )
 
