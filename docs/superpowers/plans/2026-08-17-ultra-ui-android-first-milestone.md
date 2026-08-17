@@ -196,7 +196,7 @@ git commit -m "build: scaffold Compose library and sample app"
 ```kotlin
 @Test fun parsesNamedAndRgbaColorsWithoutThrowing() {
     assertEquals(UPTheme.Primary, UPColor.parse("primary", UPTheme.Info))
-    assertEquals(Color(0x80336699), UPColor.parse("#80336699", UPTheme.Info))
+    assertEquals(Color(0x99803366), UPColor.parse("#80336699", UPTheme.Info))
     assertEquals(Color(0x80336699), UPColor.parse("rgba(51,102,153,0.5)", UPTheme.Info))
     assertEquals(UPTheme.Info, UPColor.parse("bad-color", UPTheme.Info))
 }
@@ -249,9 +249,9 @@ Populate `UPTheme` from the pinned uview-plus colors: primary `#2979ff`, warning
 
 - [ ] **Step 4: Run the core contract suite and screenshot-plugin discovery task**
 
-Run: `./gradlew :ultra-ui:testDebugUnitTest :ultra-ui:validateScreenshotTest`
+Run: `./gradlew :ultra-ui:testDebugUnitTest :ultra-ui:assembleScreenshotTest`
 
-Expected: PASS; malformed inputs return fallbacks, the exact first-milestone defaults are covered by tests, and the screenshot-test source set is recognized.
+Expected: PASS; malformed inputs return fallbacks, the exact first-milestone defaults are covered by tests, and the AGP screenshot-test source set is recognized. `validateScreenshotTest` / `verifyDebugScreenshotTest` tasks become available only after screenshot-test sources are added in later component tasks, so this bootstrap task validates the registered source set without assuming a generated validator task.
 
 - [ ] **Step 5: Commit the reusable compatibility core**
 
