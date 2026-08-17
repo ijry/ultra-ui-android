@@ -39,11 +39,11 @@ public object SampleRoutes {
     public const val Modal: String = "modal"
 }
 
-/**
- * The catalog intentionally starts empty. A component task adds its destination only after
- * both its native renderer and its matching demo page are implemented.
- */
-public val sampleDestinations: List<SampleDestination> = emptyList()
+/** Completed destinations from the current Android uview-plus compatibility milestone. */
+public val sampleDestinations: List<SampleDestination> = listOf(
+    SampleDestination(route = SampleRoutes.Icon, group = "Components A", title = "图标"),
+    SampleDestination(route = SampleRoutes.LoadingIcon, group = "Components A", title = "加载中图标"),
+)
 
 private val sampleGroups: List<String> = listOf("Components A", "Components B", "Components C")
 

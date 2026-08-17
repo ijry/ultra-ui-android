@@ -14,6 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.sample.pages.IconDemoPage
+import net.lingyun.ultraui.android.sample.pages.LoadingIconDemoPage
 
 private val sampleColorScheme = lightColorScheme(
     primary = UPTheme.Primary,
@@ -44,6 +46,12 @@ public fun SampleApp(modifier: Modifier = Modifier) {
                     SampleCatalog(onDestinationClick = { destination ->
                         navController.navigate(destination.route)
                     })
+                }
+                composable(SampleRoutes.Icon) {
+                    IconDemoPage(onBack = { navController.popBackStack() })
+                }
+                composable(SampleRoutes.LoadingIcon) {
+                    LoadingIconDemoPage(onBack = { navController.popBackStack() })
                 }
             }
         }

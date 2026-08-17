@@ -3,6 +3,7 @@ package net.lingyun.ultraui.android.sample
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
@@ -20,7 +21,19 @@ class SampleCatalogTest {
         composeRule.onNodeWithText("Components A").assertExists()
         composeRule.onNodeWithText("Components B").assertExists()
         composeRule.onNodeWithText("Components C").assertExists()
+        composeRule.onNodeWithText("图标").assertExists()
+        composeRule.onNodeWithText("加载中图标").assertExists()
         composeRule.onNodeWithText("按钮").assertDoesNotExist()
+    }
+
+    @Test
+    fun catalogNavigatesToTheCompletedIconPages() {
+        composeRule.onNodeWithText("图标").performClick()
+        composeRule.onNodeWithText("常用图标").assertExists()
+        composeRule.onNodeWithText("返回").performClick()
+
+        composeRule.onNodeWithText("加载中图标").performClick()
+        composeRule.onNodeWithText("基本案列").assertExists()
     }
 
     @Test
