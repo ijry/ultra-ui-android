@@ -1,0 +1,4 @@
+# Preserve executable scripts' POSIX line endings while delivering a usable Windows Gradle wrapper.
+gradlew text eol=lf
+*.sh text eol=lf
+gradlew.bat text eol=crlf
