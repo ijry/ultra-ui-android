@@ -52,6 +52,16 @@ class ProjectContractTest {
             "UPGridItemProps",
             "UPLineProgressProps",
             "UPCircleProgressProps",
+            "UPAlertProps",
+            "UPActionSheetProps",
+            "UPNotifyProps",
+            "UPBackTopProps",
+            "UPCardProps",
+            "UPCollapseProps",
+            "UPCollapseItemProps",
+            "UPDropdownProps",
+            "UPDropdownItemProps",
+            "UPNoticeBarProps",
         )
 
         expectedPropsClasses.forEach { simpleName ->

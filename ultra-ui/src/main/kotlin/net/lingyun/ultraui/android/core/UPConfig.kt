@@ -42,6 +42,13 @@ public object UPConfig {
     public val gridItem: UPGridItemDefaults = UPGridItemDefaults()
     public val lineProgress: UPLineProgressDefaults = UPLineProgressDefaults()
     public val circleProgress: UPCircleProgressDefaults = UPCircleProgressDefaults()
+    public val alert: UPAlertDefaults = UPAlertDefaults()
+    public val actionSheet: UPActionSheetDefaults = UPActionSheetDefaults()
+    public val notify: UPNotifyDefaults = UPNotifyDefaults()
+    public val backTop: UPBackTopDefaults = UPBackTopDefaults()
+    public val card: UPCardDefaults = UPCardDefaults()
+    public val collapse: UPCollapseDefaults = UPCollapseDefaults()
+    public val collapseItem: UPCollapseItemDefaults = UPCollapseItemDefaults()
 }
 
 public data class UPButtonDefaults(
@@ -704,4 +711,116 @@ public data class UPLineProgressDefaults(
 
 public data class UPCircleProgressDefaults(
     val percentage: UPRawValue = 30,
+)
+
+
+public data class UPAlertDefaults(
+    val title: String = "",
+    val type: String = "warning",
+    val description: String = "",
+    val closable: Boolean = false,
+    val showIcon: Boolean = false,
+    val effect: String = "light",
+    val center: Boolean = false,
+    val fontSize: UPRawValue = 14,
+    val transitionMode: String = "fade",
+    val duration: UPRawValue = 0,
+    val icon: String = "",
+    val value: Boolean = true,
+)
+
+public data class UPActionSheetDefaults(
+    val show: Boolean = false,
+    val title: String = "",
+    val description: String = "",
+    val actions: List<UPRawValue> = emptyList(),
+    val nameKey: String = "name",
+    val subnameKey: String = "subnameKey",
+    val cancelText: String = "",
+    val closeOnClickAction: Boolean = true,
+    val safeAreaInsetBottom: Boolean = true,
+    val openType: String = "",
+    val closeOnClickOverlay: Boolean = true,
+    val round: UPRawValue = 0,
+    val wrapMaxHeight: String = "600px",
+    val index: UPRawValue = "",
+)
+
+public data class UPNotifyDefaults(
+    val top: UPRawValue = 0,
+    val type: String = "primary",
+    val color: String = "#ffffff",
+    val bgColor: String = "",
+    val message: String = "",
+    val duration: UPRawValue = 3000,
+    val fontSize: UPRawValue = 15,
+    val safeAreaInsetTop: Boolean = false,
+)
+
+public data class UPBackTopDefaults(
+    val mode: String = "circle",
+    val icon: String = "arrow-upward",
+    val text: String = "",
+    val duration: UPRawValue = 100,
+    val scrollTop: UPRawValue = 0,
+    val top: UPRawValue = 400,
+    val bottom: UPRawValue = 100,
+    val right: UPRawValue = 20,
+    val zIndex: UPRawValue = 9,
+    val iconStyle: Map<String, UPRawValue> = mapOf("color" to "#909399", "fontSize" to "19px"),
+)
+
+public data class UPCardDefaults(
+    val full: Boolean = false,
+    val title: String = "",
+    val titleColor: String = "#303133",
+    val titleSize: UPRawValue = "15px",
+    val subTitle: String = "",
+    val subTitleColor: String = "#909399",
+    val subTitleSize: UPRawValue = "13px",
+    val border: Boolean = true,
+    val index: UPRawValue = "",
+    val margin: UPRawValue = "15px",
+    val borderRadius: UPRawValue = "8px",
+    val headStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val bodyStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val footStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val headBorderBottom: Boolean = true,
+    val footBorderTop: Boolean = true,
+    val thumb: String = "",
+    val thumbWidth: UPRawValue = "30px",
+    val thumbCircle: Boolean = false,
+    val padding: UPRawValue = "15px",
+    val paddingHead: UPRawValue = "",
+    val paddingBody: UPRawValue = "",
+    val paddingFoot: UPRawValue = "",
+    val showHead: Boolean = true,
+    val showFoot: Boolean = true,
+    val boxShadow: String = "none",
+)
+
+public data class UPCollapseDefaults(
+    val value: UPRawValue = null,
+    val accordion: Boolean = false,
+    val border: Boolean = true,
+)
+
+public data class UPCollapseItemDefaults(
+    val title: String = "",
+    val titleStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val value: UPRawValue = "",
+    val label: String = "",
+    val disabled: Boolean = false,
+    val isLink: Boolean = true,
+    val clickable: Boolean = true,
+    val border: Boolean = true,
+    val align: String = "left",
+    val name: UPRawValue = "",
+    val icon: String = "",
+    val duration: UPRawValue = 300,
+    val showRight: Boolean = true,
+    val iconStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val rightIconStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val cellCustomStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+    val cellCustomClass: String = "",
 )

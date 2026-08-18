@@ -5,6 +5,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
@@ -19,7 +20,7 @@ class SampleCatalogTest {
 
     @Test
     fun catalogShowsAllChineseRoutesAndRequestedComponentNames() {
-        listOf("基础展示", "弹层与内容", "输入与选择", "布局与进度").forEach { title ->
+        listOf("基础展示", "弹层与内容", "输入与选择", "布局与进度", "原生交互").forEach { title ->
             composeRule.onNodeWithText(title).assertExists()
         }
 
@@ -35,17 +36,18 @@ class SampleCatalogTest {
             "弹层与内容" to "弹窗",
             "输入与选择" to "输入框",
             "布局与进度" to "行布局",
+            "原生交互" to "警告提示",
         ).forEach { (routeTitle, sectionTitle) ->
             composeRule.onNodeWithText(routeTitle).performClick()
             composeRule.onNodeWithText(sectionTitle).assertIsDisplayed()
             composeRule.onNodeWithText("返回").performClick()
         }
 
-        composeRule.onNodeWithText("图标").performClick()
+        composeRule.onNodeWithText("图标").performScrollTo().performClick()
         composeRule.onNodeWithText("常用图标").assertIsDisplayed()
         composeRule.onNodeWithText("返回").performClick()
 
-        composeRule.onNodeWithText("加载中图标").performClick()
+        composeRule.onNodeWithText("加载中图标").performScrollTo().performClick()
         composeRule.onNodeWithText("基本案列").assertIsDisplayed()
     }
 
@@ -65,6 +67,7 @@ class SampleCatalogTest {
             "遮罩", "弹窗", "模态框", "轻提示", "单元格", "单元格组", "图片", "头像", "头像组", "空状态", "加载页", "加载更多",
             "输入框", "文本域", "搜索框", "验证码输入", "开关", "评分", "步进器", "复选框", "复选框组", "单选框", "单选框组",
             "行布局", "列布局", "栅格", "栅格项", "线性进度", "环形进度",
+            "警告提示", "操作菜单", "通知", "返回顶部", "卡片", "折叠面板", "折叠项", "下拉菜单", "下拉项", "滚动通知",
         )
     }
 }

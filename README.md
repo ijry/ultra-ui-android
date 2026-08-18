@@ -47,10 +47,13 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 | 弹层与内容 | 遮罩、弹窗、模态框、轻提示、单元格、单元格组、图片、头像、头像组、空状态、加载页、加载更多 |
 | 输入与选择 | 输入框、文本域、搜索框、验证码输入、开关、评分、步进器、复选框、复选框组、单选框、单选框组 |
 | 布局与进度 | 行布局、列布局、栅格、栅格项、线性进度、环形进度 |
+| 原生交互 | 警告提示、操作菜单、通知、返回顶部、卡片、折叠面板、折叠项、下拉菜单、下拉项、滚动通知 |
 | 图标 | 图标 |
 | 加载中图标 | 加载中图标 |
 
-## 38 个组件目录
+`原生交互` 页面展示 Batch 9A 的 10 个组件，并通过状态提升演示可见性、选择、折叠、通知和关闭回调。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
+
+## 48 个组件目录
 
 | uview-plus 标签 | Android Props |
 | --- | --- |
@@ -92,8 +95,18 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 | `up-grid-item` | `UPGridItemProps` |
 | `up-line-progress` | `UPLineProgressProps` |
 | `up-circle-progress` | `UPCircleProgressProps` |
+| `up-alert` | `UPAlertProps` |
+| `up-action-sheet` | `UPActionSheetProps` |
+| `up-notify` | `UPNotifyProps` |
+| `up-back-top` | `UPBackTopProps` |
+| `up-card` | `UPCardProps` |
+| `up-collapse` | `UPCollapseProps` |
+| `up-collapse-item` | `UPCollapseItemProps` |
+| `up-dropdown` | `UPDropdownProps` |
+| `up-dropdown-item` | `UPDropdownItemProps` |
+| `up-notice-bar` | `UPNoticeBarProps` |
 
-> `UPIconProps` 与 `UPLoadingIconProps` 作为独立基础能力保留在库内和示例页中，不计入本批 38 个生成组件目录。
+> `UPIconProps` 与 `UPLoadingIconProps` 作为独立基础能力保留在库内和示例页中，不计入本批 48 个生成组件目录。
 
 ## 公开 API 示例
 
