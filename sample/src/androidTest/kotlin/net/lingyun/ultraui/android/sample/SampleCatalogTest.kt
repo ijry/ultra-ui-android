@@ -1,5 +1,6 @@
 package net.lingyun.ultraui.android.sample
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -17,32 +18,53 @@ class SampleCatalogTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun catalogShowsGroupsButNoUnimplementedComponentRoutes() {
-        composeRule.onNodeWithText("Components A").assertExists()
-        composeRule.onNodeWithText("Components B").assertExists()
-        composeRule.onNodeWithText("Components C").assertExists()
-        composeRule.onNodeWithText("图标").assertExists()
-        composeRule.onNodeWithText("加载中图标").assertExists()
-        composeRule.onNodeWithText("按钮").assertDoesNotExist()
+    fun catalogShowsAllChineseRoutesAndRequestedComponentNames() {
+        listOf("基础展示", "弹层与内容", "输入与选择", "布局与进度").forEach { title ->
+            composeRule.onNodeWithText(title).assertExists()
+        }
+
+        requestedComponentNames.forEach { name ->
+            composeRule.onNodeWithText(name).assertExists()
+        }
     }
 
     @Test
-    fun catalogNavigatesToTheCompletedIconPages() {
+    fun catalogNavigatesToEveryNewRouteAndKeepsExistingIconPagesReachable() {
+        listOf(
+            "基础展示" to "按钮",
+            "弹层与内容" to "弹窗",
+            "输入与选择" to "输入框",
+            "布局与进度" to "行布局",
+        ).forEach { (routeTitle, sectionTitle) ->
+            composeRule.onNodeWithText(routeTitle).performClick()
+            composeRule.onNodeWithText(sectionTitle).assertIsDisplayed()
+            composeRule.onNodeWithText("返回").performClick()
+        }
+
         composeRule.onNodeWithText("图标").performClick()
-        composeRule.onNodeWithText("常用图标").assertExists()
+        composeRule.onNodeWithText("常用图标").assertIsDisplayed()
         composeRule.onNodeWithText("返回").performClick()
 
         composeRule.onNodeWithText("加载中图标").performClick()
-        composeRule.onNodeWithText("基本案列").assertExists()
+        composeRule.onNodeWithText("基本案列").assertIsDisplayed()
     }
 
     @Test
     fun catalogStartsBelowTheStatusBarSafeArea() {
-        val header = composeRule.onNodeWithText("Components A")
+        val header = composeRule.onNodeWithText("基础展示")
 
         assertTrue(
             "目录首标题必须位于系统状态栏安全区域下方",
             header.getUnclippedBoundsInRoot().top >= 32.dp,
+        )
+    }
+
+    private companion object {
+        val requestedComponentNames = listOf(
+            "按钮", "标签", "徽标", "分割线", "间隔", "线条", "链接", "文本", "标题",
+            "遮罩", "弹窗", "模态框", "轻提示", "单元格", "单元格组", "图片", "头像", "头像组", "空状态", "加载页", "加载更多",
+            "输入框", "文本域", "搜索框", "验证码输入", "开关", "评分", "步进器", "复选框", "复选框组", "单选框", "单选框组",
+            "行布局", "列布局", "栅格", "栅格项", "线性进度", "环形进度",
         )
     }
 }

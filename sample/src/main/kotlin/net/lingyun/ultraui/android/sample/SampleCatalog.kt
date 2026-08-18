@@ -4,11 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,29 +24,101 @@ public data class SampleDestination(
     val route: String,
     val group: String,
     val title: String,
+    val components: List<String> = emptyList(),
 )
 
 /** Stable route identifiers reserved for the first UltraUI Android milestone. */
 public object SampleRoutes {
     public const val Catalog: String = "catalog"
-    public const val Button: String = "button"
+    public const val Foundation: String = "foundation"
+    public const val LayerContent: String = "layer-content"
+    public const val InputSelection: String = "input-selection"
+    public const val LayoutProgress: String = "layout-progress"
     public const val Icon: String = "icon"
     public const val LoadingIcon: String = "loading-icon"
-    public const val Overlay: String = "overlay"
-    public const val Popup: String = "popup"
-    public const val Cell: String = "cell"
-    public const val Toast: String = "toast"
-    public const val Tag: String = "tag"
-    public const val Modal: String = "modal"
 }
 
-/** Completed destinations from the current Android uview-plus compatibility milestone. */
-public val sampleDestinations: List<SampleDestination> = listOf(
-    SampleDestination(route = SampleRoutes.Icon, group = "Components A", title = "图标"),
-    SampleDestination(route = SampleRoutes.LoadingIcon, group = "Components A", title = "加载中图标"),
+public val foundationComponentNames: List<String> = listOf(
+    "按钮",
+    "标签",
+    "徽标",
+    "分割线",
+    "间隔",
+    "线条",
+    "链接",
+    "文本",
+    "标题",
 )
 
-private val sampleGroups: List<String> = listOf("Components A", "Components B", "Components C")
+public val layerContentComponentNames: List<String> = listOf(
+    "遮罩",
+    "弹窗",
+    "模态框",
+    "轻提示",
+    "单元格",
+    "单元格组",
+    "图片",
+    "头像",
+    "头像组",
+    "空状态",
+    "加载页",
+    "加载更多",
+)
+
+public val inputSelectionComponentNames: List<String> = listOf(
+    "输入框",
+    "文本域",
+    "搜索框",
+    "验证码输入",
+    "开关",
+    "评分",
+    "步进器",
+    "复选框",
+    "复选框组",
+    "单选框",
+    "单选框组",
+)
+
+public val layoutProgressComponentNames: List<String> = listOf(
+    "行布局",
+    "列布局",
+    "栅格",
+    "栅格项",
+    "线性进度",
+    "环形进度",
+)
+
+/** The full public sample catalog for generated uview-plus compatible Android components. */
+public val sampleDestinations: List<SampleDestination> = listOf(
+    SampleDestination(
+        route = SampleRoutes.Foundation,
+        group = "组件总览",
+        title = "基础展示",
+        components = foundationComponentNames,
+    ),
+    SampleDestination(
+        route = SampleRoutes.LayerContent,
+        group = "组件总览",
+        title = "弹层与内容",
+        components = layerContentComponentNames,
+    ),
+    SampleDestination(
+        route = SampleRoutes.InputSelection,
+        group = "组件总览",
+        title = "输入与选择",
+        components = inputSelectionComponentNames,
+    ),
+    SampleDestination(
+        route = SampleRoutes.LayoutProgress,
+        group = "组件总览",
+        title = "布局与进度",
+        components = layoutProgressComponentNames,
+    ),
+    SampleDestination(route = SampleRoutes.Icon, group = "独立示例", title = "图标", components = listOf("图标")),
+    SampleDestination(route = SampleRoutes.LoadingIcon, group = "独立示例", title = "加载中图标", components = listOf("加载中图标")),
+)
+
+private val sampleGroups: List<String> = listOf("组件总览", "独立示例")
 
 /** The home page shared by all deterministic UltraUI component demos. */
 @Composable
@@ -54,33 +127,23 @@ public fun SampleCatalog(
     onDestinationClick: (SampleDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.background(UPTheme.Background),
-        contentPadding = PaddingValues(vertical = 16.dp),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(UPTheme.Background)
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         sampleGroups.forEach { group ->
-            item(key = "header-$group") {
-                Text(
-                    text = group,
-                    color = UPTheme.Tips,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-            val groupedDestinations = destinations.filter { it.group == group }
-            if (groupedDestinations.isEmpty()) {
-                item(key = "empty-$group") {
-                    Text(
-                        text = "暂无已完成组件",
-                        color = UPTheme.Light,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
-            } else {
-                items(items = groupedDestinations, key = SampleDestination::route) { destination ->
-                    SampleDestinationRow(destination = destination, onClick = { onDestinationClick(destination) })
-                }
+            Text(
+                text = group,
+                color = UPTheme.Tips,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            destinations.filter { it.group == group }.forEach { destination ->
+                SampleDestinationRow(destination = destination, onClick = { onDestinationClick(destination) })
             }
         }
     }
@@ -91,15 +154,27 @@ private fun SampleDestinationRow(destination: SampleDestination, onClick: () -> 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(UPTheme.Background)
+            .background(androidx.compose.ui.graphics.Color.White)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = destination.title,
             color = UPTheme.Main,
-            modifier = Modifier.padding(vertical = 16.dp),
+            fontWeight = FontWeight.SemiBold,
         )
+        if (destination.components.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                destination.components.chunked(4).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        row.forEach { component ->
+                            Text(text = component, color = UPTheme.Content)
+                        }
+                    }
+                }
+            }
+        }
         HorizontalDivider(color = UPTheme.Border)
     }
 }

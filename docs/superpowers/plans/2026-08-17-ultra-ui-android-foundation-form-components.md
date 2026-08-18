@@ -536,16 +536,16 @@ git commit -m "feat: add uview layout and progress components"
 - Consumes every public library API from Tasks 1–7; sample imports no internal symbol and has no duplicate component implementation.
 - Produces four reachable Chinese demo routes: `基础展示`, `弹层与内容`, `输入与选择`, `布局与进度`; each route contains a visible section for every component in its batch and at least one interaction that exercises the public event callback.
 
-- [ ] **Step 1: Write failing sample navigation/API coverage tests.** Assert all 38 component names occur in the catalog, each route is reachable from `SampleApp`, and the library public package contains every `UP*Props` class.
-- [ ] **Step 2: Run the tests before adding routes and docs.**
+- [x] **Step 1: Write failing sample navigation/API coverage tests.** Assert all 38 component names occur in the catalog, each route is reachable from `SampleApp`, and the library public package contains every `UP*Props` class.
+- [x] **Step 2: Run the tests before adding routes and docs.**
 
 ```bash
 ./gradlew :ultra-ui:testDebugUnitTest --tests 'net.lingyun.ultraui.android.ProjectContractTest' :sample:connectedDebugAndroidTest --console=plain
 ```
 
 Expected: failure naming missing routes/Props/classes.
-- [ ] **Step 3: Implement four Chinese pages and route wiring.** Use only public `UP*` APIs, local deterministic assets, and state hoisted in the page. Add catalog titles for all 38 components and keep existing icon/loading-icon pages reachable.
-- [ ] **Step 4: Run full verification.**
+- [x] **Step 3: Implement four Chinese pages and route wiring.** Use only public `UP*` APIs, local deterministic assets, and state hoisted in the page. Add catalog titles for all 38 components and keep existing icon/loading-icon pages reachable.
+- [x] **Step 4: Run full verification.**
 
 ```bash
 export ANDROID_HOME="$HOME/Library/Android/sdk"
@@ -562,7 +562,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ```
 
 If screenshot validation is affected by the local proxy, run only the screenshot command again with `JAVA_TOOL_OPTIONS='-Dhttp.proxyHost= -Dhttps.proxyHost= -DsocksProxyHost='`; do not use that variable for `scripts/verify-toolchain.sh`.
-- [ ] **Step 5: Review the public API and forbidden-architecture boundaries.** Run:
+- [x] **Step 5: Review the public API and forbidden-architecture boundaries.** Run:
 
 ```bash
 # Run the repository's placeholder-marker scan and require zero matches.
@@ -571,7 +571,7 @@ rg -n 'data class UP(Button|Tag|Badge|Divider|Gap|Line|Link|Text|Title|Overlay|P
 ```
 
 Expected: the plan scan prints no lines; the forbidden-boundary scan prints no forbidden implementation usage; the Props scan prints all 38 data classes.
-- [ ] **Step 6: Commit sample/docs and final coverage.**
+- [x] **Step 6: Commit sample/docs and final coverage.**
 
 ```bash
 git add sample README.md ultra-ui/src/test/kotlin/net/lingyun/ultraui/android/ProjectContractTest.kt
