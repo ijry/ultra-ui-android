@@ -32,5 +32,7 @@ class UPConfigContractTest {
         assertEquals("arrow-right", UPConfig.cell.rightIcon)
         assertEquals("spinner", UPConfig.loadingIcon.mode)
         assertTrue(UPConfig.cellGroup.border)
+        assertEquals("44px", UPConfig.batch9b.navbarHeight)
+        assertEquals("HH:mm:ss", UPConfig.batch9b.countDownFormat)
     }
 }

@@ -49,7 +49,27 @@ public object UPConfig {
     public val card: UPCardDefaults = UPCardDefaults()
     public val collapse: UPCollapseDefaults = UPCollapseDefaults()
     public val collapseItem: UPCollapseItemDefaults = UPCollapseItemDefaults()
+    /** Defaults shared by the Batch 9B native wrappers. */
+    public val batch9b: UPBatch9BDefaults = UPBatch9BDefaults()
 }
+
+public data class UPBatch9BDefaults(
+    val navbarSafeAreaInsetTop: Boolean = true,
+    val navbarHeight: UPRawValue = "44px",
+    val tabsDuration: UPRawValue = 300,
+    val tabsCurrent: UPRawValue = 0,
+    val stepsDirection: String = "row",
+    val listScrollable: Boolean = true,
+    val popoverPlacement: String = "top",
+    val tooltipTriggerMode: String = "longpress",
+    val swiperAutoplay: Boolean = true,
+    val skeletonLoading: Boolean = true,
+    val countToDuration: UPRawValue = 2000,
+    val countDownFormat: String = "HH:mm:ss",
+    val pickerPopupMode: String = "bottom",
+    val paginationPageSize: UPRawValue = 10,
+    val selectKeyName: String = "id",
+)
 
 public data class UPButtonDefaults(
     val hairline: Boolean = false,

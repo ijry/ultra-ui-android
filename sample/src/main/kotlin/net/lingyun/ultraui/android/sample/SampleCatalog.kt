@@ -35,6 +35,7 @@ public object SampleRoutes {
     public const val InputSelection: String = "input-selection"
     public const val LayoutProgress: String = "layout-progress"
     public const val NativeInteraction: String = "native-interaction"
+    public const val NavigationMore: String = "navigation-more"
     public const val Icon: String = "icon"
     public const val LoadingIcon: String = "loading-icon"
 }
@@ -102,6 +103,13 @@ public val nativeInteractionComponentNames: List<String> = listOf(
     "滚动通知",
 )
 
+public val navigationMoreComponentNames: List<String> = listOf(
+    "导航栏", "迷你导航栏", "状态栏", "底部安全区", "标签页", "标签项", "分段器", "步骤条", "步骤项",
+    "列表", "列表项", "索引列表", "索引项", "索引锚点", "滚动列表", "气泡弹出", "文字提示", "吸顶",
+    "滑动操作", "滑动操作项", "轮播图", "轮播指示器", "骨架屏", "展开阅读", "纵向通知", "横向通知",
+    "数字滚动", "倒计时", "选择器", "选择器列", "分页", "下拉选择",
+)
+
 /** The full public sample catalog for generated uview-plus compatible Android components. */
 public val sampleDestinations: List<SampleDestination> = listOf(
     SampleDestination(
@@ -133,6 +141,12 @@ public val sampleDestinations: List<SampleDestination> = listOf(
         group = "组件总览",
         title = "原生交互",
         components = nativeInteractionComponentNames,
+    ),
+    SampleDestination(
+        route = SampleRoutes.NavigationMore,
+        group = "组件总览",
+        title = "导航与更多",
+        components = navigationMoreComponentNames,
     ),
     SampleDestination(route = SampleRoutes.Icon, group = "独立示例", title = "图标", components = listOf("图标")),
     SampleDestination(route = SampleRoutes.LoadingIcon, group = "独立示例", title = "加载中图标", components = listOf("加载中图标")),

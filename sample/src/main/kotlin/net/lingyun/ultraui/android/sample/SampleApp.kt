@@ -21,6 +21,7 @@ import net.lingyun.ultraui.android.sample.pages.LayerContentDemoPage
 import net.lingyun.ultraui.android.sample.pages.LayoutProgressDemoPage
 import net.lingyun.ultraui.android.sample.pages.LoadingIconDemoPage
 import net.lingyun.ultraui.android.sample.pages.NativeInteractionDemoPage
+import net.lingyun.ultraui.android.sample.pages.NavigationMoreDemoPage
 
 private val sampleColorScheme = lightColorScheme(
     primary = UPTheme.Primary,
@@ -66,6 +67,9 @@ public fun SampleApp(modifier: Modifier = Modifier) {
                 }
                 composable(SampleRoutes.NativeInteraction) {
                     NativeInteractionDemoPage(onBack = { navController.popBackStack() })
+                }
+                composable(SampleRoutes.NavigationMore) {
+                    NavigationMoreDemoPage(onBack = { navController.popBackStack() })
                 }
                 composable(SampleRoutes.Icon) {
                     IconDemoPage(onBack = { navController.popBackStack() })
