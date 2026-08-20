@@ -39,6 +39,8 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 
 ## 示例导航
 
+完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。
+
 示例工程复刻 uview-plus 演示工程的分组体验，并保留已有独立示例：
 
 | 路由标题 | 覆盖组件 |
