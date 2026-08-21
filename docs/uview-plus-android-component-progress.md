@@ -214,3 +214,21 @@
 - 只有完成常用字段、事件、受控状态、样式和错误/禁用状态回归，才允许提升到“基本完成”。
 - “完整兼容”必须有上游演示对照或逐字段核验记录，不能仅因 Kotlin 文件存在而标记。
 - Android 不解析 JSON，不引入 FastView、`.xyfv`、WebView 或 JSON 映射运行时；后端负责把同一份 JSON 转成各端调用。
+
+## 默认值漂移核查
+
+`tools/compare_uview_defaults.py` 会把上游 `components/u-<name>/<name>.js` 的默认值与
+`core/UPConfig.kt` 的 `UP*Defaults` 逐字段对比，漂移时以退出码 1 失败：
+
+```
+python3 tools/compare_uview_defaults.py                  # 仅报告未解释的漂移
+python3 tools/compare_uview_defaults.py --show-accepted   # 同时列出已记录的降级原因
+python3 tools/compare_uview_defaults.py --list-unaudited  # 列出脚本覆盖不到的组件
+```
+
+当前状态：比对 46 个组件、560 个字段，未解释漂移 0 个，已记录降级 13 个。
+
+**覆盖盲区（重要）**：88 个已移植组件中有 41 个（含 Batch 10 全部）把默认值直接写在
+`UP*Props` 里而未经 `UPConfig`，脚本看不到它们，仍需人工对照上游 `.vue` / `props.js`。
+`u-tabbar-item` 的图标尺寸正是因此漂移未被发现。后续把这些组件迁移到 `UPConfig` 后，
+核查覆盖率才会真正提升。
