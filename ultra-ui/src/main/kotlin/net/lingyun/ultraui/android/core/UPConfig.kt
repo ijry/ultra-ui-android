@@ -327,7 +327,9 @@ public data class UPTextDefaults(
     val openType: String = "",
     val bold: Boolean = false,
     val block: Boolean = false,
-    val lines: UPRawValue = 1,
+    // uview only clamps when `lines` is truthy (`u-text.vue`: `lines && u-line-N`),
+    // so the unset default must leave the text unclamped.
+    val lines: UPRawValue = "",
     val color: String = "",
     val size: UPRawValue = 15,
     val iconStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
@@ -451,7 +453,9 @@ public data class UPInputDefaults(
     val onlyClearableOnFocused: Boolean = false,
     val password: Boolean = false,
     val maxlength: Int = 140,
-    val placeholder: String = "请输入内容",
+    // uview leaves the placeholder unset (`input.js`: null) so nothing renders
+    // until the caller supplies one.
+    val placeholder: String = "",
     val placeholderClass: String = "",
     val placeholderStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
     val showWordLimit: Boolean = false,
@@ -479,17 +483,19 @@ public data class UPInputDefaults(
     val formatter: UPRawValue = null,
     val ignoreCompositionEvent: Boolean = false,
     val cursorColor: String = "#53c21d",
-    val passwordVisibilityToggle: Boolean = false,
+    val passwordVisibilityToggle: Boolean = true,
 )
 
 public data class UPTextareaDefaults(
     val value: UPRawValue = "",
     val modelValue: UPRawValue? = null,
-    val placeholder: String = "请输入内容",
+    // uview leaves the placeholder unset (`textarea.js`: '') so nothing renders
+    // until the caller supplies one.
+    val placeholder: String = "",
     val placeholderClass: String = "",
     val placeholderStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
     val height: UPRawValue = 70,
-    val confirmType: String = "return",
+    val confirmType: String = "done",
     val disabled: Boolean = false,
     val count: Boolean = false,
     val focus: Boolean = false,

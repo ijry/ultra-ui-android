@@ -1,5 +1,6 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.ui.text.input.ImeAction
 import net.lingyun.ultraui.android.core.UPConfig
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.resolveUPModelValue
@@ -22,14 +23,34 @@ class UPInputPropsTest {
         assertEquals("#53c21d", input.cursorColor)
         assertFalse(input.clearable)
         assertFalse(input.onlyClearableOnFocused)
-        assertFalse(input.passwordVisibilityToggle)
+        assertTrue(input.passwordVisibilityToggle)
 
         assertEquals("", textarea.value)
         assertEquals(70, textarea.height)
-        assertEquals("return", textarea.confirmType)
+        assertEquals("done", textarea.confirmType)
         assertTrue(textarea.showConfirmBar)
         assertEquals(140, textarea.maxlength)
         assertEquals("surround", textarea.border)
+    }
+
+    @Test
+    fun inputAndTextareaLeaveThePlaceholderUnsetLikeUview() {
+        // uview ships no placeholder copy (`input.js`: null, `textarea.js`: ''),
+        // so a generated field must stay blank until the backend supplies one.
+        assertEquals("", UPInputProps().placeholder)
+        assertEquals("", UPTextareaProps().placeholder)
+    }
+
+    @Test
+    fun textareaKeepsNewlineKeysAndHonoursExplicitConfirmTypes() {
+        // The multiline field must not steal the newline key for 'return'/'newline',
+        // but every other uview confirmType still maps to its own IME action.
+        assertEquals(ImeAction.Default, imeActionForUPInput("return", multiline = true))
+        assertEquals(ImeAction.Default, imeActionForUPInput("newline", multiline = true))
+        assertEquals(ImeAction.Done, imeActionForUPInput("done", multiline = true))
+        assertEquals(ImeAction.Search, imeActionForUPInput("search", multiline = true))
+        assertEquals(ImeAction.Send, imeActionForUPInput("send", multiline = true))
+        assertEquals(ImeAction.Done, imeActionForUPInput("return", multiline = false))
     }
 
     @Test

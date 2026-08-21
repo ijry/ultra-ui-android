@@ -143,7 +143,7 @@ public fun UPTextarea(
                 ),
                 singleLine = false,
                 maxLines = if (props.autoHeight) Int.MAX_VALUE else (requestedHeight.value / 20f).toInt().coerceAtLeast(1),
-                keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                keyboardOptions = KeyboardOptions(imeAction = imeActionForUPInput(props.confirmType, multiline = true)),
                 keyboardActions = KeyboardActions(onDone = { confirmValue() }),
                 cursorBrush = SolidColor(UPColor.parse("#53c21d", UPTheme.Primary)),
                 decorationBox = { innerTextField ->

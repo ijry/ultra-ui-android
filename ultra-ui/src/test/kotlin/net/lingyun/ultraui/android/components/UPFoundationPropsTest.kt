@@ -3,6 +3,7 @@ package net.lingyun.ultraui.android.components
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPConfig
 import net.lingyun.ultraui.android.core.UPRawValue
+import net.lingyun.ultraui.android.core.upIntOrDefault
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -21,6 +22,15 @@ class UPFoundationPropsTest {
         assertEquals(15, UPTextProps().size)
         assertEquals(emptyMap<String, UPRawValue>(), UPTitleProps().customStyle)
         assertEquals(UPConfig.button.type, UPButtonProps().type)
+    }
+
+    @Test
+    fun textLeavesLineClampingOffUntilLinesIsSet() {
+        // uview only emits `u-line-N` when `lines` is truthy, so an unset default
+        // must wrap freely instead of collapsing to a single line.
+        assertEquals("", UPTextProps().lines)
+        assertEquals(Int.MAX_VALUE, UPTextProps().lines.upIntOrDefault(Int.MAX_VALUE))
+        assertEquals(2, UPTextProps(lines = 2).lines.upIntOrDefault(Int.MAX_VALUE))
     }
 
     @Test
