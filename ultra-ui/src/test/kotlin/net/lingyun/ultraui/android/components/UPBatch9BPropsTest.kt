@@ -17,6 +17,8 @@ class UPBatch9BPropsTest {
         assertTrue(UPTabsProps().scrollable)
         assertEquals("button", UPSubsectionProps().mode)
         assertEquals("row", UPStepsProps().direction)
+        // uview sizes the step marker from stepsItem.js `iconSize: 17`.
+        assertEquals(17, UPStepsItemProps().iconSize)
         assertEquals(50, UPListProps().lowerThreshold)
         assertTrue(UPIndexListProps().sticky)
         assertEquals("", UPIndexAnchorProps().text)

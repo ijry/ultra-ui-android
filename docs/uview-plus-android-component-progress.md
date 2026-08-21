@@ -142,7 +142,7 @@
 | 107 | 选择 | `u-slider` | `UPSlider` / `UPSliderProps` | 基础可用 | 中 | 单值、range、step 量化和 changing/change 基础手势已支持；vertical、原生无障碍语义和复杂样式仍待完善。 |
 | 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基础可用 | 高（Props） | 状态栏高度和顶部 inset 已封装。 |
 | 109 | 导航 | `u-steps` | `UPSteps` / `UPStepsProps` | 基础可用 | 中 | 步骤容器可用；current/direction/activeColor 传递仍需完善。 |
-| 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基础可用 | 中 | 空/轻量 Props 契约和内容渲染可用；组状态待补。 |
+| 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基础可用 | 中 | 内容渲染、`iconSize`（对齐上游 17）和 `itemStyle` 已生效；组状态、激活/未激活图标区分仍待补。 |
 | 111 | 原生交互 | `u-sticky` | `UPSticky` / `UPStickyProps` | 基础可用 | 低 | 当前为可嵌入容器；真实吸顶和 offset 语义待实现。 |
 | 112 | 导航 | `u-subsection` | `UPSubsection` / `UPSubsectionProps` | 基础可用 | 中 | 分段切换基础行为可用；样式和滚动模式待对照。 |
 | 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基础可用 | 中 | 原生手势基础容器可用；真实滑动距离和动画待补。 |
@@ -217,18 +217,19 @@
 
 ## 默认值漂移核查
 
-`tools/compare_uview_defaults.py` 会把上游 `components/u-<name>/<name>.js` 的默认值与
-`core/UPConfig.kt` 的 `UP*Defaults` 逐字段对比，漂移时以退出码 1 失败：
+`tools/compare_uview_defaults.py` 会把上游默认值与 Android 侧默认值逐字段对比，漂移时以退出码 1 失败。
+上游默认值来自 `components/u-<name>/<name>.js`，没有该文件的组件则回退读取 `props.js` 里的内联
+`default:`；Android 侧同时读取 `core/UPConfig.kt` 的 `UP*Defaults` 与 `UP*Props` 上的字面量默认值。
 
 ```
 python3 tools/compare_uview_defaults.py                  # 仅报告未解释的漂移
 python3 tools/compare_uview_defaults.py --show-accepted   # 同时列出已记录的降级原因
-python3 tools/compare_uview_defaults.py --list-unaudited  # 列出脚本覆盖不到的组件
+python3 tools/compare_uview_defaults.py --list-unaudited  # 列出脚本仍覆盖不到的组件
 ```
 
-当前状态：比对 46 个组件、560 个字段，未解释漂移 0 个，已记录降级 13 个。
+当前状态：比对 80 个组件、911 个字段，未解释漂移 0 个，已记录降级 15 个。
 
-**覆盖盲区（重要）**：88 个已移植组件中有 41 个（含 Batch 10 全部）把默认值直接写在
-`UP*Props` 里而未经 `UPConfig`，脚本看不到它们，仍需人工对照上游 `.vue` / `props.js`。
-`u-tabbar-item` 的图标尺寸正是因此漂移未被发现。后续把这些组件迁移到 `UPConfig` 后，
-核查覆盖率才会真正提升。
+**覆盖边界**：仍有 8 个组件（Cascader、IndexItem、Pagination、PickerColumn、SafeBottom、Select、
+TabsItem、Title）在上游没有可比对的字面量默认值，需人工对照 `.vue` 复核。另外本脚本只比对
+**声明的默认值**，不校验渲染几何与事件语义——`u-tabbar-item` 的图标尺寸漂移最终是靠截图发现的，
+两类核查缺一不可。

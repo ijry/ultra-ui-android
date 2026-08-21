@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
@@ -91,7 +92,15 @@ public fun UPSteps(props: UPStepsProps = UPStepsProps(), modifier: Modifier = Mo
 @Composable
 public fun UPStepsItem(props: UPStepsItemProps = UPStepsItemProps(), modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     Row(modifier.fillMaxWidth().upClickable(enabled = onClick != null, onClick = { onClick?.invoke() }).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPStepsItem")).padding(12.dp).upTestTag("steps-item"), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier.width(24.dp).height(24.dp).background(if (props.error) UPTheme.Error else UPTheme.Primary), contentAlignment = Alignment.Center) { BasicText("✓", style = TextStyle(color = Color.White)) }
+        // uview sizes the step marker from `iconSize` (default 17) and lets
+        // `itemStyle` decorate the row's marker cell.
+        val markerSize = upRawDp(props.iconSize, 17.dp).coerceAtLeast(0.dp)
+        Box(
+            Modifier.width(markerSize).height(markerSize)
+                .applyUPResolvedStyle(rememberUPResolvedStyle(props.itemStyle, diagnostics, "UPStepsItem.itemStyle"))
+                .background(if (props.error) UPTheme.Error else UPTheme.Primary),
+            contentAlignment = Alignment.Center,
+        ) { BasicText("✓", style = TextStyle(color = Color.White, fontSize = (markerSize.value * 0.7f).sp)) }
         Column { BasicText(props.title.upStringValueOrEmpty(), style = TextStyle(color = UPTheme.Main)); BasicText(props.desc.upStringValueOrEmpty(), style = TextStyle(color = UPTheme.Content)) }
     }
 }

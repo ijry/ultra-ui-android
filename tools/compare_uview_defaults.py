@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-"""Compare uview-plus upstream prop defaults against the Android UPConfig defaults.
+"""Compare uview-plus upstream prop defaults against the Android port's defaults.
 
-Every upstream component ships its defaults as ``export default { <key>: { ... } }``
-in ``components/u-<name>/<name>.js``; the Android port mirrors them as
-``UP<Name>Defaults`` data classes in ``core/UPConfig.kt``. This script diffs the two
-so a default can never drift silently the way ``u-tabbar-item``'s icon size did.
+Upstream declares defaults either in ``components/u-<name>/<name>.js`` or, for the
+components that never got one, as inline ``default:`` literals in ``props.js``. The
+Android port mirrors them either as ``UP<Name>Defaults`` in ``core/UPConfig.kt`` or
+as literals on the ``UP<Name>Props`` data class. This script diffs both shapes so a
+default cannot drift silently the way ``u-tabbar-item``'s icon size did.
 
 Only fields present on both sides with directly comparable literals are reported.
 Computed upstream defaults, style maps and fields the port intentionally omits are
 counted but never flagged, so a clean run means "no unexplained literal drift"
-rather than "full behavioural parity".
-
-Coverage limit: this can only see components that route their defaults through
-``UPConfig``. 41 of the 88 ported components (all of Batch 10 included) hardcode
-literals directly in their ``UP*Props`` class, so they are invisible here and still
-need manual comparison against the upstream ``.vue``/``props.js`` — that is exactly
-how ``u-tabbar-item``'s icon size drifted unnoticed. Run with ``--list-unaudited``
-to print them.
+rather than "full behavioural parity" — it compares declared defaults, not rendered
+geometry or event semantics. Run ``--list-unaudited`` for the components where not a
+single field was comparable; those still need manual review against the upstream
+``.vue``.
 """
 
 from __future__ import annotations
@@ -47,6 +44,8 @@ ACCEPTED = {
     ("u-textarea", "placeholderClass"): "CSS class name; no Compose equivalent",
     ("u-textarea", "cursor"): "'' means unset; Android encodes unset as -1",
     ("u-text", "lineHeight"): "'' means unset; Android encodes unset as 'normal'",
+    ("u-calendar", "todayColor"): "upstream falls back to the theme color (month.vue: todayColor || color)",
+    ("u-calendar", "monthFormat"): "upstream month.vue hardcodes YYYY年MM月; the Android default renders the same string",
     ("u-loading-page", "iconSize"): "upstream props.js resolves iconSize from fontSize (upstream bug, replicated)",
 }
 
@@ -72,7 +71,8 @@ def upstream_defaults(path: Path) -> dict[str, str] | None:
     src = path.read_text(encoding="utf-8", errors="replace")
     src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
     src = re.sub(r"//[^\n]*", "", src)
-    outer = re.search(r"export\s+default\s*\{(.*)\}\s*$", src, flags=re.S)
+    # Some files end `};` and some just `}`; tolerate both plus trailing whitespace.
+    outer = re.search(r"export\s+default\s*\{(.*)\}\s*;?\s*$", src, flags=re.S)
     if not outer:
         return None
     inner = re.search(r"([A-Za-z0-9_]+)\s*:\s*\{(.*)\}\s*,?\s*$", outer.group(1), flags=re.S)
@@ -87,6 +87,42 @@ def upstream_defaults(path: Path) -> dict[str, str] | None:
     return fields
 
 
+def props_js_defaults(path: Path) -> dict[str, str] | None:
+    """Read inline `default:` literals from a component's props.js.
+
+    Components without a `<name>.js` defaults file (u-popover, u-tabs-item, ...)
+    declare defaults directly in the props mixin. Entries that delegate to
+    `defProps.<x>.<y>` are skipped — those resolve through a defaults file this
+    component does not have, so there is no literal to compare.
+    """
+    src = path.read_text(encoding="utf-8", errors="replace")
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    src = re.sub(r"//[^\n]*", "", src)
+    fields = {}
+    for match in re.finditer(r"([A-Za-z0-9_]+)\s*:\s*\{[^{}]*?default\s*:\s*([^\n,}]+)", src, flags=re.S):
+        value = match.group(2).strip().rstrip(",").strip()
+        if "defProps" in value or value.startswith("()"):
+            continue
+        fields[match.group(1)] = value
+    return fields or None
+
+
+def upstream_source(comp: Path) -> Path | None:
+    """Locate a component's defaults file, tolerating upstream naming drift.
+
+    Falls back to the sole non-props .js file so u-swiper-indicator's misspelled
+    swipterIndicator.js is still picked up.
+    """
+    stem = comp.name[2:]
+    camel = re.sub(r"-(\w)", lambda m: m.group(1).upper(), stem)
+    for name in (stem, stem.replace("-", ""), camel):
+        candidate = comp / f"{name}.js"
+        if candidate.exists():
+            return candidate
+    extras = [p for p in comp.glob("*.js") if p.name != "props.js"]
+    return extras[0] if len(extras) == 1 else None
+
+
 def android_defaults(path: Path) -> dict[str, dict[str, str]]:
     src = path.read_text(encoding="utf-8")
     blocks = {}
@@ -96,6 +132,31 @@ def android_defaults(path: Path) -> dict[str, dict[str, str]]:
             for m in re.finditer(r"val\s+([A-Za-z0-9_]+)\s*:\s*[^=]+=\s*([^\n]+?),?\s*$", match.group(2), flags=re.M)
         }
         blocks[match.group(1).lower()] = fields
+    return blocks
+
+
+def props_defaults(components_dir: Path) -> dict[str, dict[str, str]]:
+    """Read literal defaults straight from UP*Props classes.
+
+    The 41 components that never got a UPConfig block still declare their defaults
+    inline, so parsing the Props class is the only way to see them. Fields that
+    delegate to UPConfig are dropped: android_defaults already covers those, and
+    keeping them would double-report the same value.
+    """
+    blocks: dict[str, dict[str, str]] = {}
+    for source in sorted(components_dir.glob("*.kt")):
+        src = source.read_text(encoding="utf-8")
+        for match in re.finditer(r"public data class UP([A-Za-z0-9]+)Props\((.*?)\n\)", src, flags=re.S):
+            fields = {}
+            for m in re.finditer(
+                r"val\s+([A-Za-z0-9_]+)\s*:\s*[^=]+=\s*([^\n]+?),?\s*$", match.group(2), flags=re.M
+            ):
+                value = m.group(2).rstrip(",").strip()
+                if "UPConfig." in value:
+                    continue
+                fields[m.group(1)] = value
+            if fields:
+                blocks.setdefault(match.group(1).lower(), {}).update(fields)
     return blocks
 
 
@@ -140,12 +201,18 @@ def equivalent(a, b) -> bool:
     return a == b
 
 
-def unaudited_components(config: Path, components_dir: Path) -> list[str]:
-    """Ported Props classes with no UP*Defaults block, so this script cannot see them."""
-    have = set(android_defaults(config))
+def uncovered_components(
+    config: Path, components_dir: Path, upstream_dir: Path, checked: set[str]
+) -> list[str]:
+    """Ported Props classes this run never compared a single field for.
+
+    Reasons vary: no upstream `<name>.js` defaults file, a name that does not map
+    onto an upstream directory, or a Props class whose every field is a style map
+    or callback. These still need manual comparison against the upstream `.vue`.
+    """
     sources = "\n".join(p.read_text(encoding="utf-8") for p in sorted(components_dir.glob("*.kt")))
     props = {m.group(1) for m in re.finditer(r"public data class UP([A-Za-z0-9]+)Props\b", sources)}
-    return sorted(p for p in props if p.lower() not in have)
+    return sorted(p for p in props if p.lower() not in checked)
 
 
 def main() -> int:
@@ -165,19 +232,24 @@ def main() -> int:
         return 2
 
     android = android_defaults(args.config)
+    components_dir = args.config.parent.parent / "components"
+    inline = props_defaults(components_dir)
     drift, accepted, compared, components = [], [], 0, 0
+    checked: set[str] = set()
 
     for comp in sorted(p for p in args.upstream.iterdir() if p.is_dir() and p.name.startswith("u-")):
         stem = comp.name[2:]
-        source = next(
-            (c for c in (comp / f"{stem}.js", comp / f"{stem.replace('-', '')}.js") if c.exists()),
-            None,
-        )
-        if source is None:
-            continue
-        upstream = upstream_defaults(source)
-        fields = android.get(stem.replace("-", ""))
-        if not upstream or fields is None:
+        source = upstream_source(comp)
+        if source is not None:
+            upstream = upstream_defaults(source)
+        else:
+            # No defaults file: fall back to inline `default:` literals in props.js.
+            props_js = comp / "props.js"
+            upstream = props_js_defaults(props_js) if props_js.exists() else None
+        key = stem.replace("-", "")
+        # UPConfig wins where it exists; inline Props defaults fill in the rest.
+        fields = {**inline.get(key, {}), **android.get(key, {})}
+        if not upstream or not fields:
             continue
         components += 1
         for field, raw in upstream.items():
@@ -187,23 +259,23 @@ def main() -> int:
             if want is UNCOMPARABLE or got is UNCOMPARABLE:
                 continue
             compared += 1
+            checked.add(key)
             if equivalent(want, got):
                 continue
             row = (comp.name, field, raw, fields[field])
             (accepted if (comp.name, field) in ACCEPTED else drift).append(row)
 
+    uncovered = uncovered_components(args.config, components_dir, args.upstream, checked)
     print(f"components compared   : {components}")
     print(f"field values compared : {compared}")
     print(f"documented downgrades : {len(accepted)}")
     print(f"unexplained drift     : {len(drift)}")
+    print(f"no field comparable   : {len(uncovered)} components (still need manual review)")
 
-    unaudited = unaudited_components(args.config, args.config.parent.parent / "components")
-    print(f"not checkable here    : {len(unaudited)} components (defaults not routed through UPConfig)")
-
-    if args.list_unaudited and unaudited:
-        print("\nnot checkable here (compare these against upstream by hand):")
-        for i in range(0, len(unaudited), 6):
-            print("  " + ", ".join(unaudited[i : i + 6]))
+    if args.list_unaudited and uncovered:
+        print("\nno field comparable (compare these against upstream by hand):")
+        for i in range(0, len(uncovered), 6):
+            print("  " + ", ".join(uncovered[i : i + 6]))
 
     if args.show_accepted and accepted:
         print("\ndocumented downgrades:")

@@ -55,7 +55,7 @@ public data class UPStepsProps(
 public data class UPStepsItemProps(
     val title: UPRawValue = "",
     val desc: UPRawValue = "",
-    val iconSize: UPRawValue = 14,
+    val iconSize: UPRawValue = 17,
     val error: Boolean = false,
     val itemStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
     val customStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
