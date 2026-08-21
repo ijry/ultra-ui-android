@@ -94,6 +94,12 @@ class ProjectContractTest {
             "UPPickerColumnProps",
             "UPPaginationProps",
             "UPSelectProps",
+            "UPCalendarProps",
+            "UPDatetimePickerProps",
+            "UPCascaderProps",
+            "UPSliderProps",
+            "UPTabbarProps",
+            "UPTabbarItemProps",
         )
 
         expectedPropsClasses.forEach { simpleName ->

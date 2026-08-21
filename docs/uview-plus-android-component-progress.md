@@ -6,11 +6,11 @@
 
 - 上游来源：`/Users/admin/Documents/Repos/xyito/open/uview-plus/src/uni_modules/uview-plus/components`
 - 上游固定提交：`b32377ce0500579830e537a20eef1a7c6c9cf806`
-- 扫描日期：2026-08-20
+- 扫描日期：2026-08-21
 - 上游目录总数：141 个
-- 当前 Android 公开 `UP*Props`：82 个
-- 当前 Android 已有公开 Compose 组件入口：82 个（另有 `UPToastHost` 等宿主辅助 API）
-- 当前目标组件完成度：82 / 138 个可直接使用的上游 UI 组件目录，约 59.4%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
+- 当前 Android 公开 `UP*Props`：88 个
+- 当前 Android 已有公开 Compose 组件入口：88 个（另有 `UPToastHost` 等宿主辅助 API）
+- 当前目标组件完成度：88 / 138 个可直接使用的上游 UI 组件目录，约 63.8%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
 
 ### 复刻进度定义
 
@@ -45,12 +45,12 @@
 | 10 | 原生能力 | `u-barcode` | — | 未开始 | 暂无 | 条形码生成，待接入 Android 原生/成熟编码库。 |
 | 11 | 布局 | `u-box` | — | 未开始 | 暂无 | 通用容器目录，待确认上游公开 Props 后实现。 |
 | 12 | 基础展示 | `u-button` | `UPButton` / `UPButtonProps` | 基本完成 | 高（Props） | `type="primary"`、形状、加载态、图标和禁用态已有测试。 |
-| 13 | 选择与日期 | `u-calendar` | — | 未开始 | 暂无 | 日历选择器，待建立日期值和范围事件契约。 |
+| 13 | 选择与日期 | `u-calendar` | `UPCalendar` / `UPCalendarProps` | 基础可用 | 中 | Compose 原生日历已支持月份切换及 single/multiple/range 基础选择；农历、时间精度、formatter 等尚未完整复刻。 |
 | 14 | 选择与日期 | `u-calendar-strip` | — | 未开始 | 暂无 | 横向日期条，待实现日期滚动和选中状态。 |
 | 15 | 媒体与内容 | `u-canvas` | — | 未开始 | 暂无 | Canvas 容器/绘制适配，需单独确认 Android 生成调用方式。 |
 | 16 | 键盘与输入 | `u-car-keyboard` | — | 未开始 | 暂无 | 车牌键盘，待按原生输入法交互实现。 |
 | 17 | 基础展示 | `u-card` | `UPCard` / `UPCardProps` | 基础可用 | 中 | 卡片基础样式和插槽容器已实现；细节视觉待对照。 |
-| 18 | 选择与日期 | `u-cascader` | — | 未开始 | 暂无 | 多级联动选择，待确定生成事件 payload。 |
+| 18 | 选择与日期 | `u-cascader` | `UPCascader` / `UPCascaderProps` | 基础可用 | 中 | `data` 多级路径、value/label/children key 与 change/confirm 基础事件已支持；弹层动画和复杂 header 尚未完整复刻。 |
 | 19 | 导航 | `u-cate-tab` | — | 未开始 | 暂无 | 分类导航，待建立横向/纵向布局契约。 |
 | 20 | 基础展示 | `u-cell` | `UPCell` / `UPCellProps` | 基本完成 | 高（Props） | 标题、描述、图标、箭头和点击行为已有测试。 |
 | 21 | 基础展示 | `u-cell-group` | `UPCellGroup` / `UPCellGroupProps` | 基本完成 | 高（Props） | 分组容器和边界样式已有实现。 |
@@ -71,7 +71,7 @@
 | 36 | 数值与时间 | `u-count-to` | `UPCountTo` / `UPCountToProps` | 基础可用 | 中 | 数字格式和回调已有；真实逐帧动画仍待实现。 |
 | 37 | 基础展示 | `u-coupon` | — | 未开始 | 暂无 | 优惠券展示/选择，待建立业务字段契约。 |
 | 38 | 媒体与内容 | `u-cropper` | — | 未开始 | 暂无 | 图片裁剪，待接入原生手势和输出 URI。 |
-| 39 | 选择与日期 | `u-datetime-picker` | — | 未开始 | 暂无 | 日期时间选择器，待复刻列配置和时间值格式。 |
+| 39 | 选择与日期 | `u-datetime-picker` | `UPDatetimePicker` / `UPDatetimePickerProps` | 基础可用 | 中 | year-month/date/time/datetime 基础列选择、时间戳和 value/modelValue 更新已支持；滚轮视觉、filter/formatter 尚未完整复刻。 |
 | 40 | 基础展示 | `u-divider` | `UPDivider` / `UPDividerProps` | 基本完成 | 高（Props） | 分割线方向、文字和样式已有实现。 |
 | 41 | 列表与拖拽 | `u-dragsort` | — | 未开始 | 暂无 | 拖拽排序，待采用 Compose drag-and-drop 方案。 |
 | 42 | 原生交互 | `u-dropdown` | `UPDropdown` / `UPDropdownProps` | 基础可用 | 中 | 下拉容器和组状态已有；Popup 定位和遮罩仍需加强。 |
@@ -139,7 +139,7 @@
 | 104 | 媒体与内容 | `u-short-video` | — | 未开始 | 暂无 | 短视频播放器涉及 ExoPlayer 和生命周期。 |
 | 105 | 原生能力 | `u-signature` | — | 未开始 | 暂无 | 手写签名画布待实现。 |
 | 106 | 通知与状态 | `u-skeleton` | `UPSkeleton` / `UPSkeletonProps` | 基础可用 | 中 | 骨架行、头像、标题和动画开关已有；细节尺寸待对照。 |
-| 107 | 选择 | `u-slider` | — | 未开始 | 暂无 | 滑块待建立 range/step/双滑块事件契约。 |
+| 107 | 选择 | `u-slider` | `UPSlider` / `UPSliderProps` | 基础可用 | 中 | 单值、range、step 量化和 changing/change 基础手势已支持；vertical、原生无障碍语义和复杂样式仍待完善。 |
 | 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基础可用 | 高（Props） | 状态栏高度和顶部 inset 已封装。 |
 | 109 | 导航 | `u-steps` | `UPSteps` / `UPStepsProps` | 基础可用 | 中 | 步骤容器可用；current/direction/activeColor 传递仍需完善。 |
 | 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基础可用 | 中 | 空/轻量 Props 契约和内容渲染可用；组状态待补。 |
@@ -150,8 +150,8 @@
 | 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基础可用 | 中 | 列表、索引和 indicator 基础渲染可用；自动播放和手势待补。 |
 | 116 | 媒体与内容 | `u-swiper-indicator` | `UPSwiperIndicator` / `UPSwiperIndicatorProps` | 基础可用 | 中 | 指示器静态状态可用；复杂样式待对照。 |
 | 117 | 选择 | `u-switch` | `UPSwitch` / `UPSwitchProps` | 基本完成 | 高（Props） | 受控值、禁用、颜色和 change/update 事件已有测试。 |
-| 118 | 导航 | `u-tabbar` | — | 未开始 | 暂无 | 底部导航容器待实现。 |
-| 119 | 导航 | `u-tabbar-item` | — | 未开始 | 暂无 | 底部导航项待实现。 |
+| 118 | 导航 | `u-tabbar` | `UPTabbar` / `UPTabbarProps` | 基础可用 | 中 | 父子受控状态、颜色、边框和安全区已支持；`fixed`/`placeholder` 为兼容字段，窗口级固定需宿主放入 Scaffold bottomBar 或底部 Box。 |
+| 119 | 导航 | `u-tabbar-item` | `UPTabbarItem` / `UPTabbarItemProps` | 基础可用 | 中 | active/inactive icon、文字、badge/dot 和 name 事件已支持；middle 动画、阴影及复杂样式尚未完整复刻。 |
 | 120 | 表格 | `u-table` | — | 未开始 | 暂无 | 表格容器待建立列宽和滚动契约。 |
 | 121 | 表格 | `u-table2` | — | 未开始 | 暂无 | 第二版表格，待确认与 `u-table` 的 API 差异。 |
 | 122 | 导航 | `u-tabs` | `UPTabs` / `UPTabsProps` | 基础可用 | 中 | tabs/current/change 基础行为可用；滚动、粘性和样式字段待补。 |
@@ -182,11 +182,11 @@
 | 上游目录总数 | 141 |
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
-| Android 已建立 Props/API | 82 |
+| Android 已建立 Props/API | 88 |
 | 基本完成 | 40 |
-| 基础可用 | 42 |
+| 基础可用 | 48 |
 | Props 已建 | 0 |
-| 未开始（含辅助模块） | 59 |
+| 未开始（含辅助模块） | 53 |
 | 完整兼容 | 0 |
 
 ## 当前已实现组件分批
@@ -197,14 +197,15 @@
 | 基础能力 | icon、loading-icon | 2 | 基本完成；自定义图片/字体能力存在平台降级。 |
 | Batch 9A 原生交互 | alert、action-sheet、notify、back-top、card、collapse、collapse-item、dropdown、dropdown-item、notice-bar | 10 | 基础可用；全局弹层、滚动和动画语义仍需加强。 |
 | Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 基础可用；部分组件已做受控字段修正，但还不是完整上游行为复刻。 |
+| Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 基础可用；日期选择、级联、滑块和底部导航核心状态已覆盖，滚轮视觉、复杂样式和窗口级固定仍需加强。 |
 
 ## 下一批推荐顺序
 
-1. **选择与日期**：`u-calendar`、`u-datetime-picker`、`u-cascader`、`u-slider`、`u-tabbar`。这些组件直接影响后端 JSON 生成后的常用业务表单和导航场景。
-2. **表单体系**：`u-form`、`u-form-item`、`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界。
-3. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
-4. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
-5. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
+1. **表单体系**：`u-form`、`u-form-item`、`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界。
+2. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
+3. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
+4. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
+5. **选择增强**：`u-calendar-strip`、`u-keyboard`、`u-number-keyboard`、`u-car-keyboard`，并继续增强 Batch 10 滚轮、弹层和固定布局语义。
 
 ## 维护规则
 
