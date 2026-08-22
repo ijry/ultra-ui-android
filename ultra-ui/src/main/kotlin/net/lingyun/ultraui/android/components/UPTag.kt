@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -38,12 +39,23 @@ public fun UPTag(
     val bg = if (props.bgColor.isNotEmpty()) UPColor.parse(props.bgColor, main) else main
     val foreground = if (props.color.isNotEmpty()) UPColor.parse(props.color, if (props.plain) main else Color.White) else if (props.plain) main else Color.White
     val borderColor = if (props.borderColor.isNotEmpty()) UPColor.parse(props.borderColor, main) else main
-    val shape = if (shapeName == "circle") RoundedCornerShape(50) else RoundedCornerShape(4.dp)
+    // uview treats an empty `borderRadius`/`height` as "unset" and otherwise overrides
+    // the defaults; `plainFill` keeps the type colour behind a hollow tag.
+    // A negative sentinel distinguishes "unset" from a real 0 without NaN handling.
+    val explicitRadius = upRawDp(props.borderRadius, (-1).dp).takeIf { it >= 0.dp }
+    val shape = when {
+        explicitRadius != null -> RoundedCornerShape(explicitRadius)
+        shapeName == "circle" -> RoundedCornerShape(50)
+        else -> RoundedCornerShape(4.dp)
+    }
+    val plainBackground = if (props.plainFill) bg.copy(alpha = 0.12f) else Color.Transparent
+    val explicitHeight = upRawDp(props.height, (-1).dp).takeIf { it > 0.dp }
     val textSize = upRawDp(props.textSize, when (size) { "large" -> 15.dp; "mini" -> 10.dp; else -> 12.dp }).value.sp
     val root = Modifier
-        .background(if (props.plain) Color.Transparent else bg, shape)
+        .then(if (explicitHeight != null) Modifier.height(explicitHeight) else Modifier)
+        .background(if (props.plain) plainBackground else bg, shape)
         .border(1.dp, borderColor.copy(alpha = if (props.disabled) .4f else 1f), shape)
-        .padding(horizontal = if (size == "mini") 5.dp else 8.dp, vertical = 3.dp)
+        .padding(horizontal = if (size == "mini") 5.dp else 8.dp, vertical = if (explicitHeight != null) 0.dp else 3.dp)
         .applyUPResolvedStyle(style)
         .upTestTag("tag")
         .upClickable(enabled = !props.disabled && onClick != null) { onClick?.invoke(props.name) }

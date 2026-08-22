@@ -66,6 +66,19 @@ KNOWN_INERT: dict[str, str] = {
     "Textarea.holdKeyboard": "wechat mini-program only (微信小程序有效)",
     "Textarea.ignoreCompositionEvent": "uni-app IME composition passthrough",
     "Textarea.placeholderClass": "CSS class name; no Compose equivalent",
+    # uview's `stop` calls preventEvent to stop DOM bubbling. Compose click handlers do
+    # not propagate to ancestors, so there is nothing to suppress.
+    "Button.stop": "DOM event-bubbling guard; Compose clicks do not propagate",
+    "Cell.stop": "DOM event-bubbling guard; Compose clicks do not propagate",
+    "Icon.stop": "DOM event-bubbling guard; Compose clicks do not propagate",
+    # uni-app navigation helpers: the component performs the route jump itself upstream.
+    # On Android routing belongs to the host, so these stay as passthrough metadata.
+    "Cell.url": "uni-app navigateTo target; routing belongs to the host app",
+    "Cell.linkType": "uni-app navigation method; routing belongs to the host app",
+    "NoticeBar.url": "uni-app navigateTo target; routing belongs to the host app",
+    "NoticeBar.linkType": "uni-app navigation method; routing belongs to the host app",
+    "Toast.url": "uni-app navigateTo target; routing belongs to the host app",
+    "Toast.back": "uni-app navigateBack flag; routing belongs to the host app",
 }
 
 
