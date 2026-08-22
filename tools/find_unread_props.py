@@ -44,6 +44,10 @@ KNOWN_INERT: dict[str, str] = {
     "Textarea.showConfirmBar": "uni-app keyboard confirm bar",
     "Toast.isTab": "uni-app tabbar-aware positioning",
     "Toast.params": "uni-app navigation payload passthrough",
+    "List.showScrollbar": "nvue only per upstream (仅nvue有效)",
+    "List.offsetAccuracy": "nvue only per upstream (仅nvue有效)",
+    "List.enableFlex": "wechat mini-program only (仅微信小程序有效)",
+    "List.enableBackToTop": "wechat mini-program only (只对微信小程序有效)",
 }
 
 

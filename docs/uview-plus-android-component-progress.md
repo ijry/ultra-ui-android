@@ -96,7 +96,7 @@
 | 61 | 基础展示 | `u-line` | `UPLine` / `UPLineProps` | 基本完成 | 高（Props） | 横竖线、颜色、虚线和尺寸已有实现。 |
 | 62 | 布局与进度 | `u-line-progress` | `UPLineProgress` / `UPLineProgressProps` | 基本完成 | 高（Props） | 进度、颜色、圆角和文字已有实现。 |
 | 63 | 基础展示 | `u-link` | `UPLink` / `UPLinkProps` | 基本完成 | 高（Props） | 链接文字、下划线、图标和点击已有实现。 |
-| 64 | 列表与索引 | `u-list` | `UPList` / `UPListProps` | 基础可用 | 中 | 列表容器和阈值字段已有；滚动事件需连接真实列表状态。 |
+| 64 | 列表与索引 | `u-list` | `UPList` / `UPListProps` | 基础可用 | 中 | `height`/`width` 限定视口、`scrollable`、`lowerThreshold`/`upperThreshold` 触边事件（按穿越沿触发一次）、`scrollTop`+`scrollWithAnimation` 程序化滚动、`refresherEnabled` 系列下拉刷新均已生效并有真机测试；`pagingEnabled`、`preLoadScreen`、`scrollIntoView` 仍未实现。 |
 | 65 | 列表与索引 | `u-list-item` | `UPListItem` / `UPListItemProps` | 基础可用 | 中 | 列表项容器可用；复杂 slot 与分割线待补。 |
 | 66 | 基础能力 | `u-loading-icon` | `UPLoadingIcon` / `UPLoadingIconProps` | 基本完成 | 高（Props） | 原生 Compose 加载动画和 icon font 兼容已有测试。 |
 | 67 | 通知与状态 | `u-loading-page` | `UPLoadingPage` / `UPLoadingPageProps` | 基本完成 | 高（Props） | 加载页文字、图标、背景和状态已有实现。 |
@@ -247,14 +247,16 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：88 个 Props 类中有 **157 个字段无人读取**，另有 17 个已记录为按设计不生效
-（uni-app / 微信小程序专有开关，仅保留接口兼容）。已修复的一批：13 个组件曾声明
-`customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等），以及 `UPSticky` 的
-`offsetTop`/`customNavHeight`。
+当前状态：88 个 Props 类中有 **134 个字段无人读取**，另有 21 个已记录为按设计不生效
+（uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
+`customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
+`offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`，
+以及 `u-list` 的 10 个滚动与下拉刷新字段。
 
-157 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音：其中既有 uni-app 专有开关，
-也有 `u-list` 的下拉刷新、`u-swiper` 的自动播放等尚未实现的真实能力。后续批次应优先
-消化本清单，而不是先增加新组件。
+134 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音：其中既有平台专有开关，
+也有 `u-swiper` 的自动播放、`u-calendar` 的农历与时间精度等尚未实现的真实能力。后续批次
+应优先消化本清单，而不是先增加新组件。清单里既可能是"缺特性"，也可能是"组件根本不可用"
+——`u-picker` 的列平铺缺陷就属于后者。
 
 ## 默认值漂移核查
 
