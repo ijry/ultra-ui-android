@@ -145,8 +145,8 @@
 | 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基本完成 | 中 | 按索引与父级 `current` 推导状态：已完成显示 ✓、当前步为实心序号、未达步为灰色序号、`error` 显示 ✕；`iconSize`（对齐上游 17）与 `itemStyle` 已生效。 |
 | 111 | 原生交互 | `u-sticky` | `UPSticky` / `UPStickyProps` | 基础可用 | 低 | 当前为可嵌入容器，`offsetTop` + `customNavHeight` 已按上游折算为顶部偏移；真实滚动吸顶仍待实现。 |
 | 112 | 导航 | `u-subsection` | `UPSubsection` / `UPSubsectionProps` | 基础可用 | 中 | 分段切换基础行为可用；样式和滚动模式待对照。 |
-| 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基础可用 | 中 | 原生手势基础容器可用；真实滑动距离和动画待补。 |
-| 114 | 原生交互 | `u-swipe-action-item` | `UPSwipeActionItem` / `UPSwipeActionItemProps` | 基础可用 | 中 | 操作项和按钮回调可用；完整手势状态待补。 |
+| 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基本完成 | 中 | 父级协调已实现：`autoClose` 打开一项时关闭其余项、`opendItem` 置 false 触发 closeAll、并通过 `onUpdateOpendItem` 上报开合状态；均有真机断言。 |
+| 114 | 原生交互 | `u-swipe-action-item` | `UPSwipeActionItem` / `UPSwipeActionItemProps` | 基本完成 | 中 | 横向拖动超过 `threshold`（默认 20）才展开、`duration` 驱动展开动画、`show` 为受控开合状态、`closeOnClick` 点击后收起、`disabled` 忽略手势；均有真机断言。此前按钮由 `show` 常驻显示且完全没有手势。 |
 | 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基础可用 | 中 | `autoplay`+`interval` 定时切换、`circular` 末尾回头、`previousMargin`/`nextMargin` 露边、`indicatorStyle` 已生效并有真机测试。仍未实现：`imgMode`/`radius`/`showTitle`/`vertical`（当前只渲染文字标签，不显示图片，也不支持纵向与圆角）、`displayMultipleItems`、`acceleration`、`currentItemId`、`duration` 过渡动画。 |
 | 116 | 媒体与内容 | `u-swiper-indicator` | `UPSwiperIndicator` / `UPSwiperIndicatorProps` | 基础可用 | 中 | 指示器静态状态可用；复杂样式待对照。 |
 | 117 | 选择 | `u-switch` | `UPSwitch` / `UPSwitchProps` | 基本完成 | 高（Props） | 受控值、禁用、颜色和 change/update 事件已有测试。 |
@@ -249,7 +249,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：88 个已实现组件行中，**56 行证据齐备、32 行标注超出证据**。
+当前状态：88 个已实现组件行中，**58 行证据齐备、30 行标注超出证据**。
 
 > 为什么要做这件事：连续五轮工作中，每一轮都在标着「基础可用/基本完成」的组件里发现
 > **组件级不可用**缺陷——`u-picker` 列平铺导致选项无法点击、`u-swiper` 只渲染文字不显示
@@ -271,7 +271,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：88 个 Props 类中有 **166 个字段无人读取**，另有 45 个已记录为按设计不生效
+当前状态：88 个 Props 类中有 **158 个字段无人读取**，另有 46 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
 `offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`、
@@ -285,7 +285,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 > 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
 > 才显形。**205 是更接近真相的数字，不是退步。**
 
-166 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+158 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
 也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。后续批次应优先
 消化本清单，而不是先增加新组件。

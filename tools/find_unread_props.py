@@ -79,6 +79,10 @@ KNOWN_INERT: dict[str, str] = {
     "NoticeBar.linkType": "uni-app navigation method; routing belongs to the host app",
     "Toast.url": "uni-app navigateTo target; routing belongs to the host app",
     "Toast.back": "uni-app navigateBack flag; routing belongs to the host app",
+    # `scrolling` is uview's v-model flag for pausing an outer scroll-view mid-drag. The
+    # Android side reports it via onUpdateScrolling; consuming it as an input would mean
+    # driving the host's scroll container, which belongs to the host.
+    "SwipeActionItem.scrolling": "outbound v-model flag; reported via onUpdateScrolling",
 }
 
 
