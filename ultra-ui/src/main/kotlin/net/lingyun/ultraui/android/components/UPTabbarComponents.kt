@@ -114,6 +114,9 @@ public fun RowScope.UPTabbarItem(
                 onClick?.invoke(value)
             }
             .padding(horizontal = 8.dp, vertical = 7.dp)
+            .applyUPResolvedStyle(
+                rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPTabbarItem"),
+            )
             .upTestTag("tabbar-item-$suffix"),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

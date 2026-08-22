@@ -76,6 +76,8 @@ public fun UPActionSheet(
                 .background(Color.White, panelShape)
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
+                // uview styles the sheet panel, not the fullscreen overlay.
+                .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPActionSheet"))
                 .upTestTag("action-sheet-panel"),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

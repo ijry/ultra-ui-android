@@ -86,6 +86,7 @@ public fun UPDropdownItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPDropdownItem"))
             .upTestTag("dropdown-item"),
     ) {
         Row(

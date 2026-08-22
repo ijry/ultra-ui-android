@@ -48,7 +48,17 @@ public fun UPTooltip(props: UPTooltipProps = UPTooltipProps(), modifier: Modifie
 }
 
 @Composable
-public fun UPSticky(props: UPStickyProps = UPStickyProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) { Box(modifier.background(UPColor.parse(props.bgColor, Color.Transparent)).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSticky")).upTestTag("sticky")) { content() } }
+public fun UPSticky(props: UPStickyProps = UPStickyProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
+    // uview offsets the sticky band by `offsetTop + customNavHeight`
+    // (`u-sticky.vue`: stickyTop = getPx(offsetTop) + getPx(customNavHeight)).
+    val stickyTop = (upRawDp(props.offsetTop, 0.dp) + upRawDp(props.customNavHeight, 0.dp)).coerceAtLeast(0.dp)
+    Box(
+        modifier.background(UPColor.parse(props.bgColor, Color.Transparent))
+            .padding(top = stickyTop)
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSticky"))
+            .upTestTag("sticky"),
+    ) { content() }
+}
 
 @Composable
 public fun UPSwipeAction(props: UPSwipeActionProps = UPSwipeActionProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) { Column(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwipeAction")).upTestTag("swipe-action")) { content() } }

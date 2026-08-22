@@ -54,7 +54,9 @@ public fun UPRate(
     val inactiveColor = props.inactiveColor.takeIf { it.isNotBlank() } ?: "#c8c9cc"
 
     Row(
-        modifier = modifier.upTestTag("rate"),
+        modifier = modifier
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, RateComponentName))
+            .upTestTag("rate"),
     ) {
         repeat(count) { index ->
             val position = index + 1f

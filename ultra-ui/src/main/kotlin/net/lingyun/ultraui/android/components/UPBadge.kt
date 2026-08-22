@@ -58,12 +58,15 @@ public fun UPBadge(
             else -> upRawText(value)
         }
         val shape = if (shapeName == "circle" || shapeName == "dot") androidx.compose.foundation.shape.RoundedCornerShape(50) else androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+        // uview applies `customStyle` to the badge itself (u-tabbar-item passes
+        // `badgeStyle` through here to nudge its position), not to the wrapper.
         val badge = Modifier
             .align(if (props.absolute) Alignment.TopEnd else Alignment.CenterEnd)
             .padding(2.dp)
             .background(if (props.inverted) Color.Transparent else base, shape)
             .then(if (props.inverted) Modifier.border(1.dp, base, shape) else Modifier)
             .padding(horizontal = if (props.isDot) 4.dp else 5.dp, vertical = if (props.isDot) 4.dp else 2.dp)
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPBadge"))
             .upTestTag("badge-label")
         BasicText(label, modifier = badge, style = androidx.compose.ui.text.TextStyle(color = foreground, fontSize = 10.sp, lineHeight = 12.sp))
     }

@@ -95,6 +95,9 @@ public fun UPToast(
                 .widthIn(max = 320.dp)
                 .background(panelColor, RoundedCornerShape(4.dp))
                 .padding(horizontal = 20.dp, vertical = if (props.loading) 20.dp else 12.dp)
+                // uview applies the toast's own style to the content panel
+                // (`contentStyle`), not to the fullscreen overlay.
+                .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, ToastComponentName))
                 .upTestTag("toast-content"),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,

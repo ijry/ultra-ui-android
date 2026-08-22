@@ -39,6 +39,7 @@ public fun UPLoadingPage(
             .fillMaxSize()
             .zIndex(zIndex)
             .background(background)
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, LoadingPageComponentName))
             .upTestTag("loading-page"),
         contentAlignment = Alignment.Center,
     ) {

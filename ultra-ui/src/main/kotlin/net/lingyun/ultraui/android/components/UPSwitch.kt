@@ -87,6 +87,7 @@ public fun UPSwitch(
     // stable test tag from the merged semantics tree.
     val root = modifier
         .size(width = width, height = size + 2.dp)
+        .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, SwitchComponentName))
         .upTestTag("switch")
         .semantics {
             if (enabled) {

@@ -64,7 +64,7 @@ public fun UPSwiper(list: List<UPRawValue>, modifier: Modifier = Modifier, curre
 public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorProps(), modifier: Modifier = Modifier, onClick: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     val count = props.length.upIntOrDefault(0).coerceAtLeast(0)
     val current = props.current.upIntOrDefault(0).coerceIn(0, (count - 1).coerceAtLeast(0))
-    Row(modifier.fillMaxWidth().padding(6.dp).upTestTag("swiper-indicator"), horizontalArrangement = Arrangement.Center) {
+    Row(modifier.fillMaxWidth().padding(6.dp).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwiperIndicator")).upTestTag("swiper-indicator"), horizontalArrangement = Arrangement.Center) {
         repeat(count) { index ->
             Box(Modifier.padding(3.dp).size(if (props.indicatorMode == "line") 18.dp else 7.dp, 7.dp).background(UPColor.parse(if (index == current) props.indicatorActiveColor else props.indicatorInactiveColor, if (index == current) Color.White else Color.LightGray)).upClickable(onClick = { onClick?.invoke(index) }))
         }

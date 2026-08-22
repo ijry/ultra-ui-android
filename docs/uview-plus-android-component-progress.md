@@ -143,7 +143,7 @@
 | 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基础可用 | 高（Props） | 状态栏高度和顶部 inset 已封装。 |
 | 109 | 导航 | `u-steps` | `UPSteps` / `UPStepsProps` | 基础可用 | 中 | 步骤容器可用；current/direction/activeColor 传递仍需完善。 |
 | 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基础可用 | 中 | 内容渲染、`iconSize`（对齐上游 17）和 `itemStyle` 已生效；组状态、激活/未激活图标区分仍待补。 |
-| 111 | 原生交互 | `u-sticky` | `UPSticky` / `UPStickyProps` | 基础可用 | 低 | 当前为可嵌入容器；真实吸顶和 offset 语义待实现。 |
+| 111 | 原生交互 | `u-sticky` | `UPSticky` / `UPStickyProps` | 基础可用 | 低 | 当前为可嵌入容器，`offsetTop` + `customNavHeight` 已按上游折算为顶部偏移；真实滚动吸顶仍待实现。 |
 | 112 | 导航 | `u-subsection` | `UPSubsection` / `UPSubsectionProps` | 基础可用 | 中 | 分段切换基础行为可用；样式和滚动模式待对照。 |
 | 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基础可用 | 中 | 原生手势基础容器可用；真实滑动距离和动画待补。 |
 | 114 | 原生交互 | `u-swipe-action-item` | `UPSwipeActionItem` / `UPSwipeActionItemProps` | 基础可用 | 中 | 操作项和按钮回调可用；完整手势状态待补。 |
@@ -214,6 +214,26 @@
 - 只有完成常用字段、事件、受控状态、样式和错误/禁用状态回归，才允许提升到“基本完成”。
 - “完整兼容”必须有上游演示对照或逐字段核验记录，不能仅因 Kotlin 文件存在而标记。
 - Android 不解析 JSON，不引入 FastView、`.xyfv`、WebView 或 JSON 映射运行时；后端负责把同一份 JSON 转成各端调用。
+
+## 未生效字段核查
+
+`tools/find_unread_props.py` 报告「声明了但组件从不读取」的 `UP*Props` 字段。这类字段是静默
+空操作：类型检查通过、Props 测试通过、截图也不变，因此既有核查手段都发现不了它。
+`u-tabbar-item` 与 `u-steps-item` 的 `iconSize` 都属于这一形态。
+
+```
+python3 tools/find_unread_props.py                # 列出无人读取的字段（有结果时退出码 1）
+python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
+```
+
+当前状态：88 个 Props 类中有 **157 个字段无人读取**，另有 17 个已记录为按设计不生效
+（uni-app / 微信小程序专有开关，仅保留接口兼容）。已修复的一批：13 个组件曾声明
+`customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等），以及 `UPSticky` 的
+`offsetTop`/`customNavHeight`。
+
+157 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音：其中既有 uni-app 专有开关，
+也有 `u-list` 的下拉刷新、`u-swiper` 的自动播放等尚未实现的真实能力。后续批次应优先
+消化本清单，而不是先增加新组件。
 
 ## 默认值漂移核查
 

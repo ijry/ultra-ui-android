@@ -42,7 +42,12 @@ public fun UPAvatarGroup(
     val shown = props.urls.take(maxCount)
     val hasMore = props.urls.size > shown.size || (props.extraValue.asFiniteFloatOrNull() ?: 0f) > 0f
     val extra = props.extraValue.asFiniteFloatOrNull()?.toInt()?.takeIf { it > 0 } ?: (props.urls.size - shown.size)
-    Row(modifier = modifier.upTestTag("avatar-group"), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = modifier
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, AvatarGroupComponentName))
+            .upTestTag("avatar-group"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         shown.forEachIndexed { index, raw ->
             val source = avatarGroupSource(raw, props.keyName)
             Box(

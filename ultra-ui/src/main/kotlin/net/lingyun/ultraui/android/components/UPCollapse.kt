@@ -122,7 +122,11 @@ public fun UPCollapse(
         toggle = ::toggle,
     )
 
-    Column(modifier = modifier.upTestTag("collapse")) {
+    Column(
+        modifier = modifier
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, CollapseComponentName))
+            .upTestTag("collapse"),
+    ) {
         CompositionLocalProvider(LocalUPCollapseContext provides context) {
             content()
         }
