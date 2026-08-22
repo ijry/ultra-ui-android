@@ -34,9 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -75,7 +77,12 @@ public fun UPInput(
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, InputComponentName)
     val placeholderStyle = rememberUPResolvedStyle(props.placeholderStyle, diagnostics, "$InputComponentName.placeholderStyle")
     val initialValue = limitUPText(resolveUPModelValue(props.modelValue, props.value).upInputString(), props.maxlength)
-    var innerValue by remember(props.modelValue, props.value, props.maxlength) { mutableStateOf(initialValue) }
+    // Held as TextFieldValue rather than String so uview's selectionStart/selectionEnd
+    // and cursor have somewhere to live; a bare String cannot carry a selection.
+    var fieldValue by remember(props.modelValue, props.value, props.maxlength) {
+        mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
+    }
+    val innerValue = fieldValue.text
     var focused by remember { mutableStateOf(false) }
     var showPassword by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -84,16 +91,27 @@ public fun UPInput(
         if (props.focus) runCatching { focusRequester.requestFocus() }
     }
 
+    // uview applies the requested selection when the field takes focus.
+    LaunchedEffect(props.focus, props.selectionStart, props.selectionEnd, props.cursor, innerValue) {
+        if (!props.focus) return@LaunchedEffect
+        upSelectionRange(innerValue, props.selectionStart, props.selectionEnd, props.cursor)
+            ?.let { if (it != fieldValue.selection) fieldValue = fieldValue.copy(selection = it) }
+    }
+
     fun emitChanged() {
         onChange?.invoke(innerValue)
     }
 
-    fun acceptValue(rawValue: String) {
+    fun acceptValue(raw: TextFieldValue) {
         if (props.disabled || props.readonly) return
-        val formatted = formatUPTextSafely(rawValue, props.formatter, diagnostics, InputComponentName)
+        val formatted = formatUPTextSafely(raw.text, props.formatter, diagnostics, InputComponentName)
         val limited = limitUPText(formatted, props.maxlength)
-        if (limited == innerValue) return
-        innerValue = limited
+        if (limited == innerValue) {
+            // Text unchanged, but the caret may have moved — keep the field responsive.
+            if (raw.selection != fieldValue.selection) fieldValue = fieldValue.copy(selection = raw.selection)
+            return
+        }
+        fieldValue = raw.copy(text = limited, selection = TextRange(limited.length.coerceAtMost(raw.selection.end)))
         onInput?.invoke(limited)
     }
 
@@ -174,7 +192,7 @@ public fun UPInput(
 
             Box(modifier = Modifier.weight(1f)) {
                 BasicTextField(
-                    value = innerValue,
+                    value = fieldValue,
                     onValueChange = ::acceptValue,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,7 +242,7 @@ public fun UPInput(
                     modifier = Modifier
                         .upTestTag("input-clear")
                         .upClickable(role = Role.Button) {
-                            innerValue = ""
+                            fieldValue = TextFieldValue("", TextRange.Zero)
                             onInput?.invoke("")
                             onChange?.invoke("")
                             onClear?.invoke()

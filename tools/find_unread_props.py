@@ -49,6 +49,23 @@ KNOWN_INERT: dict[str, str] = {
     "List.enableFlex": "wechat mini-program only (仅微信小程序有效)",
     "List.enableBackToTop": "wechat mini-program only (只对微信小程序有效)",
     "Swiper.easingFunction": "wechat mini-program only (只对微信小程序有效)",
+    # Keyboard/viewport plumbing owned by the uni-app runtime. On Android the platform
+    # handles these via windowSoftInputMode and the IME itself, so the props stay inert.
+    "Input.adjustPosition": "uni-app pushes the page up; Android uses windowSoftInputMode",
+    "Input.autoBlur": "uni-app App 3.0.0+ only (仅App3.0.0+有效)",
+    "Input.cursorSpacing": "uni-app keyboard spacing hint; no Compose equivalent",
+    "Input.disableDefaultPadding": "wechat + type=textarea only (仅微信小程序)",
+    "Input.fixed": "mini-program position:fixed hint (微信/百度/字节/QQ)",
+    "Input.holdKeyboard": "wechat mini-program only (微信小程序有效)",
+    "Input.ignoreCompositionEvent": "uni-app IME composition passthrough",
+    "Input.placeholderClass": "CSS class name; no Compose equivalent",
+    "Textarea.adjustPosition": "uni-app pushes the page up; Android uses windowSoftInputMode",
+    "Textarea.cursorSpacing": "uni-app keyboard spacing hint; no Compose equivalent",
+    "Textarea.disableDefaultPadding": "wechat + type=textarea only (仅微信小程序)",
+    "Textarea.fixed": "mini-program position:fixed hint (微信/百度/字节/QQ)",
+    "Textarea.holdKeyboard": "wechat mini-program only (微信小程序有效)",
+    "Textarea.ignoreCompositionEvent": "uni-app IME composition passthrough",
+    "Textarea.placeholderClass": "CSS class name; no Compose equivalent",
 }
 
 

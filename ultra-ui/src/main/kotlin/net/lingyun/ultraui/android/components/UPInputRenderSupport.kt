@@ -1,5 +1,6 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -52,6 +53,35 @@ internal fun keyboardTypeForUPInput(type: String): KeyboardType = when (type.tri
     "url" -> KeyboardType.Uri
     "decimal" -> KeyboardType.Decimal
     else -> KeyboardType.Text
+}
+
+/**
+ * Resolves uview's `selectionStart`/`selectionEnd`/`cursor` into a Compose selection.
+ *
+ * All three default to -1, meaning "leave the caret alone" — uview only applies them on
+ * focus. A range wins over `cursor`; anything out of bounds is clamped to the text so a
+ * stale index cannot crash the field. Returns null when nothing is requested, letting
+ * the caller keep the caret where it already is.
+ */
+internal fun upSelectionRange(
+    text: String,
+    selectionStart: UPRawValue,
+    selectionEnd: UPRawValue,
+    cursor: UPRawValue,
+): TextRange? {
+    val start = selectionStart.upIntOrDefault(-1)
+    val end = selectionEnd.upIntOrDefault(-1)
+    if (start >= 0 && end >= 0) {
+        val lo = start.coerceIn(0, text.length)
+        val hi = end.coerceIn(0, text.length)
+        return TextRange(minOf(lo, hi), maxOf(lo, hi))
+    }
+    val caret = cursor.upIntOrDefault(-1)
+    if (caret >= 0) {
+        val at = caret.coerceIn(0, text.length)
+        return TextRange(at, at)
+    }
+    return null
 }
 
 internal fun imeActionForUPInput(confirmType: String, multiline: Boolean = false): ImeAction = when {

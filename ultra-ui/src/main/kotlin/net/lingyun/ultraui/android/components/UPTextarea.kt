@@ -27,7 +27,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +61,11 @@ public fun UPTextarea(
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, TextareaComponentName)
     val placeholderStyle = rememberUPResolvedStyle(props.placeholderStyle, diagnostics, "$TextareaComponentName.placeholderStyle")
     val initialValue = limitUPText(resolveUPModelValue(props.modelValue, props.value).upInputString(), props.maxlength)
-    var innerValue by remember(props.modelValue, props.value, props.maxlength) { mutableStateOf(initialValue) }
+    // TextFieldValue rather than String so selectionStart/selectionEnd/cursor apply.
+    var fieldValue by remember(props.modelValue, props.value, props.maxlength) {
+        mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
+    }
+    val innerValue = fieldValue.text
     var focused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
@@ -67,16 +73,26 @@ public fun UPTextarea(
         if (props.focus) runCatching { focusRequester.requestFocus() }
     }
 
+    // uview applies the requested selection when the field takes focus.
+    LaunchedEffect(props.focus, props.selectionStart, props.selectionEnd, props.cursor, innerValue) {
+        if (!props.focus) return@LaunchedEffect
+        upSelectionRange(innerValue, props.selectionStart, props.selectionEnd, props.cursor)
+            ?.let { if (it != fieldValue.selection) fieldValue = fieldValue.copy(selection = it) }
+    }
+
     fun emitChanged() {
         onChange?.invoke(innerValue)
     }
 
-    fun acceptValue(rawValue: String) {
+    fun acceptValue(raw: TextFieldValue) {
         if (props.disabled) return
-        val formatted = formatUPTextSafely(rawValue, props.formatter, diagnostics, TextareaComponentName)
+        val formatted = formatUPTextSafely(raw.text, props.formatter, diagnostics, TextareaComponentName)
         val limited = limitUPText(formatted, props.maxlength)
-        if (limited == innerValue) return
-        innerValue = limited
+        if (limited == innerValue) {
+            if (raw.selection != fieldValue.selection) fieldValue = fieldValue.copy(selection = raw.selection)
+            return
+        }
+        fieldValue = raw.copy(text = limited, selection = TextRange(limited.length.coerceAtMost(raw.selection.end)))
         onInput?.invoke(limited)
     }
 
@@ -121,7 +137,7 @@ public fun UPTextarea(
                 .padding(horizontal = 10.dp, vertical = 8.dp),
         ) {
             BasicTextField(
-                value = innerValue,
+                value = fieldValue,
                 onValueChange = ::acceptValue,
                 modifier = Modifier
                     .fillMaxWidth()
