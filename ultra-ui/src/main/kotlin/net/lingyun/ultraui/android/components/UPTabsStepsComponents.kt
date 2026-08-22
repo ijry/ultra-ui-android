@@ -1,6 +1,8 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +35,7 @@ import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upDimension
 import net.lingyun.ultraui.android.core.upIntOrDefault
+import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 
 @Composable
@@ -80,27 +84,121 @@ public fun UPSubsection(props: UPSubsectionProps = UPSubsectionProps(), modifier
     }
 }
 
-private val LocalUPStepsIndex = staticCompositionLocalOf { -1 }
+/**
+ * Parent state each `UPStepsItem` needs. uview passes this down as `parentData`; the
+ * items cannot derive their own status without knowing `current` and the sibling count.
+ */
+@Immutable
+private data class UPStepsContext(
+    val current: Int,
+    val direction: String,
+    val activeColor: String,
+    val inactiveColor: String,
+    val activeIcon: String,
+    val inactiveIcon: String,
+    val dot: Boolean,
+    val nextIndex: () -> Int,
+)
+
+private val LocalUPSteps = staticCompositionLocalOf<UPStepsContext?> { null }
+
+/** uview's four step states (`u-steps-item.vue`: statusClass). */
+internal fun stepsItemStatus(index: Int, current: Int, error: Boolean): String = when {
+    current == index -> if (error) "error" else "process"
+    error -> "error"
+    current > index -> "finish"
+    else -> "wait"
+}
 
 @Composable
 public fun UPSteps(props: UPStepsProps = UPStepsProps(), modifier: Modifier = Modifier, onClick: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
-    Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSteps")).upTestTag("steps")) {
-        CompositionLocalProvider(LocalUPStepsIndex provides 0) { content() }
+    val direction = upSafeEnum(props.direction, setOf("row", "column"), "row", diagnostics, "UPSteps", "direction")
+    var nextIndex = 0
+    val context = UPStepsContext(
+        current = props.current.upIntOrDefault(0),
+        direction = direction,
+        activeColor = props.activeColor,
+        inactiveColor = props.inactiveColor,
+        activeIcon = props.activeIcon,
+        inactiveIcon = props.inactiveIcon,
+        dot = props.dot,
+        nextIndex = { nextIndex++ },
+    )
+    val root = modifier.fillMaxWidth()
+        .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSteps"))
+        .upTestTag("steps")
+    // `direction` picks the axis the steps advance along, as it does upstream.
+    if (direction == "column") {
+        Column(root) { CompositionLocalProvider(LocalUPSteps provides context) { content() } }
+    } else {
+        Row(root) { CompositionLocalProvider(LocalUPSteps provides context) { content() } }
     }
 }
 
 @Composable
 public fun UPStepsItem(props: UPStepsItemProps = UPStepsItemProps(), modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
-    Row(modifier.fillMaxWidth().upClickable(enabled = onClick != null, onClick = { onClick?.invoke() }).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPStepsItem")).padding(12.dp).upTestTag("steps-item"), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        // uview sizes the step marker from `iconSize` (default 17) and lets
-        // `itemStyle` decorate the row's marker cell.
-        val markerSize = upRawDp(props.iconSize, 17.dp).coerceAtLeast(0.dp)
-        Box(
-            Modifier.width(markerSize).height(markerSize)
-                .applyUPResolvedStyle(rememberUPResolvedStyle(props.itemStyle, diagnostics, "UPStepsItem.itemStyle"))
-                .background(if (props.error) UPTheme.Error else UPTheme.Primary),
-            contentAlignment = Alignment.Center,
-        ) { BasicText("✓", style = TextStyle(color = Color.White, fontSize = (markerSize.value * 0.7f).sp)) }
-        Column { BasicText(props.title.upStringValueOrEmpty(), style = TextStyle(color = UPTheme.Main)); BasicText(props.desc.upStringValueOrEmpty(), style = TextStyle(color = UPTheme.Content)) }
+    val parent = LocalUPSteps.current
+    val index = parent?.nextIndex?.invoke() ?: 0
+    val status = stepsItemStatus(index, parent?.current ?: 0, props.error)
+    val activeColor = UPColor.parse(parent?.activeColor, UPTheme.Primary)
+    val inactiveColor = UPColor.parse(parent?.inactiveColor, UPTheme.Tips)
+    val markerColor = when (status) {
+        "finish", "process" -> activeColor
+        "error" -> UPTheme.Error
+        else -> inactiveColor
+    }
+    val markerSize = upRawDp(props.iconSize, 17.dp).coerceAtLeast(0.dp)
+    val vertical = parent?.direction == "column"
+    val row = modifier
+        .then(if (vertical) Modifier.fillMaxWidth() else Modifier)
+        .upClickable(enabled = onClick != null, onClick = { onClick?.invoke() })
+        .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPStepsItem"))
+        .padding(12.dp)
+        .upTestTag("steps-item-$index-$status")
+
+    Row(row, verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val marker = Modifier.width(markerSize).height(markerSize)
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.itemStyle, diagnostics, "UPStepsItem.itemStyle"))
+        val customIcon = if (index <= (parent?.current ?: 0)) parent?.activeIcon else parent?.inactiveIcon
+        if (parent?.dot == true) {
+            // Dot mode drops the numbered circle entirely and just tints a disc.
+            Box(marker.background(markerColor, RoundedCornerShape(50)).upTestTag("steps-item-$index-dot"))
+        } else if (!parent?.activeIcon.isNullOrEmpty() || !parent?.inactiveIcon.isNullOrEmpty()) {
+            // uview swaps the circle for `activeIcon`/`inactiveIcon` when either is set,
+            // picking by `index <= current` rather than by the four-state status.
+            Box(marker.upTestTag("steps-item-$index-icon"), contentAlignment = Alignment.Center) {
+                UPIcon(
+                    UPIconProps(
+                        name = customIcon.orEmpty(),
+                        size = props.iconSize,
+                        color = if (status == "wait") parent.inactiveColor else parent.activeColor,
+                    ),
+                )
+            }
+        } else {
+            Box(
+                marker
+                    .background(if (status == "process") markerColor else Color.Transparent, RoundedCornerShape(50))
+                    .border(1.dp, markerColor, RoundedCornerShape(50)),
+                contentAlignment = Alignment.Center,
+            ) {
+                val glyph = when (status) {
+                    "finish" -> "✓"
+                    "error" -> "✕"
+                    else -> "${index + 1}"
+                }
+                BasicText(
+                    glyph,
+                    style = TextStyle(
+                        color = if (status == "process") Color.White else markerColor,
+                        fontSize = (markerSize.value * 0.6f).sp,
+                    ),
+                )
+            }
+        }
+        Column {
+            BasicText(props.title.upStringValueOrEmpty(), style = TextStyle(color = if (status == "wait") inactiveColor else UPTheme.Main))
+            BasicText(props.desc.upStringValueOrEmpty(), style = TextStyle(color = UPTheme.Content))
+        }
     }
 }
