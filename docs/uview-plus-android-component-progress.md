@@ -71,7 +71,7 @@
 | 36 | 数值与时间 | `u-count-to` | `UPCountTo` / `UPCountToProps` | 基础可用 | 中 | 数字格式和回调已有；真实逐帧动画仍待实现。 |
 | 37 | 基础展示 | `u-coupon` | — | 未开始 | 暂无 | 优惠券展示/选择，待建立业务字段契约。 |
 | 38 | 媒体与内容 | `u-cropper` | — | 未开始 | 暂无 | 图片裁剪，待接入原生手势和输出 URI。 |
-| 39 | 选择与日期 | `u-datetime-picker` | `UPDatetimePicker` / `UPDatetimePickerProps` | 基础可用 | 中 | year-month/date/time/datetime 基础列选择、时间戳和 value/modelValue 更新已支持；滚轮视觉、filter/formatter 尚未完整复刻。 |
+| 39 | 选择与日期 | `u-datetime-picker` | `UPDatetimePicker` / `UPDatetimePickerProps` | 基础可用 | 中 | year-month/date/time/datetime 基础列选择、时间戳和 value/modelValue 更新已支持；列已按 `visibleItemCount × itemHeight` 固定高度并可滚动（此前平铺导致屏幕外选项无法点击）；惯性滚轮视觉、filter/formatter 尚未复刻。 |
 | 40 | 基础展示 | `u-divider` | `UPDivider` / `UPDividerProps` | 基本完成 | 高（Props） | 分割线方向、文字和样式已有实现。 |
 | 41 | 列表与拖拽 | `u-dragsort` | — | 未开始 | 暂无 | 拖拽排序，待采用 Compose drag-and-drop 方案。 |
 | 42 | 原生交互 | `u-dropdown` | `UPDropdown` / `UPDropdownProps` | 基础可用 | 中 | 下拉容器和组状态已有；Popup 定位和遮罩仍需加强。 |
@@ -116,7 +116,7 @@
 | 81 | 选择与日期 | `u-pagination` | `UPPagination` / `UPPaginationProps` | 基础可用 | 中 | 分页基础按钮可用；sizes、total 布局和完整页码算法待补。 |
 | 82 | 内容与解析 | `u-parse` | — | 未开始 | 暂无 | HTML 富文本解析待确定原生实现边界。 |
 | 83 | 内容与解析 | `u-pdf-reader` | — | 未开始 | 暂无 | PDF 阅读器待接入 Android 原生 PDF 能力。 |
-| 84 | 选择与日期 | `u-picker` | `UPPicker` / `UPPickerProps` | 基础可用 | 中 | modelValue/value/defaultIndex 和事件 payload 已修正；Popup、列滚动、动画待补。 |
+| 84 | 选择与日期 | `u-picker` | `UPPicker` / `UPPickerProps` | 基础可用 | 中 | modelValue/value/defaultIndex 和事件 payload 已修正；列已按 `visibleItemCount × itemHeight` 固定高度并可滚动，选项在行内垂直居中；Popup 与惯性动画待补。 |
 | 85 | 选择与日期 | `u-picker-column` | `UPPickerColumn` / `UPPickerColumnProps` | 基础可用 | 中 | Props 为空契约的容器已提供；原生列滚动待补。 |
 | 86 | 辅助模块 | `u-picker-data` | — | 未开始 | 暂无 | 选择器数据辅助目录，不单独作为 Android UI 组件。 |
 | 87 | 原生交互 | `u-popover` | `UPPopover` / `UPPopoverProps` | 基础可用 | 中 | 内嵌面板展示可用；Popup 定位、长按触发和遮罩待补。 |
@@ -206,6 +206,27 @@
 3. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
 4. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
 5. **选择增强**：`u-calendar-strip`、`u-keyboard`、`u-number-keyboard`、`u-car-keyboard`，并继续增强 Batch 10 滚轮、弹层和固定布局语义。
+
+## 真机行为测试
+
+`src/androidTest` 下的行为测试**必须在设备/模拟器上执行**，仅编译通过不构成验证证据。
+本机已有可用 AVD（`MCode_Phone`，android-36/arm64-v8a），`adb` 与 `emulator` 位于
+`$ANDROID_HOME` 下但不在默认 `PATH` 中——需要显式导出，否则会误判为"环境无 adb"：
+
+```
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+emulator -avd MCode_Phone -no-snapshot-load -no-boot-anim -gpu swiftshader_indirect &
+until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 4; done
+./gradlew :ultra-ui:connectedDebugAndroidTest
+```
+
+当前状态：**53 个行为测试全部通过**。首次真机执行即暴露 1 个实现缺陷（picker 列平铺
+导致屏幕外选项无法点击）和 4 处测试自身写错（`upTestTag` 会加 `up-` 前缀；
+`customStyle` 需在组件自身尺寸**之前**应用才能覆盖）。
+
+> 教训：`upTestTag("x")` 生成的标签是 `up-x`；断言几何时要确认 tag 挂在 modifier 链的
+> 哪一层，`padding` 之后的 tag 只能看到内容区。
 
 ## 维护规则
 

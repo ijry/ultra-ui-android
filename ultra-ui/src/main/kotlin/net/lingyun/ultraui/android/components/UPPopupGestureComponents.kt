@@ -54,9 +54,9 @@ public fun UPSticky(props: UPStickyProps = UPStickyProps(), modifier: Modifier =
     val stickyTop = (upRawDp(props.offsetTop, 0.dp) + upRawDp(props.customNavHeight, 0.dp)).coerceAtLeast(0.dp)
     Box(
         modifier.background(UPColor.parse(props.bgColor, Color.Transparent))
-            .padding(top = stickyTop)
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSticky"))
-            .upTestTag("sticky"),
+            .upTestTag("sticky")
+            .padding(top = stickyTop),
     ) { content() }
 }
 

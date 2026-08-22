@@ -85,9 +85,11 @@ public fun UPSwitch(
     // Keep the root test/semantics node separate from the visual/clickable layer.
     // Compose clickable merges descendants, which would otherwise hide the dot's
     // stable test tag from the merged semantics tree.
+    // `customStyle` is applied before the component's own size so a caller-supplied
+    // width/height wins, matching uview where the inline style overrides the default.
     val root = modifier
-        .size(width = width, height = size + 2.dp)
         .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, SwitchComponentName))
+        .size(width = width, height = size + 2.dp)
         .upTestTag("switch")
         .semantics {
             if (enabled) {

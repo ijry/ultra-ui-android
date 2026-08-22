@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.lingyun.ultraui.android.core.UPRawValue
@@ -54,7 +55,9 @@ class UPBatch10BehaviorTest {
             )
         }
 
-        composeRule.onNodeWithTag("up-datetime-picker-option-4-36").performClick()
+        // Columns are wheels showing visibleItemCount options at a time, so the target
+        // minute has to be scrolled into view before it can be tapped.
+        composeRule.onNodeWithTag("up-datetime-picker-option-4-36").performScrollTo().performClick()
         composeRule.onNodeWithTag("up-datetime-picker-confirm").performClick()
         composeRule.runOnIdle {
             assertEquals(36, changes.last().selectedValues[4])

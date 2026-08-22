@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,12 +43,31 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
             BasicText(props.title, style = TextStyle(color = UPTheme.Main))
             BasicText(props.confirmText, modifier = Modifier.upClickable(onClick = { val event = pickerEvent(props, selected); onConfirm?.invoke(event); onUpdateModelValue?.invoke(pickerModelValues(props, selected)); onUpdateShow?.invoke(false); onClose?.invoke() }), style = TextStyle(color = UPColor.parse(props.confirmColor, UPTheme.Primary)))
         }
+        // Each column is a `visibleItemCount * itemHeight` wheel that scrolls internally,
+        // as upstream does. A flat column pushes later options outside the root bounds,
+        // where they measure zero-height and cannot be tapped.
+        val itemHeight = upRawDp(props.itemHeight, 44.dp).coerceAtLeast(16.dp)
+        val visibleCount = props.visibleItemCount.upIntOrDefault(5).coerceIn(1, 20)
         props.columns.forEachIndexed { columnIndex, rawColumn ->
             val column = rawColumn.upItemsOrEmpty()
-            Column(Modifier.fillMaxWidth().upTestTag("picker-column-$columnIndex")) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .height(itemHeight * visibleCount)
+                    .verticalScroll(rememberScrollState())
+                    .upTestTag("picker-column-$columnIndex"),
+            ) {
                 column.forEachIndexed { optionIndex, option ->
                     val label = actionOrOptionText(option, props.keyName, option.toString())
-                    BasicText(label, modifier = Modifier.fillMaxWidth().background(if (selected.getOrElse(columnIndex) { 0 } == optionIndex) Color(0xFFEAF3FF) else Color.Transparent).upClickable(onClick = { selected[columnIndex] = optionIndex; if (props.immediateChange) onChange?.invoke(pickerEvent(props, selected, columnIndex, optionIndex)) }).padding(12.dp), style = TextStyle(color = UPTheme.Main, fontSize = 14.sp))
+                    // uview sets lineHeight = itemHeight, so the label sits centred in its row.
+                    Box(
+                        Modifier.fillMaxWidth().height(itemHeight)
+                            .background(if (selected.getOrElse(columnIndex) { 0 } == optionIndex) Color(0xFFEAF3FF) else Color.Transparent)
+                            .upClickable(onClick = { selected[columnIndex] = optionIndex; if (props.immediateChange) onChange?.invoke(pickerEvent(props, selected, columnIndex, optionIndex)) })
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        BasicText(label, style = TextStyle(color = UPTheme.Main, fontSize = 14.sp))
+                    }
                 }
             }
         }

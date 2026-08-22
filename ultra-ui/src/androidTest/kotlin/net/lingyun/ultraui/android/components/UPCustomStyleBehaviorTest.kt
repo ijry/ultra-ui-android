@@ -26,13 +26,13 @@ class UPCustomStyleBehaviorTest {
     @Test
     fun switchAppliesCustomStyleToItsRoot() {
         composeRule.setContent { UPSwitch(UPSwitchProps(modelValue = true, customStyle = tallStyle)) }
-        composeRule.onNodeWithTag("switch").assertHeightIsAtLeast(120.dp)
+        composeRule.onNodeWithTag("up-switch").assertHeightIsAtLeast(120.dp)
     }
 
     @Test
     fun rateAppliesCustomStyleToItsRoot() {
         composeRule.setContent { UPRate(UPRateProps(modelValue = 3, customStyle = tallStyle)) }
-        composeRule.onNodeWithTag("rate").assertHeightIsAtLeast(120.dp)
+        composeRule.onNodeWithTag("up-rate").assertHeightIsAtLeast(120.dp)
     }
 
     @Test
@@ -40,7 +40,7 @@ class UPCustomStyleBehaviorTest {
         composeRule.setContent {
             UPAvatarGroup(UPAvatarGroupProps(urls = listOf("a", "b"), customStyle = tallStyle))
         }
-        composeRule.onNodeWithTag("avatar-group").assertHeightIsAtLeast(120.dp)
+        composeRule.onNodeWithTag("up-avatar-group").assertHeightIsAtLeast(120.dp)
     }
 
     @Test
@@ -48,7 +48,7 @@ class UPCustomStyleBehaviorTest {
         composeRule.setContent {
             UPCollapse(UPCollapseProps(customStyle = tallStyle)) { Column {} }
         }
-        composeRule.onNodeWithTag("collapse").assertHeightIsAtLeast(120.dp)
+        composeRule.onNodeWithTag("up-collapse").assertHeightIsAtLeast(120.dp)
     }
 
     @Test
@@ -57,6 +57,6 @@ class UPCustomStyleBehaviorTest {
         composeRule.setContent {
             UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 30)) { UPGap(UPGapProps(height = 20)) }
         }
-        composeRule.onNodeWithTag("sticky").assertHeightIsAtLeast(90.dp)
+        composeRule.onNodeWithTag("up-sticky").assertHeightIsAtLeast(90.dp)
     }
 }
