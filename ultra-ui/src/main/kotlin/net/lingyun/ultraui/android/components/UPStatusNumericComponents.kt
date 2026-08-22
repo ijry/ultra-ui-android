@@ -44,15 +44,40 @@ public fun UPSwiper(props: UPSwiperProps = UPSwiperProps(), modifier: Modifier =
     LaunchedEffect(props.current) { current = props.current.upIntOrDefault(0).coerceAtLeast(0) }
     val list = props.list
     if (list.isEmpty()) return
-    current = current.coerceIn(0, list.lastIndex)
-    val item = list[current]
+    // Clamp for rendering only. Assigning to `current` during composition would feed a
+    // state write back into the same pass, which Compose treats as an unstable read.
+    val index = current.coerceIn(0, list.lastIndex)
+    val item = list[index]
     val label = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
+
+    // uview defaults `autoplay` to true and advances every `interval` ms, wrapping past
+    // the final slide only when `circular` is set.
+    val interval = props.interval.upIntOrDefault(3000).toLong().coerceAtLeast(1L)
+    if (props.autoplay && list.size > 1) {
+        LaunchedEffect(props.autoplay, interval, props.circular, list.size, index) {
+            delay(interval)
+            val next = if (index >= list.lastIndex) (if (props.circular) 0 else return@LaunchedEffect) else index + 1
+            current = next
+            onChange?.invoke(next)
+            onUpdateCurrent?.invoke(next)
+        }
+    }
+
+    val previousMargin = upRawDp(props.previousMargin, 0.dp).coerceAtLeast(0.dp)
+    val nextMargin = upRawDp(props.nextMargin, 0.dp).coerceAtLeast(0.dp)
     Column(modifier.fillMaxWidth().background(UPColor.parse(props.bgColor, Color(0xFFF3F4F6))).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwiper")).upTestTag("swiper")) {
-        Box(Modifier.fillMaxWidth().height(net.lingyun.ultraui.android.core.upDimension(props.height, 130.dp)).upClickable(onClick = { onClick?.invoke(current) }), contentAlignment = Alignment.Center) { BasicText(label, style = TextStyle(color = UPTheme.Main)) }
-        if (props.indicator) UPSwiperIndicator(UPSwiperIndicatorProps(length = list.size, current = current, indicatorActiveColor = props.indicatorActiveColor, indicatorInactiveColor = props.indicatorInactiveColor, indicatorMode = props.indicatorMode), onClick = { next -> current = next; onChange?.invoke(next); onUpdateCurrent?.invoke(next) })
+        Box(
+            Modifier.fillMaxWidth()
+                .height(net.lingyun.ultraui.android.core.upDimension(props.height, 130.dp))
+                // previousMargin/nextMargin reveal a sliver of the neighbouring slides.
+                .padding(start = previousMargin, end = nextMargin)
+                .upClickable(onClick = { onClick?.invoke(index) }),
+            contentAlignment = Alignment.Center,
+        ) { BasicText(label, style = TextStyle(color = UPTheme.Main)) }
+        if (props.indicator) UPSwiperIndicator(UPSwiperIndicatorProps(length = list.size, current = index, indicatorActiveColor = props.indicatorActiveColor, indicatorInactiveColor = props.indicatorInactiveColor, indicatorMode = props.indicatorMode, customStyle = props.indicatorStyle), onClick = { next -> current = next; onChange?.invoke(next); onUpdateCurrent?.invoke(next) })
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            if (current > 0) BasicText("‹", modifier = Modifier.upClickable(onClick = { current--; onChange?.invoke(current); onUpdateCurrent?.invoke(current) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
-            if (current < list.lastIndex) BasicText("›", modifier = Modifier.upClickable(onClick = { current++; onChange?.invoke(current); onUpdateCurrent?.invoke(current) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
+            if (index > 0) BasicText("‹", modifier = Modifier.upClickable(onClick = { current = index - 1; onChange?.invoke(index - 1); onUpdateCurrent?.invoke(index - 1) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
+            if (index < list.lastIndex) BasicText("›", modifier = Modifier.upClickable(onClick = { current = index + 1; onChange?.invoke(index + 1); onUpdateCurrent?.invoke(index + 1) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
         }
     }
 }

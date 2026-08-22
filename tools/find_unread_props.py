@@ -48,6 +48,7 @@ KNOWN_INERT: dict[str, str] = {
     "List.offsetAccuracy": "nvue only per upstream (仅nvue有效)",
     "List.enableFlex": "wechat mini-program only (仅微信小程序有效)",
     "List.enableBackToTop": "wechat mini-program only (只对微信小程序有效)",
+    "Swiper.easingFunction": "wechat mini-program only (只对微信小程序有效)",
 }
 
 
@@ -87,6 +88,29 @@ def reads_field(blob: str, field: str) -> bool:
     )
 
 
+def component_bodies(sources: dict[Path, str], name: str) -> str:
+    """Extract just the UP<name> composable bodies, not the whole file.
+
+    Several components share one file (UPSwiper and UPCountTo both live in
+    UPStatusNumericComponents.kt). Searching the file as a whole let a sibling's
+    `props.autoplay` mask UPSwiper's own unread `autoplay`, so scope the text to the
+    function that actually receives this component's props.
+    """
+    out = []
+    pattern = re.compile(
+        rf"public fun (?:[A-Za-z]+Scope\.)?UP{re.escape(name)}\s*\(", re.M
+    )
+    for src in sources.values():
+        for match in pattern.finditer(src):
+            start = match.start()
+            # Walk to the matching close of the parameter list, then take the body up to
+            # the next top-level declaration.
+            rest = src[start:]
+            nxt = re.search(r"\n@Composable|\npublic fun |\nprivate fun |\ninternal fun ", rest[1:])
+            out.append(rest[: nxt.start() + 1] if nxt else rest)
+    return "\n".join(out)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--main", type=Path, default=DEFAULT_MAIN, help="library main source root")
@@ -112,9 +136,11 @@ def main() -> int:
         if not files:
             missing_entry.append(name)
             continue
-        blob = "\n".join(stripped[f] for f in files)
-        # If the entry hands the whole props object onward, the read may live anywhere.
-        if re.search(r"\(\s*props\s*[,)]|=\s*props\b|\bprops\s*,", blob):
+        blob = component_bodies(stripped, name)
+        # Widen to the whole library only when the component really forwards its entire
+        # props object onward. `= props` alone is too loose: it also matches
+        # `current = props.current`, which is a field read, not a forward.
+        if re.search(r"\(\s*props\s*[,)]|=\s*props\s*[,)\n]|\bprops\s*,\s*\w", blob):
             blob = whole_library
         for field in fields:
             if reads_field(blob, field):

@@ -147,7 +147,7 @@
 | 112 | 导航 | `u-subsection` | `UPSubsection` / `UPSubsectionProps` | 基础可用 | 中 | 分段切换基础行为可用；样式和滚动模式待对照。 |
 | 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基础可用 | 中 | 原生手势基础容器可用；真实滑动距离和动画待补。 |
 | 114 | 原生交互 | `u-swipe-action-item` | `UPSwipeActionItem` / `UPSwipeActionItemProps` | 基础可用 | 中 | 操作项和按钮回调可用；完整手势状态待补。 |
-| 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基础可用 | 中 | 列表、索引和 indicator 基础渲染可用；自动播放和手势待补。 |
+| 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基础可用 | 中 | `autoplay`+`interval` 定时切换、`circular` 末尾回头、`previousMargin`/`nextMargin` 露边、`indicatorStyle` 已生效并有真机测试。仍未实现：`imgMode`/`radius`/`showTitle`/`vertical`（当前只渲染文字标签，不显示图片，也不支持纵向与圆角）、`displayMultipleItems`、`acceleration`、`currentItemId`、`duration` 过渡动画。 |
 | 116 | 媒体与内容 | `u-swiper-indicator` | `UPSwiperIndicator` / `UPSwiperIndicatorProps` | 基础可用 | 中 | 指示器静态状态可用；复杂样式待对照。 |
 | 117 | 选择 | `u-switch` | `UPSwitch` / `UPSwitchProps` | 基本完成 | 高（Props） | 受控值、禁用、颜色和 change/update 事件已有测试。 |
 | 118 | 导航 | `u-tabbar` | `UPTabbar` / `UPTabbarProps` | 基础可用 | 中 | 父子受控状态、颜色、边框和安全区已支持；`fixed`/`placeholder` 为兼容字段，窗口级固定需宿主放入 Scaffold bottomBar 或底部 Box。 |
@@ -247,16 +247,23 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：88 个 Props 类中有 **134 个字段无人读取**，另有 21 个已记录为按设计不生效
+当前状态：88 个 Props 类中有 **205 个字段无人读取**，另有 22 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
-`offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`，
-以及 `u-list` 的 10 个滚动与下拉刷新字段。
+`offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`、
+`u-list` 的 10 个滚动与下拉刷新字段，以及 `u-swiper` 的自动播放与循环。
 
-134 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音：其中既有平台专有开关，
-也有 `u-swiper` 的自动播放、`u-calendar` 的农历与时间精度等尚未实现的真实能力。后续批次
-应优先消化本清单，而不是先增加新组件。清单里既可能是"缺特性"，也可能是"组件根本不可用"
-——`u-picker` 的列平铺缺陷就属于后者。
+> 数字为何从 134 涨到 205：脚本原先把**整个文件**当作搜索范围，同文件内的兄弟组件
+> （`UPSwiper` 与 `UPCountTo` 同在 `UPStatusNumericComponents.kt`）会互相掩盖——
+> `UPCountTo` 的 `props.autoplay` 让 `UPSwiper` 从未生效的 `autoplay` 被误判为已读。
+> 另一处 `= props` 正则过宽，把 `current = props.current`（字段读取）误判为
+> 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
+> 才显形。**205 是更接近真相的数字，不是退步。**
+
+205 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片、
+`u-steps` 完全忽略 `current` 导致每一步都显示为已完成，都属于后者。后续批次应优先
+消化本清单，而不是先增加新组件。
 
 ## 默认值漂移核查
 
