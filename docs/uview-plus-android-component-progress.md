@@ -119,7 +119,7 @@
 | 84 | 选择与日期 | `u-picker` | `UPPicker` / `UPPickerProps` | 基础可用 | 中 | modelValue/value/defaultIndex 和事件 payload 已修正；列已按 `visibleItemCount × itemHeight` 固定高度并可滚动，选项在行内垂直居中；Popup 与惯性动画待补。 |
 | 85 | 选择与日期 | `u-picker-column` | `UPPickerColumn` / `UPPickerColumnProps` | 基础可用 | 中 | Props 为空契约的容器已提供；原生列滚动待补。 |
 | 86 | 辅助模块 | `u-picker-data` | — | 未开始 | 暂无 | 选择器数据辅助目录，不单独作为 Android UI 组件。 |
-| 87 | 原生交互 | `u-popover` | `UPPopover` / `UPPopoverProps` | 基础可用 | 中 | 内嵌面板展示可用；Popup 定位、长按触发和遮罩待补。 |
+| 87 | 原生交互 | `u-popover` | `UPPopover` / `UPPopoverProps` | 基础可用 | 中 | `direction` 四向定位（top/bottom/left/right）、`triggerMode` 三态（click 默认／hover 映射为长按／manual 仅受 `show` 控制）、`bgColor` 均已生效并有真机断言。降级：`zIndex`、`forcePosition` 需窗口级弹层，当前为内联渲染。 |
 | 88 | 原生交互 | `u-popup` | `UPPopup` / `UPPopupProps` | 基本完成 | 高（Props） | Android 原生 Dialog/Compose 弹层基础能力已有实现；复杂 slot 动画待对照。 |
 | 89 | 媒体与内容 | `u-poster` | — | 未开始 | 暂无 | 海报生成/展示待实现。 |
 | 90 | 列表与索引 | `u-pull-refresh` | — | 未开始 | 暂无 | 下拉刷新待接入 Compose nested scroll。 |
@@ -165,7 +165,7 @@
 | 130 | 基础展示 | `u-title` | `UPTitle` / `UPTitleProps` | 基本完成 | 高（Props） | 标题、装饰线和对齐样式已有实现。 |
 | 131 | 原生交互 | `u-toast` | `UPToast` / `UPToastProps` | 基本完成 | 高（Props） | Toast 原生展示和 `UPToastHost` 宿主已有；队列细节待补。 |
 | 132 | 原生交互 | `u-toolbar` | — | 未开始 | 暂无 | 工具栏待确认与导航/输入场景的复用边界。 |
-| 133 | 原生交互 | `u-tooltip` | `UPTooltip` / `UPTooltipProps` | 基础可用 | 中 | 内嵌提示和 click 基础行为可用；longpress/定位待补。 |
+| 133 | 原生交互 | `u-tooltip` | `UPTooltip` / `UPTooltipProps` | 基础可用 | 中 | `direction`（top 默认／bottom）决定气泡在触发器上方还是下方、`triggerMode` 三态（longpress 默认／click／manual）、`buttons` 扩展按钮组（带索引回调）、`copyText`（为空回退 `text`）、`bgColor` 均已生效并有真机断言。此前气泡固定渲染在下方且点击与长按都会触发。降级：`zIndex`、`overlay`、`singleton`、`forcePosition` 需窗口级弹层；`showToast` 的复制提示由宿主决定。 |
 | 134 | 表格 | `u-tr` | — | 未开始 | 暂无 | 表格行待随表格体系实现。 |
 | 135 | 原生交互 | `u-transition` | — | 未开始 | 暂无 | 通用过渡动画待建立 Compose 状态 API。 |
 | 136 | 内容面板 | `u-tree` | — | 未开始 | 暂无 | 树节点展开、选中和懒加载待实现。 |
@@ -249,7 +249,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：88 个已实现组件行中，**58 行证据齐备、30 行标注超出证据**。
+当前状态：88 个已实现组件行中，**60 行证据齐备、28 行标注超出证据**。
 
 > 为什么要做这件事：连续五轮工作中，每一轮都在标着「基础可用/基本完成」的组件里发现
 > **组件级不可用**缺陷——`u-picker` 列平铺导致选项无法点击、`u-swiper` 只渲染文字不显示
@@ -271,7 +271,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：88 个 Props 类中有 **158 个字段无人读取**，另有 46 个已记录为按设计不生效
+当前状态：88 个 Props 类中有 **142 个字段无人读取**，另有 53 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
 `offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`、
@@ -285,7 +285,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 > 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
 > 才显形。**205 是更接近真相的数字，不是退步。**
 
-158 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+142 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
 也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。后续批次应优先
 消化本清单，而不是先增加新组件。

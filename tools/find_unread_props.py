@@ -83,6 +83,16 @@ KNOWN_INERT: dict[str, str] = {
     # Android side reports it via onUpdateScrolling; consuming it as an input would mean
     # driving the host's scroll container, which belongs to the host.
     "SwipeActionItem.scrolling": "outbound v-model flag; reported via onUpdateScrolling",
+    # tooltip/popover render inline next to their trigger rather than in a window-level
+    # overlay, so there is no stacking context to apply these to. Lifting them into a
+    # real overlay is tracked as the window-level popup gap, not a per-field fix.
+    "Tooltip.zIndex": "inline render; no window-level overlay to stack in",
+    "Tooltip.overlay": "inline render; no window-level overlay to stack in",
+    "Tooltip.singleton": "needs a window-level popup registry",
+    "Tooltip.showToast": "copy feedback toast is the host app's call",
+    "Tooltip.forcePosition": "absolute repositioning needs a window-level overlay",
+    "Popover.zIndex": "inline render; no window-level overlay to stack in",
+    "Popover.forcePosition": "absolute repositioning needs a window-level overlay",
 }
 
 

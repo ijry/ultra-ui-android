@@ -36,25 +36,132 @@ import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upClickable
+import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 import androidx.compose.foundation.combinedClickable
 
 @Composable
 public fun UPPopover(props: UPPopoverProps = UPPopoverProps(), modifier: Modifier = Modifier, onUpdateShow: ((Boolean) -> Unit)? = null, onOpen: (() -> Unit)? = null, onClose: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: (@Composable () -> Unit)? = null) {
+    // uview: triggerMode is hover/click/manual (default click). `u-popover` forwards both
+    // `direction` and `placement` to its inner tooltip; `direction` is the field that
+    // picks the side, and `placement` only matters once it is left blank.
+    val trigger = upSafeEnum(props.triggerMode, setOf("hover", "click", "manual"), "click", diagnostics, "UPPopover", "triggerMode")
+    val sides = setOf("top", "bottom", "left", "right")
+    val requestedSide = props.direction.ifBlank { props.placement }
+    val placement = upSafeEnum(requestedSide, sides, "top", diagnostics, "UPPopover", "direction")
     var visible by remember { mutableStateOf(props.show) }
-    val trigger = content ?: { BasicText(props.text.toString()) }
-    Column(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPPopover")).upTestTag("popover")) {
-        Box(Modifier.upTestTag("popover-trigger").combinedClickable(onClick = { visible = !visible; onUpdateShow?.invoke(visible); if (visible) onOpen?.invoke() else onClose?.invoke() }, onLongClick = { visible = true; onUpdateShow?.invoke(true); onOpen?.invoke() })) { trigger() }
-        if (visible) Box(Modifier.fillMaxWidth().background(UPColor.parse(props.popupBgColor, Color(0xFFF7F7F7)), RoundedCornerShape(4.dp)).padding(10.dp).upTestTag("popover-content")) { BasicText(props.text.toString(), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Main))) }
+    LaunchedEffect(props.show) { visible = props.show }
+    val trigger0 = content ?: { BasicText(props.text.toString()) }
+
+    fun toggle(next: Boolean) {
+        if (visible == next) return
+        visible = next
+        onUpdateShow?.invoke(next)
+        if (next) onOpen?.invoke() else onClose?.invoke()
+    }
+
+    val panel: @Composable () -> Unit = {
+        Box(
+            Modifier.background(UPColor.parse(props.popupBgColor.ifEmpty { props.bgColor }, Color(0xFFF7F7F7)), RoundedCornerShape(4.dp))
+                .padding(10.dp)
+                .upTestTag("popover-content"),
+        ) { BasicText(props.text.toString(), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Main))) }
+    }
+    val triggerBox: @Composable () -> Unit = {
+        Box(
+            Modifier.upTestTag("popover-trigger").then(
+                when (trigger) {
+                    "click" -> Modifier.upClickable(onClick = { toggle(!visible) })
+                    // Android has no hover, so uview's hover maps onto long-press.
+                    "hover" -> Modifier.combinedClickable(onClick = {}, onLongClick = { toggle(true) })
+                    else -> Modifier
+                },
+            ),
+        ) { trigger0() }
+    }
+
+    val root = modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPPopover")).upTestTag("popover")
+    if (placement == "left" || placement == "right") {
+        Row(root, verticalAlignment = Alignment.CenterVertically) {
+            if (visible && placement == "left") panel()
+            triggerBox()
+            if (visible && placement == "right") panel()
+        }
+    } else {
+        Column(root) {
+            if (visible && placement == "top") panel()
+            triggerBox()
+            if (visible && placement == "bottom") panel()
+        }
     }
 }
 
 @Composable
-public fun UPTooltip(props: UPTooltipProps = UPTooltipProps(), modifier: Modifier = Modifier, onUpdateShow: ((Boolean) -> Unit)? = null, onOpen: (() -> Unit)? = null, onClose: (() -> Unit)? = null, onCopy: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: (@Composable () -> Unit)? = null) {
+public fun UPTooltip(
+    props: UPTooltipProps = UPTooltipProps(),
+    modifier: Modifier = Modifier,
+    onUpdateShow: ((Boolean) -> Unit)? = null,
+    onOpen: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    onCopy: ((UPRawValue) -> Unit)? = null,
+    onButtonClick: ((UPRawValue, Int) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: (@Composable () -> Unit)? = null,
+) {
+    val trigger = upSafeEnum(props.triggerMode, setOf("longpress", "click", "manual"), "longpress", diagnostics, "UPTooltip", "triggerMode")
+    val direction = upSafeEnum(props.direction, setOf("top", "bottom"), "top", diagnostics, "UPTooltip", "direction")
     var visible by remember { mutableStateOf(props.show) }
+    // In manual mode `show` is the only way in or out; gestures are inert.
+    LaunchedEffect(props.show) { visible = props.show }
+
+    fun toggle(next: Boolean) {
+        if (visible == next) return
+        visible = next
+        onUpdateShow?.invoke(next)
+        if (next) onOpen?.invoke() else onClose?.invoke()
+    }
+
+    val bubble: @Composable () -> Unit = {
+        Row(
+            Modifier
+                .background(UPColor.parse(props.popupBgColor.ifEmpty { props.bgColor }, Color.White), RoundedCornerShape(4.dp))
+                .padding(8.dp)
+                .upTestTag("tooltip-content"),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            BasicText(
+                props.text.toString(),
+                style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = props.size.toString().toFloatOrNull()?.sp ?: 14.sp),
+            )
+            if (props.showCopy) {
+                // uview copies `copyText` when set and falls back to `text`.
+                val payload = props.copyText.toString().ifEmpty { props.text.toString() }
+                BasicText("复制", modifier = Modifier.upClickable(onClick = { onCopy?.invoke(payload) }).upTestTag("tooltip-copy"))
+            }
+            // uview renders `buttons` alongside the copy action as an extension slot.
+            props.buttons.forEachIndexed { index, button ->
+                BasicText(
+                    actionOrOptionText(button, "text", button.toString()),
+                    modifier = Modifier.upClickable(onClick = { onButtonClick?.invoke(button, index) }).upTestTag("tooltip-button-$index"),
+                    style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content)),
+                )
+            }
+        }
+    }
+
     Column(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPTooltip")).upTestTag("tooltip")) {
-        Box(Modifier.upTestTag("tooltip-trigger").combinedClickable(onClick = { visible = !visible; onUpdateShow?.invoke(visible); if (visible) onOpen?.invoke() else onClose?.invoke() }, onLongClick = { visible = true; onUpdateShow?.invoke(true); onOpen?.invoke() })) { content?.invoke() ?: BasicText(props.text.toString()) }
-        if (visible) Row(Modifier.background(UPColor.parse(props.popupBgColor, Color.White), RoundedCornerShape(4.dp)).padding(8.dp).upTestTag("tooltip-content"), horizontalArrangement = Arrangement.spacedBy(8.dp)) { BasicText(props.text.toString(), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = props.size.toString().toFloatOrNull()?.sp ?: 14.sp)); if (props.showCopy) BasicText("复制", modifier = Modifier.upClickable(onClick = { onCopy?.invoke() })) }
+        // `direction` decides which side of the trigger the bubble occupies.
+        if (visible && direction == "top") bubble()
+        Box(
+            Modifier.upTestTag("tooltip-trigger").then(
+                when (trigger) {
+                    "click" -> Modifier.upClickable(onClick = { toggle(!visible) })
+                    "longpress" -> Modifier.combinedClickable(onClick = {}, onLongClick = { toggle(true) })
+                    else -> Modifier
+                },
+            ),
+        ) { content?.invoke() ?: BasicText(props.text.toString()) }
+        if (visible && direction == "bottom") bubble()
     }
 }
 
