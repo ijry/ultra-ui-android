@@ -96,6 +96,9 @@ KNOWN_INERT: dict[str, str] = {
     # `menu` has no counterpart in upstream u-dropdown/props.js; it is an Android-only
     # alias kept so older generated templates keep compiling.
     "Dropdown.menu": "Android-only compatibility alias; no upstream field",
+    # Anchor stickiness needs the surrounding scroll container to report its offset back
+    # to the list. Tracked with the same real-scroll-sticky gap as u-sticky.
+    "IndexList.sticky": "anchor sticking needs scroll-position feedback from the host",
 }
 
 

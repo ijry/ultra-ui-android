@@ -1,13 +1,17 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
+import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upBooleanOrDefault
@@ -131,8 +136,51 @@ public fun UPListItem(props: UPListItemProps = UPListItemProps(), modifier: Modi
 }
 
 @Composable
-public fun UPIndexList(props: UPIndexListProps = UPIndexListProps(), modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPIndexList")).upTestTag("index-list")) { content() }
+public fun UPIndexList(
+    props: UPIndexListProps = UPIndexListProps(),
+    modifier: Modifier = Modifier,
+    activeIndex: Int = -1,
+    onIndexClick: ((UPRawValue, Int) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: @Composable () -> Unit,
+) {
+    // uview draws a tappable index rail down the right edge from `indexList`; with no
+    // characters there is nothing to anchor, so the rail is omitted entirely.
+    val itemMargin = upRawDp(props.itemMargin, 0.dp).coerceAtLeast(0.dp)
+    Box(
+        modifier.fillMaxWidth()
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPIndexList"))
+            .upTestTag("index-list"),
+    ) {
+        Column(Modifier.fillMaxWidth()) { content() }
+        if (props.indexList.isNotEmpty()) {
+            Column(
+                Modifier.align(Alignment.CenterEnd)
+                    // `customNavHeight` shifts the rail clear of a custom navbar, and
+                    // `safeBottomFix` keeps its tail above the bottom safe area.
+                    .padding(top = upRawDp(props.customNavHeight, 0.dp).coerceAtLeast(0.dp), end = 4.dp)
+                    .then(if (props.safeBottomFix) Modifier.navigationBarsPadding() else Modifier)
+                    .upTestTag("index-list-rail"),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(itemMargin),
+            ) {
+                props.indexList.forEachIndexed { index, entry ->
+                    val color = UPColor.parse(
+                        if (index == activeIndex) props.activeColor else props.inactiveColor,
+                        if (index == activeIndex) UPTheme.Primary else UPTheme.Content,
+                    )
+                    BasicText(
+                        entry.toString(),
+                        modifier = Modifier
+                            .upClickable(onClick = { onIndexClick?.invoke(entry, index) })
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .upTestTag("index-list-entry-$index"),
+                        style = TextStyle(color = color, fontSize = 12.sp),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -149,5 +197,40 @@ public fun UPIndexAnchor(props: UPIndexAnchorProps = UPIndexAnchorProps(), modif
 
 @Composable
 public fun UPScrollList(props: UPScrollListProps = UPScrollListProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
-    Box(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPScrollList")).upTestTag("scroll-list")) { content() }
+    // uview scrolls its panel horizontally and shows a progress indicator underneath
+    // (`indicator` defaults to true), whose bar tracks the scroll position.
+    val scrollState = rememberScrollState()
+    val trackWidth = upRawDp(props.indicatorWidth, 50.dp).coerceAtLeast(1.dp)
+    val barWidth = upRawDp(props.indicatorBarWidth, 20.dp).coerceIn(1.dp, trackWidth)
+    Column(
+        modifier.fillMaxWidth()
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPScrollList"))
+            .upTestTag("scroll-list"),
+    ) {
+        Box(Modifier.fillMaxWidth().horizontalScroll(scrollState)) { content() }
+        if (props.indicator) {
+            val progress = if (scrollState.maxValue > 0) {
+                scrollState.value.toFloat() / scrollState.maxValue.toFloat()
+            } else {
+                0f
+            }
+            Box(
+                Modifier.align(Alignment.CenterHorizontally)
+                    .padding(top = 6.dp)
+                    .width(trackWidth)
+                    .height(barWidth / 4f)
+                    .applyUPResolvedStyle(rememberUPResolvedStyle(props.indicatorStyle, diagnostics, "UPScrollList.indicatorStyle"))
+                    .background(UPColor.parse(props.indicatorColor, Color(0xFFF2F2F2)), RoundedCornerShape(50))
+                    .upTestTag("scroll-list-indicator"),
+            ) {
+                Box(
+                    Modifier.offset(x = (trackWidth - barWidth) * progress.coerceIn(0f, 1f))
+                        .width(barWidth)
+                        .height(barWidth / 4f)
+                        .background(UPColor.parse(props.indicatorActiveColor, UPTheme.Primary), RoundedCornerShape(50))
+                        .upTestTag("scroll-list-indicator-bar"),
+                )
+            }
+        }
+    }
 }
