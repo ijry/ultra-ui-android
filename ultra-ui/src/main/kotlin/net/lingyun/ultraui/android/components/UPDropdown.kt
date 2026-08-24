@@ -31,6 +31,14 @@ internal class UPDropdownContext {
     var closeOnClickSelf: Boolean = true
     var activeColor: String = "#2979ff"
     var inactiveColor: String = "#606266"
+    // uview styles the title bar from the parent, so the items read it from here.
+    var titleHeight: UPRawValue = 40
+    var titleSize: UPRawValue = 14
+    var menuIcon: String = "arrow-down"
+    var menuIconSize: UPRawValue = 14
+    var borderBottom: Boolean = false
+    var borderRadius: UPRawValue = 0
+    var duration: UPRawValue = 300
     var closeCallback: ((Boolean) -> Unit)? = null
 
     fun beginComposition() {
@@ -82,10 +90,19 @@ public fun UPDropdown(
     )
     val context = remember { UPDropdownContext() }
     context.beginComposition()
-    context.closeOnClickMask = props.closeOnClickMask
+    // `closeOnClickOverlay` is the Android-side alias kept for earlier templates; an
+    // explicit value on it wins over the uview-named `closeOnClickMask`.
+    context.closeOnClickMask = props.closeOnClickOverlay ?: props.closeOnClickMask
     context.closeOnClickSelf = props.closeOnClickSelf
     context.activeColor = props.activeColor
     context.inactiveColor = props.inactiveColor
+    context.titleHeight = props.height
+    context.titleSize = props.titleSize
+    context.menuIcon = props.menuIcon
+    context.menuIconSize = props.menuIconSize
+    context.borderBottom = props.borderBottom
+    context.borderRadius = props.borderRadius
+    context.duration = props.duration
     context.closeCallback = { nextOpen ->
         onUpdateOpen?.invoke(nextOpen)
         if (nextOpen) onOpen?.invoke() else onClose?.invoke()
@@ -105,19 +122,12 @@ public fun UPDropdown(
         .applyUPResolvedStyle(style)
         .upTestTag("dropdown")
 
-    // The direction is intentionally represented as layout order. This keeps
-    // screenshots deterministic while preserving the generated prop contract.
-    if (direction == "up") {
-        Column(modifier = rootModifier) {
-            androidx.compose.runtime.CompositionLocalProvider(LocalUPDropdownContext provides context) {
-                content()
-            }
-        }
-    } else {
-        Column(modifier = rootModifier) {
-            androidx.compose.runtime.CompositionLocalProvider(LocalUPDropdownContext provides context) {
-                content()
-            }
+    // `direction` is validated so an unsupported value still reports a diagnostic, but
+    // both arms laid out identically before, so there is only one layout to emit.
+    // Opening upward needs a window-level overlay; see the popup gap in the progress doc.
+    Column(modifier = rootModifier) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalUPDropdownContext provides context) {
+            content()
         }
     }
 }

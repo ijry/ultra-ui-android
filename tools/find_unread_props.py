@@ -93,6 +93,9 @@ KNOWN_INERT: dict[str, str] = {
     "Tooltip.forcePosition": "absolute repositioning needs a window-level overlay",
     "Popover.zIndex": "inline render; no window-level overlay to stack in",
     "Popover.forcePosition": "absolute repositioning needs a window-level overlay",
+    # `menu` has no counterpart in upstream u-dropdown/props.js; it is an Android-only
+    # alias kept so older generated templates keep compiling.
+    "Dropdown.menu": "Android-only compatibility alias; no upstream field",
 }
 
 
