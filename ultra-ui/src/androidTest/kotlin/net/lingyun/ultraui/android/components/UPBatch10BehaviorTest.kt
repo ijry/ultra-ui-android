@@ -1,6 +1,10 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -13,6 +17,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
 @RunWith(AndroidJUnit4::class)
@@ -37,6 +42,243 @@ class UPBatch10BehaviorTest {
             assertEquals("2026-08-20", changes.single().value)
             assertEquals("2026-08-20", confirms.single().value)
         }
+    }
+
+    @Test
+    fun calendarShowsRangePromptWhenEndDateExceedsMaxRange() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = listOf("2026-08-20"),
+                    mode = "range",
+                    maxRange = 2,
+                    rangePrompt = "最多相差两天",
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-23").performClick()
+        composeRule.onNodeWithTag("up-calendar-prompt").assertTextEquals("最多相差两天")
+    }
+
+    @Test
+    fun calendarShowsConfiguredToastWhenForbiddenDateIsTapped() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-20",
+                    forbidDays = listOf("2026-08-21"),
+                    forbidDaysToast = "该日期不可选",
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-21").performClick()
+        composeRule.onNodeWithTag("up-calendar-prompt").assertTextEquals("该日期不可选")
+    }
+
+    @Test
+    fun calendarTimePanelUsesDefaultTimeAndUpdatesSingleResult() {
+        val confirms = mutableListOf<UPCalendarEvent>()
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-20",
+                    enableTime = true,
+                    timePrecision = "minute",
+                    defaultTime = "07:08",
+                ),
+                onConfirm = { confirms += it },
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-time-single-hour").assertTextEquals("07")
+        composeRule.onNodeWithTag("up-calendar-time-single-hour-increase").performClick()
+        composeRule.onNodeWithTag("up-calendar-time-single-hour").assertTextEquals("08")
+        composeRule.onNodeWithTag("up-calendar-confirm").performClick()
+        composeRule.runOnIdle {
+            assertEquals("2026-08-20 08:08", confirms.single().value)
+        }
+    }
+
+    @Test
+    fun calendarRendersConfiguredMonthSequenceAndFormat() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-20",
+                    monthNum = 3,
+                    monthFormat = "YYYY/MM",
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-month-2026-08").assertExists()
+        composeRule.onNodeWithTag("up-calendar-month-2026-09").assertExists()
+        composeRule.onNodeWithTag("up-calendar-month-2026-10").assertExists()
+        composeRule.onNodeWithTag("up-calendar-month-title-2026-08").assertTextEquals("2026/08")
+        composeRule.onNodeWithTag("up-calendar-month-title-2026-09").assertTextEquals("2026/09")
+        composeRule.onNodeWithTag("up-calendar-month-title-2026-10").assertTextEquals("2026/10")
+    }
+
+    @Test
+    fun calendarMonthSwitchShowsOneMonthAndNavigatesWithinConfiguredSequence() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-20",
+                    monthNum = 3,
+                    monthSwitch = true,
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-month-2026-08").assertExists()
+        composeRule.onNodeWithTag("up-calendar-month-2026-09").assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-prev").performClick()
+        composeRule.onNodeWithTag("up-calendar-month-2026-08").assertExists()
+        composeRule.onNodeWithTag("up-calendar-next").performClick()
+        composeRule.onNodeWithTag("up-calendar-month-2026-08").assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-month-2026-09").assertExists()
+        composeRule.onNodeWithTag("up-calendar-prev").performClick()
+        composeRule.onNodeWithTag("up-calendar-month-2026-08").assertExists()
+    }
+
+    @Test
+    fun calendarRejectsSameDayRangeWhenEndTimePrecedesStartTime() {
+        val confirms = mutableListOf<UPCalendarEvent>()
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    mode = "range",
+                    defaultDate = listOf("2026-08-20"),
+                    allowSameDay = true,
+                    enableTime = true,
+                    rangeResultMode = "boundary",
+                    defaultTime = "14:30",
+                ),
+                onConfirm = { confirms += it },
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20").performClick()
+        composeRule.onNodeWithTag("up-calendar-time-range-end-minute-decrease").performClick()
+        composeRule.onNodeWithTag("up-calendar-confirm").performClick()
+        composeRule.onNodeWithTag("up-calendar-prompt").assertTextEquals("结束时间不能早于开始时间")
+        composeRule.runOnIdle { assertTrue(confirms.isEmpty()) }
+    }
+
+    @Test
+    fun calendarRowHeightChangesDateCellHeight() {
+        val rowHeight = mutableStateOf(56)
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(show = true, defaultDate = "2026-08-20", rowHeight = rowHeight.value),
+            )
+        }
+        val defaultHeight = composeRule
+            .onNodeWithTag("up-calendar-day-2026-08-20")
+            .getUnclippedBoundsInRoot()
+            .let { it.bottom - it.top }
+
+        composeRule.runOnIdle {
+            rowHeight.value = 84
+        }
+        composeRule.waitForIdle()
+        val expandedHeight = composeRule
+            .onNodeWithTag("up-calendar-day-2026-08-20")
+            .getUnclippedBoundsInRoot()
+            .let { it.bottom - it.top }
+
+        assertTrue(expandedHeight > defaultHeight)
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20").assertHeightIsEqualTo(52.dp)
+    }
+
+    @Test
+    fun calendarCustomListRendersMetadataAndDisablesTheDate() {
+        val changes = mutableListOf<UPCalendarEvent>()
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-20",
+                    customList = listOf(
+                        mapOf(
+                            "date" to "2026-08-20",
+                            "topInfo" to "假",
+                            "bottomInfo" to "生日",
+                            "dot" to true,
+                            "disabled" to true,
+                        ),
+                    ),
+                ),
+                onChange = { changes += it },
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20-top-info", useUnmergedTree = true).assertTextEquals("假")
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20-bottom-info", useUnmergedTree = true).assertTextEquals("生日")
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20-dot", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20-disabled", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20").performClick()
+        composeRule.runOnIdle { assertTrue(changes.isEmpty()) }
+    }
+
+    @Test
+    fun calendarShowsMonthMarkTodayHighlightAndLunarLabelWhenEnabled() {
+        val showDecorations = mutableStateOf(true)
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    defaultDate = "2026-08-31",
+                    showMark = showDecorations.value,
+                    showToday = showDecorations.value,
+                    todayColor = "#ff5500",
+                    showLunar = showDecorations.value,
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-month-2026-08-mark").assertTextEquals("8")
+        composeRule.onNodeWithTag("up-calendar-today").assertTextEquals("今天")
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-today", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-today-color-ff5500", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-lunar", useUnmergedTree = true).assertTextEquals("七月十九")
+
+        composeRule.runOnIdle {
+            showDecorations.value = false
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("up-calendar-month-2026-08-mark").assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-today").assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-lunar", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun calendarRendersRangeBoundaryLabelsAndMiddleState() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(
+                    show = true,
+                    mode = "range",
+                    defaultDate = listOf("2026-08-20", "2026-08-23"),
+                    startText = "入住",
+                    endText = "离店",
+                ),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-20-bottom-info", useUnmergedTree = true).assertTextEquals("入住")
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-23-bottom-info", useUnmergedTree = true).assertTextEquals("离店")
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-21-range-middle", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-22-range-middle", useUnmergedTree = true).assertExists()
     }
 
     @Test

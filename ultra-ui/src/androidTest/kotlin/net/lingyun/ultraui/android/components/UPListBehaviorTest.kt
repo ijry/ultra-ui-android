@@ -1,10 +1,15 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
@@ -91,5 +96,21 @@ class UPListBehaviorTest {
         }
         composeRule.onNodeWithTag("up-list").assertExists()
         composeRule.onNodeWithTag("up-list-item").assertExists()
+    }
+
+    @Test
+    fun listCanBeEmbeddedInVerticallyScrollableContent() {
+        composeRule.setContent {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                UPList {
+                    repeat(3) { index ->
+                        UPListItem { UPText(UPTextProps(text = "列表项 ${index + 1}")) }
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("up-list").assertExists()
+        composeRule.onNodeWithText("列表项 1").assertExists()
     }
 }

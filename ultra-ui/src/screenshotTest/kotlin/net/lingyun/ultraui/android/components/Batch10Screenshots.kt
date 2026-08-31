@@ -21,7 +21,17 @@ public fun UPBatch10CalendarSliderScreenshot() {
         Modifier.fillMaxSize().background(Color.White).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        UPCalendar(UPCalendarProps(pageInline = true, defaultDate = "2026-08-20"))
+        UPCalendarLegacyPreview(
+            UPCalendarProps(
+                pageInline = true,
+                defaultDate = "2026-08-20",
+                monthNum = 1,
+                monthSwitch = true,
+                showToday = false,
+                showMark = false,
+                monthFormat = "YYYY年M月",
+            ),
+        )
         UPSlider(UPSliderProps(value = 65, step = 5, showValue = true))
     }
 }

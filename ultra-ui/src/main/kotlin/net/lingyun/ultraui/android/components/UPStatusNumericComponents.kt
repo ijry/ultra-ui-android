@@ -6,10 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicText
@@ -89,9 +93,53 @@ public fun UPSwiper(list: List<UPRawValue>, modifier: Modifier = Modifier, curre
 public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorProps(), modifier: Modifier = Modifier, onClick: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     val count = props.length.upIntOrDefault(0).coerceAtLeast(0)
     val current = props.current.upIntOrDefault(0).coerceIn(0, (count - 1).coerceAtLeast(0))
+    val activeColor = UPColor.parse(props.indicatorActiveColor, Color.White)
+    val inactiveColor = UPColor.parse(props.indicatorInactiveColor, Color.LightGray)
+    val indicatorShape = RoundedCornerShape(100.dp)
     Row(modifier.fillMaxWidth().padding(6.dp).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwiperIndicator")).upTestTag("swiper-indicator"), horizontalArrangement = Arrangement.Center) {
-        repeat(count) { index ->
-            Box(Modifier.padding(3.dp).size(if (props.indicatorMode == "line") 18.dp else 7.dp, 7.dp).background(UPColor.parse(if (index == current) props.indicatorActiveColor else props.indicatorInactiveColor, if (index == current) Color.White else Color.LightGray)).upClickable(onClick = { onClick?.invoke(index) }))
+        if (props.indicatorMode == "dot") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                repeat(count) { index ->
+                    Box(
+                        Modifier
+                            .width(if (index == current) 12.dp else 5.dp)
+                            .height(5.dp)
+                            .background(if (index == current) activeColor else inactiveColor, indicatorShape)
+                            .upClickable(onClick = { onClick?.invoke(index) })
+                            .upTestTag("swiper-indicator-dot-$index"),
+                    )
+                }
+            }
+        } else {
+            val lineWidth = 22.dp
+            Box(
+                Modifier
+                    .width(lineWidth * count)
+                    .height(4.dp)
+                    .background(inactiveColor, indicatorShape)
+                    .upTestTag("swiper-indicator-line-track"),
+            ) {
+                Box(
+                    Modifier
+                        .offset(x = lineWidth * current)
+                        .width(lineWidth)
+                        .fillMaxHeight()
+                        .background(activeColor, indicatorShape)
+                        .upTestTag("swiper-indicator-line-bar"),
+                )
+                if (onClick != null) {
+                    Row(Modifier.fillMaxWidth().fillMaxHeight()) {
+                        repeat(count) { index ->
+                            Spacer(
+                                Modifier
+                                    .width(lineWidth)
+                                    .fillMaxHeight()
+                                    .upClickable(onClick = { onClick(index) }),
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

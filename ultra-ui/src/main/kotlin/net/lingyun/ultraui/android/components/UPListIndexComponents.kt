@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
@@ -83,10 +85,13 @@ public fun UPList(props: UPListProps = UPListProps(), modifier: Modifier = Modif
         if (props.refresherEnabled) {
             UPListRefresher(props, onRefresherRefresh, onUpdateRefresherTriggered)
         }
-        Column(Modifier.verticalScroll(scrollState)) {
-            content()
-            // Anchors the bottom edge so callers and tests can scroll straight to it.
-            Box(Modifier.fillMaxWidth().height(1.dp).upTestTag("list-sentinel"))
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val bodyModifier = if (maxHeight == Dp.Infinity) Modifier else Modifier.verticalScroll(scrollState)
+            Column(bodyModifier) {
+                content()
+                // Anchors the bottom edge so callers and tests can scroll straight to it.
+                Box(Modifier.fillMaxWidth().height(1.dp).upTestTag("list-sentinel"))
+            }
         }
     }
 }
@@ -190,8 +195,9 @@ public fun UPIndexItem(props: UPIndexItemProps = UPIndexItemProps(), modifier: M
 
 @Composable
 public fun UPIndexAnchor(props: UPIndexAnchorProps = UPIndexAnchorProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
+    val label = actionOrOptionText(props.text, "name", props.text.upStringValueOrEmpty())
     Box(modifier.fillMaxWidth().height(net.lingyun.ultraui.android.core.upDimension(props.height, 32.dp)).background(UPColor.parse(props.bgColor, Color(0xFFF1F1F1))).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPIndexAnchor")).padding(horizontal = 16.dp).upTestTag("index-anchor"), contentAlignment = Alignment.CenterStart) {
-        BasicText(props.text.toString(), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.size, 14.dp).value.sp))
+        BasicText(label, style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.size, 14.dp).value.sp))
     }
 }
 

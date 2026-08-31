@@ -169,6 +169,265 @@ class UPBatch10PropsTest {
     }
 
     @Test
+    fun calendarMonthSequenceHonorsCountAndSwitchMode() {
+        assertEquals(
+            listOf(
+                UPCalendarMonth(2026, 8),
+                UPCalendarMonth(2026, 9),
+                UPCalendarMonth(2026, 10),
+            ),
+            calendarMonthSequence("2026-08-20", monthNum = 3, monthSwitch = false),
+        )
+        assertEquals(
+            listOf(UPCalendarMonth(2026, 8)),
+            calendarMonthSequence("2026-08-20", monthNum = 3, monthSwitch = true),
+        )
+    }
+
+    @Test
+    fun legacyCalendarPreviewKeepsSundayFirstEmptyAdjacentCellsAndSixRows() {
+        val cells = legacyCalendarPreviewCells(2026, 8)
+
+        assertEquals(42, cells.size)
+        assertEquals(listOf(null, null, null, null, null, null, 1), cells.take(7))
+        assertEquals(listOf(30, 31, null, null, null, null, null), cells.takeLast(7))
+    }
+
+    @Test
+    fun calendarMonthTitleUsesConfiguredTokensAndFallback() {
+        val month = UPCalendarMonth(2026, 8)
+
+        assertEquals("2026/08", calendarMonthTitle(month, "YYYY/MM"))
+        assertEquals("2026年8月", calendarMonthTitle(month, "YYYY年M月"))
+        assertEquals("2026年08月", calendarMonthTitle(month, ""))
+    }
+
+    @Test
+    fun calendarCustomMetadataMergesObservableDateFields() {
+        val metadata = calendarCustomMetadata(
+            listOf(
+                mapOf(
+                    "date" to "2026-08-20",
+                    "topInfo" to "假",
+                    "bottomInfo" to "生日",
+                    "dot" to true,
+                    "disabled" to true,
+                ),
+            ),
+        )
+
+        assertEquals(
+            UPCalendarDayMetadata(
+                date = "2026-08-20",
+                topInfo = "假",
+                bottomInfo = "生日",
+                dot = true,
+                disabled = true,
+            ),
+            metadata["2026-08-20"],
+        )
+    }
+
+    @Test
+    fun calendarRangeSelectionRejectsConfiguredDistanceWithPrompt() {
+        val props = UPCalendarProps(
+            mode = "range",
+            maxRange = 2,
+            rangePrompt = "最多相差两天",
+            showRangePrompt = true,
+        )
+
+        assertEquals(
+            UPCalendarSelectionOutcome(
+                selected = listOf("2026-08-20", "2026-08-22"),
+            ),
+            resolveCalendarSelection(props, listOf("2026-08-20"), "2026-08-22"),
+        )
+        assertEquals(
+            UPCalendarSelectionOutcome(
+                selected = listOf("2026-08-20"),
+                prompt = "最多相差两天",
+            ),
+            resolveCalendarSelection(props, listOf("2026-08-20"), "2026-08-23"),
+        )
+    }
+
+    @Test
+    fun calendarRangePromptUsesFallbackAndCanDisableTheLimitPrompt() {
+        val prompted = resolveCalendarSelection(
+            UPCalendarProps(mode = "range", maxRange = 1, showRangePrompt = true),
+            listOf("2026-08-20"),
+            "2026-08-22",
+        )
+        val unprompted = resolveCalendarSelection(
+            UPCalendarProps(mode = "range", maxRange = 1, showRangePrompt = false),
+            listOf("2026-08-20"),
+            "2026-08-22",
+        )
+
+        assertEquals(listOf("2026-08-20"), prompted.selected)
+        assertEquals("选择天数不能超过1天", prompted.prompt)
+        assertEquals(listOf("2026-08-20", "2026-08-22"), unprompted.selected)
+        assertEquals(null, unprompted.prompt)
+    }
+
+    @Test
+    fun calendarRangeResultModeExpandsAllDatesOrKeepsBoundaries() {
+        val boundaries = listOf("2026-08-20", "2026-08-23")
+
+        assertEquals(
+            listOf("2026-08-20", "2026-08-21", "2026-08-22", "2026-08-23"),
+            calendarResultDates("range", boundaries, "all"),
+        )
+        assertEquals(boundaries, calendarResultDates("range", boundaries, "boundary"))
+        assertEquals(listOf("2026-08-20"), calendarResultDates("single", listOf("2026-08-20"), "all"))
+    }
+
+    @Test
+    fun calendarForbiddenDateReturnsConfiguredToastText() {
+        val props = UPCalendarProps(
+            forbidDays = listOf("2026-08-20"),
+            forbidDaysToast = "该日期不可选",
+        )
+
+        assertEquals("该日期不可选", calendarForbiddenPrompt(props, "2026-08-20"))
+        assertEquals(null, calendarForbiddenPrompt(props, "2026-08-21"))
+        assertEquals(
+            null,
+            calendarForbiddenPrompt(
+                props.copy(mode = "range"),
+                "2026-08-20",
+            ),
+        )
+    }
+
+    @Test
+    fun calendarTimeParsingClampsMalformedValuesAndFormatsRequestedPrecision() {
+        val time = calendarInitialTimes(
+            UPCalendarProps(
+                enableTime = true,
+                mode = "single",
+                timePrecision = "second",
+                defaultTime = "27:oops:91",
+            ),
+        ).single()
+
+        assertEquals(UPCalendarTime(hour = 23, minute = 0, second = 59), time)
+        assertEquals(listOf("23"), calendarTimeParts(time, "hour"))
+        assertEquals(listOf("23", "00"), calendarTimeParts(time, "minute"))
+        assertEquals(listOf("23", "00", "59"), calendarTimeParts(time, "second"))
+    }
+
+    @Test
+    fun calendarInitialTimesOnlyExposeSupportedTimePanels() {
+        val default = UPCalendarTime(hour = 7, minute = 8, second = 0)
+
+        assertEquals(
+            listOf(default),
+            calendarInitialTimes(
+                UPCalendarProps(enableTime = true, mode = "single", defaultTime = "7:8"),
+            ),
+        )
+        assertEquals(
+            listOf(default, default),
+            calendarInitialTimes(
+                UPCalendarProps(
+                    enableTime = true,
+                    mode = "range",
+                    rangeResultMode = "boundary",
+                    defaultTime = "7:8",
+                ),
+            ),
+        )
+        assertTrue(
+            calendarInitialTimes(
+                UPCalendarProps(enableTime = true, mode = "range", rangeResultMode = "all"),
+            ).isEmpty(),
+        )
+        assertTrue(calendarInitialTimes(UPCalendarProps(enableTime = false, mode = "single")).isEmpty())
+    }
+
+    @Test
+    fun calendarTimeUpdatesNormalizePartsAndAppendOnlySupportedResults() {
+        val initial = UPCalendarTime(hour = 7, minute = 8, second = 9)
+        val updated = updateCalendarTime(updateCalendarTime(initial, 0, 29), 1, -5)
+
+        assertEquals(UPCalendarTime(hour = 23, minute = 0, second = 9), updated)
+        assertEquals(
+            listOf("2026-08-20 07:08"),
+            calendarResultValues(
+                UPCalendarProps(enableTime = true, mode = "single", timePrecision = "minute"),
+                listOf("2026-08-20"),
+                listOf(initial),
+            ),
+        )
+        assertEquals(
+            listOf("2026-08-20 07:08:09", "2026-08-21 10:11:12"),
+            calendarResultValues(
+                UPCalendarProps(
+                    enableTime = true,
+                    mode = "range",
+                    rangeResultMode = "boundary",
+                    timePrecision = "second",
+                ),
+                listOf("2026-08-20", "2026-08-21"),
+                listOf(initial, UPCalendarTime(hour = 10, minute = 11, second = 12)),
+            ),
+        )
+        assertEquals(
+            listOf("2026-08-20", "2026-08-21", "2026-08-22"),
+            calendarResultValues(
+                UPCalendarProps(
+                    enableTime = true,
+                    mode = "range",
+                    rangeResultMode = "all",
+                ),
+                listOf("2026-08-20", "2026-08-22"),
+                emptyList(),
+            ),
+        )
+    }
+
+    @Test
+    fun calendarSameDayRangeRejectsAnEndTimeBeforeTheStartTime() {
+        val props = UPCalendarProps(
+            enableTime = true,
+            mode = "range",
+            rangeResultMode = "boundary",
+        )
+
+        assertFalse(
+            calendarSameDayRangeTimeAllowed(
+                props,
+                listOf("2026-08-20", "2026-08-20"),
+                listOf(
+                    UPCalendarTime(hour = 14, minute = 30),
+                    UPCalendarTime(hour = 14, minute = 29),
+                ),
+            ),
+        )
+        assertTrue(
+            calendarSameDayRangeTimeAllowed(
+                props,
+                listOf("2026-08-20", "2026-08-20"),
+                listOf(
+                    UPCalendarTime(hour = 14, minute = 30),
+                    UPCalendarTime(hour = 14, minute = 30),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun calendarLunarLabelMatchesKnownSolarDatesAndRejectsUnsupportedYears() {
+        assertEquals("正月初一", calendarLunarLabel(2024, 2, 10))
+        assertEquals("七月十九", calendarLunarLabel(2026, 8, 31))
+        assertEquals("正月初一", calendarLunarLabel(1900, 1, 31))
+        assertEquals("", calendarLunarLabel(1899, 12, 31))
+        assertEquals("", calendarLunarLabel(2101, 1, 1))
+    }
+
+    @Test
     fun calendarDateBoundsDisableDatesOutsideTheAllowedWindow() {
         val props = UPCalendarProps(minDate = "2026-08-10", maxDate = "2026-08-20")
 
@@ -176,6 +435,14 @@ class UPBatch10PropsTest {
         assertTrue(calendarDateAllowed(props, "2026-08-20"))
         assertFalse(calendarDateAllowed(props, "2026-08-09"))
         assertFalse(calendarDateAllowed(props, "2026-08-21"))
+    }
+
+    @Test
+    fun calendarForbiddenDatesAreNotAllowedInSingleOrRangeMode() {
+        val props = UPCalendarProps(forbidDays = listOf("2026-08-15"))
+
+        assertFalse(calendarDateAllowed(props, "2026-08-15"))
+        assertFalse(calendarDateAllowed(props.copy(mode = "range"), "2026-08-15"))
     }
 
     @Test

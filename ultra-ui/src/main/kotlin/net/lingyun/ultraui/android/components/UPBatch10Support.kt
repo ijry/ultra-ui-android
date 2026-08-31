@@ -31,7 +31,10 @@ internal fun updateCalendarSelection(
 internal fun calendarDateAllowed(props: UPCalendarProps, date: String): Boolean {
     val minDate = normalizedCalendarBoundary(props.minDate)
     val maxDate = normalizedCalendarBoundary(props.maxDate)
-    return (minDate == null || date >= minDate) && (maxDate == null || date <= maxDate)
+    val forbidden = props.forbidDays.any { value ->
+        value?.toString()?.trim() == date || normalizedCalendarBoundary(value) == date
+    }
+    return !forbidden && (minDate == null || date >= minDate) && (maxDate == null || date <= maxDate)
 }
 
 internal fun resolveDatetimeSelection(props: UPDatetimePickerProps): UPDatetimeSelection {
