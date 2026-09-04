@@ -108,6 +108,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("数字滚动") { UPCountTo(UPCountToProps(startVal = 0, endVal = 128, autoplay = false)) }
             DemoSection("倒计时") { UPCountDown(UPCountDownProps(time = 61000, autoStart = false)) }
             DemoSection("选择器") { UPPicker(UPPickerProps(show = true, title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"))))) }
+            DemoSection("选择器输入触发器") { UPPicker(UPPickerProps(hasInput = true, placeholder = "请选择城市", title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"), mapOf("text" to "上海", "value" to "sh"))))) }
             DemoSection("选择器列") { UPPickerColumn { BasicText("北京") } }
             DemoSection("分页") { UPPagination(UPPaginationProps(total = 42)) }
             DemoSection("下拉选择") { UPSelect(UPSelectProps(options = listOf(mapOf("id" to 1, "name" to "北京"), mapOf("id" to 2, "name" to "上海")), current = select), onUpdateCurrent = { select = it }) }

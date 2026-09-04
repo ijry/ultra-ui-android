@@ -75,6 +75,16 @@ public fun SelectionNavigationDemoPage(onBack: () -> Unit, modifier: Modifier = 
                     ),
                 )
             }
+            DemoSection("日期时间输入触发器") {
+                UPDatetimePicker(
+                    UPDatetimePickerProps(
+                        hasInput = true,
+                        placeholder = "请选择日期",
+                        mode = "date",
+                        value = "2026-08-20",
+                    ),
+                )
+            }
             DemoSection("级联选择器") {
                 UPCascader(
                     props = UPCascaderProps(show = true, data = cascaderData, modelValue = cascaderValue),

@@ -56,7 +56,7 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 | 图标 | 图标 |
 | 加载中图标 | 加载中图标 |
 
-`原生交互` 页面展示 Batch 9A 的 10 个组件，`导航与更多` 页面展示 Batch 9B 的 32 个组件，`选择与底部导航` 页面展示 Batch 10 的 6 个组件，`表单与校验` 页面展示 Batch 11 的 `up-form`/`up-form-item`（规则校验、六个 ref 方法、`toast` 错误通道、顶部标签与三个插槽），并通过状态提升演示可见性、选择和受控值回调。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
+`原生交互` 页面展示 Batch 9A 的 10 个组件，`导航与更多` 页面展示 Batch 9B 的 32 个组件，`选择与底部导航` 页面展示 Batch 10 的 6 个组件，`表单与校验` 页面展示 Batch 11 的 `up-form`/`up-form-item`（规则校验、六个 ref 方法、`toast` 错误通道、顶部标签与三个插槽），并通过状态提升演示可见性、选择和受控值回调。`u-picker` 与 `u-datetime-picker` 在两个页面各增一个 `hasInput` 触发器示例：只读输入框展示已选文案，点击由覆盖层接管并开合面板。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
 
 ## 88 个组件目录
 
