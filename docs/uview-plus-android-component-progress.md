@@ -8,9 +8,9 @@
 - 上游固定提交：`b32377ce0500579830e537a20eef1a7c6c9cf806`
 - 扫描日期：2026-08-30
 - 上游目录总数：141 个
-- 当前 Android 公开 `UP*Props`：88 个
-- 当前 Android 已有公开 Compose 组件入口：88 个（另有 `UPToastHost` 等宿主辅助 API）
-- 当前目标组件完成度：88 / 138 个可直接使用的上游 UI 组件目录，约 63.8%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
+- 当前 Android 公开 `UP*Props`：90 个
+- 当前 Android 已有公开 Compose 组件入口：90 个（另有 `UPToastHost` 等宿主辅助 API）
+- 当前目标组件完成度：90 / 138 个可直接使用的上游 UI 组件目录，约 65.2%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
 
 ### 复刻进度定义
 
@@ -78,8 +78,8 @@
 | 43 | 原生交互 | `u-dropdown-item` | `UPDropdownItem` / `UPDropdownItemProps` | 基本完成 | 中 | 标题点击开合、单选/多选 payload、选项禁用与 `height` 限定面板最大高度（超出滚动）均已生效并有真机断言；复杂内容插槽已支持 `content`。 |
 | 44 | 基础展示 | `u-empty` | `UPEmpty` / `UPEmptyProps` | 基本完成 | 高（Props） | 图标、描述、按钮和样式已有实现。 |
 | 45 | 原生交互 | `u-float-button` | — | 未开始 | 暂无 | 浮动按钮，待实现拖动/吸附和安全区处理。 |
-| 46 | 表单与协议 | `u-form` | — | 未开始 | 暂无 | 表单校验上下文，待建立 Kotlin validator 事件边界。 |
-| 47 | 表单与协议 | `u-form-item` | — | 未开始 | 暂无 | 表单项标签、错误和校验展示待实现。 |
+| 46 | 表单与协议 | `u-form` | `UPForm` / `UPFormProps` | 基本完成 | 高（Props） | model/rules/errorType/labelPosition/labelWidth/labelAlign/labelStyle 逐字段下发子项；`UPFormController` 复刻 validate/validateField/resetFields/resetField/clearValidate/setRules 六个 ref 方法，async-validator 的 required/type/range/pattern/whitespace/enum/transform/validator 与消息模板逐条实现；errorType="toast" 交由 `onToast` 宿主回调。差异：Kotlin `model` 不可变，`resetFields()` 经 `onUpdateModel` 回传首帧快照；`borderBottom` 上游仅存于死代码 computed，保留字段但不生效。 |
+| 47 | 表单与协议 | `u-form-item` | `UPFormItem` / `UPFormItemProps` | 基本完成 | 高（Props） | 标签宽度/对齐/位置回落父级、必填星号绝对定位不占布局、leftIcon、label/right/error 三插槽、错误文案缩进（labelPosition="top" 归零）、borderBottom 画线与错误色均有真机断言。降级：上游 `rightIcon` 声明后从未渲染，Android 同样保留字段但不生效。 |
 | 48 | 基础展示 | `u-gap` | `UPGap` / `UPGapProps` | 基本完成 | 高（Props） | 间隔尺寸和背景已有实现。 |
 | 49 | 选择 | `u-goods-sku` | — | 未开始 | 暂无 | 商品规格选择器，待明确业务数据模型。 |
 | 50 | 布局 | `u-grid` | `UPGrid` / `UPGridProps` | 基本完成 | 高（Props） | 列数、间距、边框和点击布局已有测试。 |
@@ -147,7 +147,7 @@
 | 112 | 导航 | `u-subsection` | `UPSubsection` / `UPSubsectionProps` | 基础可用 | 中 | 分段切换基础行为可用；样式和滚动模式待对照。 |
 | 113 | 原生交互 | `u-swipe-action` | `UPSwipeAction` / `UPSwipeActionProps` | 基本完成 | 中 | 父级协调已实现：`autoClose` 打开一项时关闭其余项、`opendItem` 置 false 触发 closeAll、并通过 `onUpdateOpendItem` 上报开合状态；均有真机断言。 |
 | 114 | 原生交互 | `u-swipe-action-item` | `UPSwipeActionItem` / `UPSwipeActionItemProps` | 基本完成 | 中 | 横向拖动超过 `threshold`（默认 20）才展开、`duration` 驱动展开动画、`show` 为受控开合状态、`closeOnClick` 点击后收起、`disabled` 忽略手势；均有真机断言。此前按钮由 `show` 常驻显示且完全没有手势。 |
-| 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基础可用 | 中 | `autoplay`+`interval` 定时切换、`circular` 末尾回头、`previousMargin`/`nextMargin` 露边、`indicatorStyle` 已生效并有真机测试。仍未实现：`imgMode`/`radius`/`showTitle`/`vertical`（当前只渲染文字标签，不显示图片，也不支持纵向与圆角）、`displayMultipleItems`、`acceleration`、`currentItemId`、`duration` 过渡动画。 |
+| 115 | 媒体与内容 | `u-swiper` | `UPSwiper` / `UPSwiperProps` | 基本完成 | 中 | `autoplay`+`interval` 定时切换、`circular` 末尾回头、`previousMargin`/`nextMargin` 露边、`indicatorStyle` 已生效；本批补齐 `imgMode`（图片项经 `UPImage` 渲染，`keyName`/`getSource` 对齐上游）、`radius` 圆角裁剪、`showTitle` 半透明标题条（显示标题时隐藏指示器）、`vertical` 纵向布局与纵向拖拽、`displayMultipleItems` 视口均分、`currentItemId`（优先级高于 `current`）、`duration` 过渡动画和 `loading` 占位。视频项渲染 `poster` + 播放图标并上报诊断（无原生播放器）；`acceleration` 降级为诊断上报，`easingFunction` 登记为按设计不生效。 |
 | 116 | 媒体与内容 | `u-swiper-indicator` | `UPSwiperIndicator` / `UPSwiperIndicatorProps` | 基础可用 | 中 | line/dot 两种基础模式、当前项尺寸、颜色和点击回调已有真机断言；复杂样式待对照。 |
 | 117 | 选择 | `u-switch` | `UPSwitch` / `UPSwitchProps` | 基本完成 | 高（Props） | 受控值、禁用、颜色和 change/update 事件已有测试。 |
 | 118 | 导航 | `u-tabbar` | `UPTabbar` / `UPTabbarProps` | 基础可用 | 中 | 父子受控状态、颜色、边框和安全区已支持；新增 9 种 `styleType`、active/inactive 背景、`itemShape`、`textMode`、`iconScale` 和 `animationType`，均有真机结构/状态回归。`fixed`/`placeholder`/`zIndex` 为兼容字段，窗口级固定需宿主放入 Scaffold bottomBar 或底部 Box。 |
@@ -182,11 +182,11 @@
 | 上游目录总数 | 141 |
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
-| Android 已建立 Props/API | 88 |
-| 基本完成 | 40 |
-| 基础可用 | 48 |
+| Android 已建立 Props/API | 90 |
+| 基本完成 | 50 |
+| 基础可用 | 40 |
 | Props 已建 | 0 |
-| 未开始（含辅助模块） | 53 |
+| 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
 
 ## 当前已实现组件分批
@@ -198,10 +198,11 @@
 | Batch 9A 原生交互 | alert、action-sheet、notify、back-top、card、collapse、collapse-item、dropdown、dropdown-item、notice-bar | 10 | 基础可用；全局弹层、滚动和动画语义仍需加强。 |
 | Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 基础可用；部分组件已做受控字段修正，但还不是完整上游行为复刻。 |
 | Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 基础可用；日期选择、级联、滑块和底部导航核心状态已覆盖，滚轮视觉、复杂样式和窗口级固定仍需加强。 |
+| Batch 11 表单校验 | form、form-item | 2 | 基本完成；上游 async-validator 规则、六个 ref 方法与标签/错误布局均有真机断言。 |
 
 ## 下一批推荐顺序
 
-1. **表单体系**：`u-form`、`u-form-item`、`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界。
+1. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 2. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 3. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
 4. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
@@ -218,13 +219,33 @@ export ANDROID_HOME="$HOME/Library/Android/sdk"
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 emulator -avd MCode_Phone -no-snapshot-load -no-boot-anim -gpu swiftshader_indirect &
 until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 4; done
+export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 Wear OS 模拟器会让同一批用例在圆形小屏上重复执行并必然裁剪失败
 ./gradlew :ultra-ui:connectedDebugAndroidTest
+# 按类执行（该任务不支持 --tests）
+./gradlew :ultra-ui:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：**135 个库内行为测试全部通过**。本次新增 8 项 `u-tabbar`/`u-tabbar-item`
-回归，覆盖风格结构、状态背景、underline/dot 指示器、激活图标动画、middle 按钮几何、
-内容包裹高度、图标与标签居中和
-CSS hook 降级诊断；此前另有 10 项结构与滚动约束回归，覆盖 `u-index-anchor`、`u-index-item`、
+当前状态：库内共 **174 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+`connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-swiper` 补齐 12 项回归（`UPSwiperBehaviorTest` 5 项 → 17 项），覆盖 `loading` 占位、图片项经
+`UPImage` 渲染、`showTitle` 标题条与指示器互斥、`currentItemId` 压过 `current`、翻页控件上报的邻居
+索引、`circular` 首屏双向控件、`vertical` 纵向堆叠对比横向排列、`displayMultipleItems` 视口均分和
+露边内缩。这 12 项**只有编译级证据**（`compileDebugAndroidTestKotlin` 通过），按用户要求未在
+设备/模拟器上执行。Batch 11 新增 16 项
+`u-form`/`u-form-item` 回归，覆盖 validate/validateField/resetFields/resetField/clearValidate/setRules
+六个 ref 方法、`trigger` 事件过滤、`errorType="toast"` 经 `onToast` 转发且行内不渲染文案、
+必填星号绝对定位不占布局、标签宽度/对齐/位置回落父级、label/right/error 三插槽和
+`borderBottom` 画线；另新增 1 项固定公历日期→农历文案的换算用例。这 16 项与修订后的
+`UPBatch10BehaviorTest`（16 项）已在 `emulator-5554`（MCode_Phone，android-36/arm64-v8a）上按类跑通；
+整轮 162 项的一次性全绿**尚缺证据**——两次尝试都因模拟器进程被外部回收而中断
+（报告为 `device offline` / `device 'emulator-5554' not found`），最近一次停在第 51 项，
+且这 51 项中没有真实失败。补跑时优先按类分批执行，并核对
+`ultra-ui/build/outputs/androidTest-results/connected/debug/TEST-*.xml` 的累计条数。
+
+此前批次新增 8 项 `u-tabbar`/`u-tabbar-item` 回归，覆盖风格结构、状态背景、underline/dot
+指示器、激活图标动画、middle 按钮几何、内容包裹高度、图标与标签居中和
+CSS hook 降级诊断；再往前有 10 项结构与滚动约束回归，覆盖 `u-index-anchor`、`u-index-item`、
 `u-picker`、`u-picker-column`、`u-datetime-picker`、`u-list`、`u-safe-bottom`、
 `u-swiper-indicator`、`u-tabs-item`。其中 picker、datetime-picker 和 list 均验证了嵌入外层
 纵向滚动容器时不会触发无限高度约束崩溃。首次真机执行曾暴露 1 个实现缺陷（picker 列平铺
@@ -233,6 +254,13 @@ CSS hook 降级诊断；此前另有 10 项结构与滚动约束回归，覆盖 
 
 > 教训：`upTestTag("x")` 生成的标签是 `up-x`；断言几何时要确认 tag 挂在 modifier 链的
 > 哪一层，`padding` 之后的 tag 只能看到内容区。
+
+> 教训：涉及「今天」的断言必须从 `Calendar.getInstance()` 推导。`UPBatch10BehaviorTest`
+> 曾把 `2026-08-31` 写死当作今天，跨天后必然失败；已改为动态推导，并另留一个固定公历
+> 日期→农历（`2026-08-31` → `七月十九`）的用例保留精确换算证据。
+>
+> 教训：整轮执行期间模拟器可能被外部回收，AGP 会把 `device offline` 报成某个用例 FAILED。
+> 判定回归前先确认设备仍在线（`adb devices`），再看是否有断言堆栈。
 
 ## 维护规则
 
@@ -255,38 +283,49 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：88 个已实现组件行中，**72 行证据齐备、16 行标注超出证据**。
+当前状态：90 个已实现组件行中，**75 行证据齐备、15 行标注超出证据**。新增的 `u-form`、
+`u-form-item` 两行同时具备真机行为测试与零未读字段，因此未进入偏乐观清单；`u-swiper` 补齐九个
+字段后未读数归零，并同时拥有行为测试与截图语料，因此本轮从偏乐观清单中移出并升级为「基本完成」。
 
 > 为什么要做这件事：连续五轮工作中，每一轮都在标着「基础可用/基本完成」的组件里发现
 > **组件级不可用**缺陷——`u-picker` 列平铺导致选项无法点击、`u-swiper` 只渲染文字不显示
-> 图片、`u-steps` 完全忽略 `current` 使每步都显示已完成、`u-input` 的 `selectionStart`
-> 全无作用。这些都通过了 Props 单测与截图，说明**标注整体偏乐观**，需要独立的证据核验。
+> 图片（已修复：图片项现走 `UPImage`）、`u-steps` 完全忽略 `current` 使每步都显示已完成、
+> `u-input` 的 `selectionStart` 全无作用。这些都通过了 Props 单测与截图，说明**标注整体偏乐观**，
+> 需要独立的证据核验。
 
 此前已补齐证据的行：`u-avatar`、`u-cell-group`、`u-divider`、`u-title`（此前既无真机测试
 也无截图，却标「基本完成」）、`u-button`（库内最常用组件，此前零真机断言）。上一批新增
 `u-index-anchor`、`u-index-item`、`u-picker-column`、`u-safe-bottom`、`u-swiper-indicator`、
 `u-tabs-item` 的结构行为证据，并为 `u-picker`、`u-datetime-picker`、`u-list` 补充了外层
-纵向滚动回归；本次再补齐 `u-tabbar` 与 `u-tabbar-item` 的风格和状态行为证据。`u-tag` 的
-`height`/`borderRadius`/`plainFill` 已实现并有真机测试。
+纵向滚动回归；此后补齐 `u-tabbar` 与 `u-tabbar-item` 的风格和状态行为证据。`u-tag` 的
+`height`/`borderRadius`/`plainFill` 已实现并有真机测试。最近一批为 `u-swiper` 补齐 12 项行为断言
+（编译级）与 4 张截图参考图（文字页、`loading`、标题条、露边缩放），参考图总数 14 → 18。
 
 ## 未生效字段核查
 
 `tools/find_unread_props.py` 报告「声明了但组件从不读取」的 `UP*Props` 字段。这类字段是静默
 空操作：类型检查通过、Props 测试通过、截图也不变，因此既有核查手段都发现不了它。
-当前扫描结果中，`u-tabbar` 与 `u-tabbar-item` 已不再出现在未读字段清单；未读字段仍需按组件
-逐项消化，不能仅以 Props 声明或编译通过替代行为证据。
+当前扫描结果中，`u-tabbar`、`u-tabbar-item` 与 `u-swiper` 已不再出现在未读字段清单；未读字段
+仍需按组件逐项消化，不能仅以 Props 声明或编译通过替代行为证据。Batch 11 的两个表单组件没有新增未读字段：
+`u-form` 的 `borderBottom` 已登记为按设计不生效（上游只有一个不再被调用的 `propsChange` computed 引用它，
+`u-form-item` 从不读取父级该字段），`u-form-item` 的 `rightIcon` 上游声明后同样从未渲染——后者因为
+`UPFormItem` 会把整个 `props` 转发给内部函数，脚本会退化成全库搜索并被 `UPCell` 的同名字段掩盖，
+所以只能记录在本文档而不会出现在脚本清单里。
 
 ```
 python3 tools/find_unread_props.py                # 列出无人读取的字段（有结果时退出码 1）
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：88 个 Props 类中有 **90 个字段无人读取**，另有 55 个已记录为按设计不生效
+当前状态：90 个 Props 类中有 **81 个字段无人读取**，另有 56 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
 `offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`、
 `u-list` 的 10 个滚动与下拉刷新字段、`u-swiper` 的自动播放与循环，以及 `u-steps` 的
 全部 7 个状态字段，以及 `u-input`/`u-textarea` 的 `selectionStart`/`selectionEnd`/`cursor`。
+最近一批把 `u-swiper` 剩余 9 个字段（`imgMode`、`radius`、`showTitle`、`vertical`、
+`displayMultipleItems`、`currentItemId`、`duration`、`loading`、`acceleration`）全部接上实现或
+诊断降级，未读数因此从 90 降到 81；`easingFunction` 早已登记为按设计不生效（上游注明只对微信小程序有效）。
 
 > 数字为何从 134 涨到 205：脚本原先把**整个文件**当作搜索范围，同文件内的兄弟组件
 > （`UPSwiper` 与 `UPCountTo` 同在 `UPStatusNumericComponents.kt`）会互相掩盖——
@@ -295,10 +334,11 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 > 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
 > 才显形。**205 是更接近真相的数字，不是退步。**
 
-90 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
-也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片、
+81 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。后续批次应优先
-消化本清单，而不是先增加新组件。
+消化本清单，而不是先增加新组件。按未读字段数排序，下一批优先目标是
+`u-datetime-picker`/`u-picker`/`u-tabs`（各 7 个）与 `u-pagination`（4 个）。
 
 ## 默认值漂移核查
 
@@ -312,7 +352,7 @@ python3 tools/compare_uview_defaults.py --show-accepted   # 同时列出已记�
 python3 tools/compare_uview_defaults.py --list-unaudited  # 列出脚本仍覆盖不到的组件
 ```
 
-当前状态：比对 80 个组件、911 个字段，未解释漂移 0 个，已记录降级 15 个。
+当前状态：比对 82 个组件、925 个字段，未解释漂移 0 个，已记录降级 15 个。
 
 **覆盖边界**：仍有 8 个组件（Cascader、IndexItem、Pagination、PickerColumn、SafeBottom、Select、
 TabsItem、Title）在上游没有可比对的字面量默认值，需人工对照 `.vue` 复核。另外本脚本只比对

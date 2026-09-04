@@ -100,6 +100,8 @@ class ProjectContractTest {
             "UPSliderProps",
             "UPTabbarProps",
             "UPTabbarItemProps",
+            "UPFormProps",
+            "UPFormItemProps",
         )
 
         expectedPropsClasses.forEach { simpleName ->

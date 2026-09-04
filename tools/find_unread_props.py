@@ -99,6 +99,9 @@ KNOWN_INERT: dict[str, str] = {
     # Anchor stickiness needs the surrounding scroll container to report its offset back
     # to the list. Tracked with the same real-scroll-sticky gap as u-sticky.
     "IndexList.sticky": "anchor sticking needs scroll-position feedback from the host",
+    # u-form declares borderBottom but only a dead propsChange computed exposes it;
+    # u-form-item never reads the parent value, so the flag stays inert.
+    "Form.borderBottom": "upstream u-form-item never reads the parent flag",
 }
 
 

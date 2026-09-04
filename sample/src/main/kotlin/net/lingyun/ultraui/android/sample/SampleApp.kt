@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.sample.pages.FormValidationDemoPage
 import net.lingyun.ultraui.android.sample.pages.FoundationDemoPage
 import net.lingyun.ultraui.android.sample.pages.IconDemoPage
 import net.lingyun.ultraui.android.sample.pages.InputSelectionDemoPage
@@ -74,6 +75,9 @@ public fun SampleApp(modifier: Modifier = Modifier) {
                 }
                 composable(SampleRoutes.SelectionNavigation) {
                     SelectionNavigationDemoPage(onBack = { navController.popBackStack() })
+                }
+                composable(SampleRoutes.FormValidation) {
+                    FormValidationDemoPage(onBack = { navController.popBackStack() })
                 }
                 composable(SampleRoutes.Icon) {
                     IconDemoPage(onBack = { navController.popBackStack() })

@@ -49,6 +49,8 @@ public object UPConfig {
     public val card: UPCardDefaults = UPCardDefaults()
     public val collapse: UPCollapseDefaults = UPCollapseDefaults()
     public val collapseItem: UPCollapseItemDefaults = UPCollapseItemDefaults()
+    public val form: UPFormDefaults = UPFormDefaults()
+    public val formItem: UPFormItemDefaults = UPFormItemDefaults()
     /** Defaults shared by the Batch 9B native wrappers. */
     public val batch9b: UPBatch9BDefaults = UPBatch9BDefaults()
 }
@@ -849,4 +851,28 @@ public data class UPCollapseItemDefaults(
     val rightIconStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
     val cellCustomStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
     val cellCustomClass: String = "",
+)
+
+public data class UPFormDefaults(
+    val model: Map<String, UPRawValue> = emptyMap(),
+    val rules: Map<String, UPRawValue> = emptyMap(),
+    val errorType: String = "message",
+    val borderBottom: Boolean = true,
+    val labelPosition: String = "left",
+    val labelWidth: UPRawValue = 45,
+    val labelAlign: String = "left",
+    val labelStyle: UPStyleInput = emptyMap<String, UPRawValue>(),
+)
+
+public data class UPFormItemDefaults(
+    val label: String = "",
+    val prop: String = "",
+    val rules: List<UPRawValue> = emptyList(),
+    val borderBottom: UPRawValue = "",
+    val labelPosition: String = "",
+    val labelWidth: UPRawValue = "",
+    val rightIcon: String = "",
+    val leftIcon: String = "",
+    val required: Boolean = false,
+    val leftIconStyle: UPStyleInput = "",
 )

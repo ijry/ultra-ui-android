@@ -52,12 +52,13 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 | 原生交互 | 警告提示、操作菜单、通知、返回顶部、卡片、折叠面板、折叠项、下拉菜单、下拉项、滚动通知 |
 | 导航与更多 | 导航栏、迷你导航栏、状态栏、底部安全区、标签页、标签项、分段器、步骤条、步骤项、列表、列表项、索引列表、索引项、索引锚点、滚动列表、气泡弹出、文字提示、吸顶、滑动操作、滑动操作项、轮播图、轮播指示器、骨架屏、展开阅读、纵向通知、横向通知、数字滚动、倒计时、选择器、选择器列、分页、下拉选择 |
 | 选择与底部导航 | 日历、日期时间选择器、级联选择器、滑块、底部导航、底部导航项 |
+| 表单与校验 | 表单、表单项 |
 | 图标 | 图标 |
 | 加载中图标 | 加载中图标 |
 
-`原生交互` 页面展示 Batch 9A 的 10 个组件，`导航与更多` 页面展示 Batch 9B 的 32 个组件，`选择与底部导航` 页面展示 Batch 10 的 6 个组件，并通过状态提升演示可见性、选择和受控值回调。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
+`原生交互` 页面展示 Batch 9A 的 10 个组件，`导航与更多` 页面展示 Batch 9B 的 32 个组件，`选择与底部导航` 页面展示 Batch 10 的 6 个组件，`表单与校验` 页面展示 Batch 11 的 `up-form`/`up-form-item`（规则校验、六个 ref 方法、`toast` 错误通道、顶部标签与三个插槽），并通过状态提升演示可见性、选择和受控值回调。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
 
-## 86 个组件目录
+## 88 个组件目录
 
 | uview-plus 标签 | Android Props |
 | --- | --- |
@@ -147,8 +148,10 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 | `up-slider` | `UPSliderProps` |
 | `up-tabbar` | `UPTabbarProps` |
 | `up-tabbar-item` | `UPTabbarItemProps` |
+| `up-form` | `UPFormProps` |
+| `up-form-item` | `UPFormItemProps` |
 
-> `UPIconProps` 与 `UPLoadingIconProps` 作为独立基础能力保留在库内和示例页中，不计入本批 86 个生成组件目录。
+> `UPIconProps` 与 `UPLoadingIconProps` 作为独立基础能力保留在库内和示例页中，不计入本批 88 个生成组件目录。
 
 ## 公开 API 示例
 

@@ -37,6 +37,7 @@ public object SampleRoutes {
     public const val NativeInteraction: String = "native-interaction"
     public const val NavigationMore: String = "navigation-more"
     public const val SelectionNavigation: String = "selection-navigation"
+    public const val FormValidation: String = "form-validation"
     public const val Icon: String = "icon"
     public const val LoadingIcon: String = "loading-icon"
 }
@@ -115,6 +116,10 @@ public val selectionNavigationComponentNames: List<String> = listOf(
     "日历", "日期时间选择器", "级联选择器", "滑块", "底部导航", "底部导航项",
 )
 
+public val formValidationComponentNames: List<String> = listOf(
+    "表单", "表单项",
+)
+
 /** The full public sample catalog for generated uview-plus compatible Android components. */
 public val sampleDestinations: List<SampleDestination> = listOf(
     SampleDestination(
@@ -158,6 +163,12 @@ public val sampleDestinations: List<SampleDestination> = listOf(
         group = "组件总览",
         title = "选择与底部导航",
         components = selectionNavigationComponentNames,
+    ),
+    SampleDestination(
+        route = SampleRoutes.FormValidation,
+        group = "组件总览",
+        title = "表单与校验",
+        components = formValidationComponentNames,
     ),
     SampleDestination(route = SampleRoutes.Icon, group = "独立示例", title = "图标", components = listOf("图标")),
     SampleDestination(route = SampleRoutes.LoadingIcon, group = "独立示例", title = "加载中图标", components = listOf("加载中图标")),

@@ -99,7 +99,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("吸顶") { UPSticky { BasicText("吸顶内容") } }
             DemoSection("滑动操作") { UPSwipeAction { UPSwipeActionItem(UPSwipeActionItemProps(show = true, options = listOf(mapOf("text" to "删除")))) { BasicText("向左滑动", Modifier.padding(12.dp)) } } }
             DemoSection("滑动操作项") { UPSwipeActionItem(UPSwipeActionItemProps(show = true, options = listOf(mapOf("text" to "删除")))) { BasicText("操作项") } }
-            DemoSection("轮播图") { UPSwiper(UPSwiperProps(list = listOf("第一页", "第二页"), indicator = true)) }
+            DemoSection("轮播图") { UPSwiper(UPSwiperProps(list = listOf("第一页", "第二页", "第三页"), indicator = true, indicatorMode = "dot", radius = 12, previousMargin = 12, nextMargin = 12)) }
             DemoSection("轮播指示器") { UPSwiperIndicator(UPSwiperIndicatorProps(length = 3, current = 1)) }
             DemoSection("骨架屏") { UPSkeleton(UPSkeletonProps(rows = 3, avatar = true)) }
             DemoSection("展开阅读") { UPReadMore(UPReadMoreProps(showHeight = 48)) { BasicText("这是一段较长的内容，用于展示展开阅读组件在原生页面中的截断与展开行为。") } }

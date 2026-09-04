@@ -1,21 +1,27 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,32 +33,51 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
+import net.lingyun.ultraui.android.core.UPImageLoader
+import net.lingyun.ultraui.android.core.UPImageLoaders
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upDoubleOrDefault
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upTestTag
 
 @Composable
-public fun UPSwiper(props: UPSwiperProps = UPSwiperProps(), modifier: Modifier = Modifier, onChange: ((Int) -> Unit)? = null, onClick: ((Int) -> Unit)? = null, onUpdateCurrent: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
-    var current by remember { mutableStateOf(props.current.upIntOrDefault(0).coerceAtLeast(0)) }
-    LaunchedEffect(props.current) { current = props.current.upIntOrDefault(0).coerceAtLeast(0) }
+public fun UPSwiper(props: UPSwiperProps = UPSwiperProps(), modifier: Modifier = Modifier, loader: UPImageLoader = UPImageLoaders.Android, onChange: ((Int) -> Unit)? = null, onClick: ((Int) -> Unit)? = null, onUpdateCurrent: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     val list = props.list
+    // uview documents `currentItemId` and `current` as mutually exclusive; addressing a slide by
+    // identity wins whenever the id actually matches an entry of `list`.
+    var current by remember { mutableStateOf(upSwiperResolveIndex(list, props.current, props.currentItemId)) }
+    LaunchedEffect(props.current, props.currentItemId, list) { current = upSwiperResolveIndex(list, props.current, props.currentItemId) }
+    val style = rememberUPResolvedStyle(props.customStyle, diagnostics, UPSwiperComponentName)
+    val background = UPColor.parse(props.bgColor, Color(0xFFF3F4F6))
+    val height = net.lingyun.ultraui.android.core.upDimension(props.height, 130.dp)
+    val shape = RoundedCornerShape(net.lingyun.ultraui.android.core.upDimension(props.radius, 4.dp).coerceAtLeast(0.dp))
+    // While `loading` is set upstream renders a centered loading icon instead of the swiper.
+    if (props.loading) {
+        Box(modifier.fillMaxWidth().height(height).clip(shape).background(background).applyUPResolvedStyle(style).upTestTag("swiper"), contentAlignment = Alignment.Center) {
+            Box(Modifier.upTestTag("swiper-loading"), contentAlignment = Alignment.Center) { UPLoadingIcon(UPLoadingIconProps(show = true, mode = "circle", size = 28), diagnostics = diagnostics) }
+        }
+        return
+    }
     if (list.isEmpty()) return
     // Clamp for rendering only. Assigning to `current` during composition would feed a
     // state write back into the same pass, which Compose treats as an unstable read.
     val index = current.coerceIn(0, list.lastIndex)
-    val item = list[index]
-    val label = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
 
     // uview defaults `autoplay` to true and advances every `interval` ms, wrapping past
     // the final slide only when `circular` is set.
@@ -60,34 +85,119 @@ public fun UPSwiper(props: UPSwiperProps = UPSwiperProps(), modifier: Modifier =
     if (props.autoplay && list.size > 1) {
         LaunchedEffect(props.autoplay, interval, props.circular, list.size, index) {
             delay(interval)
-            val next = if (index >= list.lastIndex) (if (props.circular) 0 else return@LaunchedEffect) else index + 1
+            val next = upSwiperNextIndex(index, list.lastIndex, props.circular) ?: return@LaunchedEffect
             current = next
             onChange?.invoke(next)
             onUpdateCurrent?.invoke(next)
         }
     }
+    // `acceleration` only tunes uni-app's multi-screen inertia, which has no Compose counterpart.
+    if (props.acceleration) LaunchedEffect(props.acceleration) { diagnostics.report(UPSwiperComponentName, "acceleration", props.acceleration, "uni-app 惯性滑动参数，Compose 手势没有对应实现") }
 
+    // `duration` drives the slide transition. Zero keeps the jump instant so callers (and tests)
+    // that pause the clock never wait on an animation.
+    val durationMillis = props.duration.upIntOrDefault(300).coerceAtLeast(0)
+    val slideOffset = remember { Animatable(index.toFloat()) }
+    LaunchedEffect(index, durationMillis) {
+        val distance = kotlin.math.abs(slideOffset.value - index.toFloat())
+        if (durationMillis > 0 && distance > 0f && distance <= 1f) slideOffset.animateTo(index.toFloat(), tween(durationMillis))
+        else slideOffset.snapTo(index.toFloat())
+    }
     val previousMargin = upRawDp(props.previousMargin, 0.dp).coerceAtLeast(0.dp)
     val nextMargin = upRawDp(props.nextMargin, 0.dp).coerceAtLeast(0.dp)
-    Column(modifier.fillMaxWidth().background(UPColor.parse(props.bgColor, Color(0xFFF3F4F6))).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwiper")).upTestTag("swiper")) {
-        Box(
+    val displayCount = upSwiperDisplayCount(props.displayMultipleItems, list.size).coerceAtLeast(1)
+    val moveTo: (Int?) -> Unit = { target -> if (target != null) { current = target; onChange?.invoke(target); onUpdateCurrent?.invoke(target) } }
+    Column(modifier.fillMaxWidth().applyUPResolvedStyle(style).upTestTag("swiper")) {
+        BoxWithConstraints(
             Modifier.fillMaxWidth()
-                .height(net.lingyun.ultraui.android.core.upDimension(props.height, 130.dp))
-                // previousMargin/nextMargin reveal a sliver of the neighbouring slides.
-                .padding(start = previousMargin, end = nextMargin)
-                .upClickable(onClick = { onClick?.invoke(index) }),
-            contentAlignment = Alignment.Center,
-        ) { BasicText(label, style = TextStyle(color = UPTheme.Main)) }
-        if (props.indicator) UPSwiperIndicator(UPSwiperIndicatorProps(length = list.size, current = index, indicatorActiveColor = props.indicatorActiveColor, indicatorInactiveColor = props.indicatorInactiveColor, indicatorMode = props.indicatorMode, customStyle = props.indicatorStyle), onClick = { next -> current = next; onChange?.invoke(next); onUpdateCurrent?.invoke(next) })
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            if (index > 0) BasicText("‹", modifier = Modifier.upClickable(onClick = { current = index - 1; onChange?.invoke(index - 1); onUpdateCurrent?.invoke(index - 1) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
-            if (index < list.lastIndex) BasicText("›", modifier = Modifier.upClickable(onClick = { current = index + 1; onChange?.invoke(index + 1); onUpdateCurrent?.invoke(index + 1) }).padding(12.dp), style = TextStyle(fontSize = 22.sp))
+                .height(height)
+                .clip(shape)
+                .background(background)
+                // `vertical` swaps the scroll axis, so the drag detector follows it.
+                .pointerInput(index, list.size, props.circular, props.vertical) {
+                    val threshold = 24.dp.toPx()
+                    var travelled = 0f
+                    val settle: () -> Unit = {
+                        if (travelled <= -threshold) moveTo(upSwiperNextIndex(index, list.lastIndex, props.circular))
+                        else if (travelled >= threshold) moveTo(upSwiperPreviousIndex(index, list.lastIndex, props.circular))
+                    }
+                    if (props.vertical) detectVerticalDragGestures(onDragStart = { travelled = 0f }, onDragEnd = settle) { _, amount -> travelled += amount }
+                    else detectHorizontalDragGestures(onDragStart = { travelled = 0f }, onDragEnd = settle) { _, amount -> travelled += amount }
+                },
+        ) {
+            // previousMargin/nextMargin shrink each slide so the neighbouring ones peek through.
+            // Hoisted because @LayoutScopeMarker hides this scope inside the nested Row/Column.
+            val boxWidth = maxWidth
+            val boxHeight = maxHeight
+            val span = (((if (props.vertical) boxHeight else boxWidth) - previousMargin - nextMargin) / displayCount).coerceAtLeast(1.dp)
+            val lead = previousMargin - span * slideOffset.value
+            if (props.vertical) {
+                Column(Modifier.fillMaxWidth().requiredHeight(span * list.size).offset(y = lead)) {
+                    list.forEachIndexed { position, slide ->
+                        UPSwiperSlide(item = slide, position = position, keyName = props.keyName, imgMode = props.imgMode, radius = props.radius, bgColor = props.bgColor, showTitle = props.showTitle, scale = upSwiperItemScale(previousMargin.value, nextMargin.value, position == index), slideWidth = boxWidth, slideHeight = span, shape = shape, loader = loader, diagnostics = diagnostics, onClick = onClick)
+                    }
+                }
+            } else {
+                Row(Modifier.fillMaxHeight().requiredWidth(span * list.size).offset(x = lead)) {
+                    list.forEachIndexed { position, slide ->
+                        UPSwiperSlide(item = slide, position = position, keyName = props.keyName, imgMode = props.imgMode, radius = props.radius, bgColor = props.bgColor, showTitle = props.showTitle, scale = upSwiperItemScale(previousMargin.value, nextMargin.value, position == index), slideWidth = span, slideHeight = boxHeight, shape = shape, loader = loader, diagnostics = diagnostics, onClick = onClick)
+                    }
+                }
+            }
+            // Upstream hides the indicator while a title bar is shown, and while loading.
+            if (upSwiperShouldShowIndicator(props.loading, props.indicator, props.showTitle)) {
+                UPSwiperIndicator(UPSwiperIndicatorProps(length = list.size, current = index, indicatorActiveColor = props.indicatorActiveColor, indicatorInactiveColor = props.indicatorInactiveColor, indicatorMode = props.indicatorMode, customStyle = props.indicatorStyle), Modifier.align(Alignment.BottomCenter), onClick = { next -> moveTo(next) }, diagnostics = diagnostics)
+            }
+        }
+        val backward = upSwiperPreviousIndex(index, list.lastIndex, props.circular)
+        val forward = upSwiperNextIndex(index, list.lastIndex, props.circular)
+        if (backward != null || forward != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                if (backward != null) Box(Modifier.upClickable(onClick = { moveTo(backward) }).padding(12.dp).upTestTag("swiper-previous")) { UPIcon(UPIconProps(name = if (props.vertical) "arrow-up" else "arrow-left", color = "#606266", size = 20), diagnostics = diagnostics) }
+                if (forward != null) Box(Modifier.upClickable(onClick = { moveTo(forward) }).padding(12.dp).upTestTag("swiper-next")) { UPIcon(UPIconProps(name = if (props.vertical) "arrow-down" else "arrow-right", color = "#606266", size = 20), diagnostics = diagnostics) }
+            }
         }
     }
 }
 
 @Composable
-public fun UPSwiper(list: List<UPRawValue>, modifier: Modifier = Modifier, current: Int = 0, onChange: ((Int) -> Unit)? = null) = UPSwiper(UPSwiperProps(list = list, current = current), modifier, onChange)
+private fun UPSwiperSlide(item: UPRawValue, position: Int, keyName: String, imgMode: String, radius: UPRawValue, bgColor: String, showTitle: Boolean, scale: Float, slideWidth: Dp, slideHeight: Dp, shape: RoundedCornerShape, loader: UPImageLoader, diagnostics: UPCompatibilityDiagnostics, onClick: ((Int) -> Unit)?) {
+    val source = upSwiperSource(item, keyName)
+    val title = if (upSwiperShouldShowTitle(item, keyName, showTitle)) upSwiperTitle(item) else ""
+    Box(
+        Modifier.size(slideWidth, slideHeight)
+            // uview scales the neighbouring slides down when both margins reveal them.
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(shape)
+            .upTestTag("swiper-item-$position")
+            .upClickable(onClick = { onClick?.invoke(position) }),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (upSwiperRenderKind(item, keyName)) {
+            "image" -> UPImage(props = UPImageProps(src = source, mode = imgMode, width = slideWidth, height = slideHeight, radius = radius, showLoading = false, bgColor = bgColor), loader = loader, diagnostics = diagnostics)
+            "video" -> {
+                // Compose ships no video surface, so the poster plus a play badge stands in.
+                LaunchedEffect(source) { diagnostics.report(UPSwiperComponentName, "list", source, "视频项渲染为封面加播放标记，Compose 没有内置播放器") }
+                Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+                    val poster = upSwiperPoster(item)
+                    if (poster.isNotEmpty()) UPImage(props = UPImageProps(src = poster, mode = imgMode, width = slideWidth, height = slideHeight, radius = radius, showLoading = false, showError = false, bgColor = "#000000"), loader = loader, diagnostics = diagnostics)
+                    UPIcon(UPIconProps(name = "play-right-fill", color = "#FFFFFF", size = 34), diagnostics = diagnostics)
+                }
+            }
+            // Plain labels stay text: upstream would hand them to `<image>` and show a broken icon.
+            else -> BasicText(actionOrOptionText(item, keyName, item.upStringValueOrEmpty()), style = TextStyle(color = UPTheme.Main))
+        }
+        if (title.isNotEmpty()) {
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color(0x4D000000)).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                BasicText(title, style = TextStyle(color = Color.White, fontSize = 14.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+public fun UPSwiper(list: List<UPRawValue>, modifier: Modifier = Modifier, current: Int = 0, onChange: ((Int) -> Unit)? = null) = UPSwiper(UPSwiperProps(list = list, current = current), modifier, onChange = onChange)
+
 
 @Composable
 public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorProps(), modifier: Modifier = Modifier, onClick: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {

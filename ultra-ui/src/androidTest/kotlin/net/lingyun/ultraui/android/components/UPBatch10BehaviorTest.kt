@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class UPBatch10BehaviorTest {
@@ -233,11 +234,21 @@ class UPBatch10BehaviorTest {
     @Test
     fun calendarShowsMonthMarkTodayHighlightAndLunarLabelWhenEnabled() {
         val showDecorations = mutableStateOf(true)
+        val calendar = Calendar.getInstance()
+        val today = String.format(
+            Locale.ROOT,
+            "%04d-%02d-%02d",
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH),
+        )
+        val todayMonth = today.substringBeforeLast('-')
+        val todayMonthMark = (calendar.get(Calendar.MONTH) + 1).toString()
         composeRule.setContent {
             UPCalendar(
                 props = UPCalendarProps(
                     show = true,
-                    defaultDate = "2026-08-31",
+                    defaultDate = today,
                     showMark = showDecorations.value,
                     showToday = showDecorations.value,
                     todayColor = "#ff5500",
@@ -246,19 +257,31 @@ class UPBatch10BehaviorTest {
             )
         }
 
-        composeRule.onNodeWithTag("up-calendar-month-2026-08-mark").assertTextEquals("8")
+        composeRule.onNodeWithTag("up-calendar-month-$todayMonth-mark").assertTextEquals(todayMonthMark)
         composeRule.onNodeWithTag("up-calendar-today").assertTextEquals("今天")
-        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-today", useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-today-color-ff5500", useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-lunar", useUnmergedTree = true).assertTextEquals("七月十九")
+        composeRule.onNodeWithTag("up-calendar-day-$today-today", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-$today-today-color-ff5500", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("up-calendar-day-$today-lunar", useUnmergedTree = true).assertExists()
 
         composeRule.runOnIdle {
             showDecorations.value = false
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("up-calendar-month-2026-08-mark").assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-month-$todayMonth-mark").assertDoesNotExist()
         composeRule.onNodeWithTag("up-calendar-today").assertDoesNotExist()
-        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-lunar", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag("up-calendar-day-$today-lunar", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun calendarConvertsAFixedGregorianDateIntoItsLunarLabel() {
+        composeRule.setContent {
+            UPCalendar(
+                props = UPCalendarProps(show = true, defaultDate = "2026-08-31", showLunar = true),
+            )
+        }
+
+        composeRule.onNodeWithTag("up-calendar-day-2026-08-31-lunar", useUnmergedTree = true)
+            .assertTextEquals("七月十九")
     }
 
     @Test
