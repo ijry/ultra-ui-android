@@ -56,6 +56,11 @@ public fun UPCellGroup(
                 style = TextStyle(color = UPTheme.Tips, fontSize = 13.sp),
             )
         }
+        // `<view class="u-cell-group__wrapper"><u-line v-if="border">`: the group's own
+        // border is one hairline above the first cell, not a box around the whole group.
+        if (props.border) {
+            UPLine(diagnostics = diagnostics)
+        }
         content()
     }
 }

@@ -60,7 +60,18 @@ public fun UPDatetimePicker(
     if (!props.hasInput && !visible) return
     var selection by remember(props.value, props.modelValue, props.mode) { mutableStateOf(resolveDatetimeSelection(props)) }
     LaunchedEffect(props.value, props.modelValue, props.mode) { selection = resolveDatetimeSelection(props) }
-    val columns = datetimeColumns(props, selection)
+    // `getOriginColumns()` runs `filter(type, values)` on each column before the wheel
+    // sees it, so a filtered-out option can never be reached or selected.
+    val columnTypes = datetimeColumnTypes(props.mode)
+    val columns = datetimeColumns(props, selection).mapIndexed { columnIndex, values ->
+        applyDatetimeFilter(
+            filter = props.filter,
+            type = columnTypes.getOrElse(columnIndex) { "" },
+            values = values,
+            diagnostics = diagnostics,
+            component = DatetimePickerComponentName,
+        )
+    }
     val popupMode = upPickerPopupMode(props.popupMode, diagnostics, DatetimePickerComponentName)
     LaunchedEffect(props.maskClass, diagnostics) {
         if (props.maskClass.isNotBlank()) diagnostics.report(DatetimePickerComponentName, "maskClass", props.maskClass, "CSS class hooks have no native Android equivalent; the wheel mask is styled through maskStyle instead.")
@@ -136,7 +147,16 @@ public fun UPDatetimePicker(
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     BasicText(
-                                        option.toString().padStart(2, '0'),
+                                        // `updateColumns()` maps every value through
+                                        // `formatter(column.type, value)`; without one the
+                                        // value is simply zero-padded (years excepted).
+                                        applyDatetimeFormatter(
+                                            formatter = props.formatter,
+                                            type = columnTypes.getOrElse(columnIndex) { "" },
+                                            value = option,
+                                            diagnostics = diagnostics,
+                                            component = DatetimePickerComponentName,
+                                        ),
                                         style = TextStyle(color = if (selected) UPTheme.Primary else UPTheme.Main, fontSize = 14.sp),
                                     )
                                 }

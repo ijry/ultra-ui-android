@@ -2,7 +2,9 @@ package net.lingyun.ultraui.android.components
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
+import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
+import net.lingyun.ultraui.android.core.report
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -138,6 +140,81 @@ internal fun datetimeTimestamp(props: UPDatetimePickerProps, state: UPDatetimeSe
     val min = props.minDate.rawLong(Long.MIN_VALUE)
     val max = props.maxDate.rawLong(Long.MAX_VALUE)
     return calendar.timeInMillis.coerceIn(min, max.coerceAtLeast(min))
+}
+
+/**
+ * `getRanges()` labels every column, and both `filter(type, values)` and
+ * `formatter(type, value)` receive that label. The order matches the column order the
+ * mode produces.
+ */
+internal fun datetimeColumnTypes(mode: String): List<String> = when (mode) {
+    "year-month" -> listOf("year", "month")
+    "date" -> listOf("year", "month", "day")
+    "datehour" -> listOf("year", "month", "day", "hour")
+    "time" -> listOf("hour", "minute")
+    "timesecond" -> listOf("hour", "minute", "second")
+    "datetimesecond" -> listOf("year", "month", "day", "hour", "minute", "second")
+    else -> listOf("year", "month", "day", "hour", "minute")
+}
+
+/** `value = type === 'year' ? `${value}` : padZero(value)` before filter/formatter run. */
+internal fun datetimeColumnValueText(type: String, value: Int): String =
+    if (type == "year") value.toString() else value.toString().padStart(2, '0')
+
+/**
+ * `if (this.filter) { values = this.filter(type, values) }`. Upstream logs and keeps going
+ * when the result is empty, so an empty or unusable return leaves the column untouched.
+ */
+internal fun applyDatetimeFilter(
+    filter: UPRawValue,
+    type: String,
+    values: List<Int>,
+    diagnostics: UPCompatibilityDiagnostics,
+    component: String,
+): List<Int> {
+    if (filter == null) return values
+    val function = filter as? Function2<*, *, *> ?: run {
+        diagnostics.report(component, "filter", filter, "Filter is not callable with (type, values); using the unfiltered column.")
+        return values
+    }
+    val texts = values.map { datetimeColumnValueText(type, it) }
+    val result = runCatching {
+        @Suppress("UNCHECKED_CAST")
+        (function as (String, List<String>) -> Any?).invoke(type, texts)
+    }.onFailure { throwable ->
+        diagnostics.report(component, "filter", filter, "Filter failed: ${throwable.message ?: "unknown error"}.")
+    }.getOrNull()
+    val kept = result.rawList().mapNotNull { it?.toString()?.trim()?.toIntOrNull() }.toSet()
+    if (kept.isEmpty()) {
+        diagnostics.report(component, "filter", filter, "日期filter结果不能为空; using the unfiltered column.")
+        return values
+    }
+    return values.filter { it in kept }.ifEmpty { values }
+}
+
+/**
+ * `formatter(column.type, value)` decorates each option's label. A non-callable or
+ * throwing formatter is reported and the padded value survives.
+ */
+internal fun applyDatetimeFormatter(
+    formatter: UPRawValue,
+    type: String,
+    value: Int,
+    diagnostics: UPCompatibilityDiagnostics,
+    component: String,
+): String {
+    val text = datetimeColumnValueText(type, value)
+    if (formatter == null) return text
+    val function = formatter as? Function2<*, *, *> ?: run {
+        diagnostics.report(component, "formatter", formatter, "Formatter is not callable with (type, value); using the unformatted value.")
+        return text
+    }
+    return runCatching {
+        @Suppress("UNCHECKED_CAST")
+        (function as (String, String) -> Any?).invoke(type, text)?.toString() ?: text
+    }.onFailure { throwable ->
+        diagnostics.report(component, "formatter", formatter, "Formatter failed: ${throwable.message ?: "unknown error"}.")
+    }.getOrDefault(text)
 }
 
 internal fun datetimeValueIndex(mode: String, column: Int): Int = when (mode) {

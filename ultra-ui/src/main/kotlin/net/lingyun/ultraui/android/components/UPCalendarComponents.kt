@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -24,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -31,11 +36,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upTestTag
 import java.text.SimpleDateFormat
@@ -126,10 +133,26 @@ public fun UPCalendar(
         months
     }
 
+    // `<u-popup :duration :zIndex :safeAreaInsetTop :safeAreaInsetBottom>` wraps the sheet
+    // upstream. There is no window-level scrim inline, but the sheet still owns its entry
+    // fade, its stacking among siblings and both safe-area insets.
+    // `entered` starts at the current visibility so an already-open sheet renders opaque in
+    // its first frame; only an actual open animates.
+    var entered by remember { mutableStateOf(props.show || props.pageInline) }
+    LaunchedEffect(props.show, props.pageInline) { entered = props.show || props.pageInline }
+    val sheetAlpha by animateFloatAsState(
+        targetValue = if (entered) 1f else 0f,
+        animationSpec = tween(upPopupTransitionDuration(props.duration)),
+        label = "up-calendar-fade",
+    )
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .zIndex(props.zIndex.asFiniteFloatOrNull() ?: 10_075f)
+            .alpha(sheetAlpha)
             .background(background, RoundedCornerShape(props.round.rawFloat(0f).dp))
+            .then(if (props.safeAreaInsetTop) Modifier.statusBarsPadding() else Modifier)
+            .then(if (props.safeAreaInsetBottom) Modifier.navigationBarsPadding() else Modifier)
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCalendar"))
             .upTestTag("calendar")
             .padding(12.dp),
@@ -223,6 +246,7 @@ public fun UPCalendar(
                     primary = primary,
                     todayColor = todayColor,
                     cellHeight = cellHeight,
+                    diagnostics = diagnostics,
                     onDateClick = { date ->
                         val metadata = customMetadata[date] ?: UPCalendarDayMetadata(date)
                         val forbiddenPrompt = calendarForbiddenPrompt(props, date)
@@ -308,6 +332,7 @@ private fun CalendarMonth(
     primary: Color,
     todayColor: Color,
     cellHeight: Dp,
+    diagnostics: UPCompatibilityDiagnostics,
     onDateClick: (String) -> Unit,
 ) {
     val monthKey = month.key
@@ -357,6 +382,7 @@ private fun CalendarMonth(
                         primary = primary,
                         todayColor = todayColor,
                         cellHeight = cellHeight,
+                        diagnostics = diagnostics,
                         onDateClick = onDateClick,
                     )
                 }
@@ -397,14 +423,27 @@ private fun RowScope.CalendarDayCell(
     primary: Color,
     todayColor: Color,
     cellHeight: Dp,
+    diagnostics: UPCompatibilityDiagnostics,
     onDateClick: (String) -> Unit,
 ) {
     val date = cell.date
-    val metadata = customMetadata[date] ?: UPCalendarDayMetadata(date)
+    val allowedByBounds = calendarDateAllowed(props, date)
+    // `formatter(config)` runs after the built-in state is computed, so a caller can
+    // override `bottomInfo` / `dot` / `disabled` per day.
+    val metadata = applyCalendarFormatter(
+        formatter = props.formatter,
+        metadata = customMetadata[date] ?: UPCalendarDayMetadata(date),
+        day = cell.day,
+        week = cell.week,
+        month = cell.month,
+        disabled = !allowedByBounds,
+        diagnostics = diagnostics,
+        component = "UPCalendar",
+    )
     val active = calendarDateSelected(props.mode, selected, date)
     val rangeMiddle = props.mode == "range" && selected.size >= 2 && date > selected.first() && date < selected.last()
     val forbiddenPrompt = calendarForbiddenPrompt(props, date)
-    val allowed = calendarDateAllowed(props, date) && !metadata.disabled
+    val allowed = allowedByBounds && !metadata.disabled
     val forbidden = !allowed
     val clickable = !props.readonly && !metadata.disabled && (allowed || forbiddenPrompt != null)
     val showToday = props.showToday && !cell.adjacent && date == todayDate
@@ -522,6 +561,8 @@ private data class UPCalendarGridCell(
     val month: Int,
     val day: Int,
     val adjacent: Boolean,
+    /** `week` in the formatter config: 0 = Sunday, matching `Date.getDay()`. */
+    val week: Int = 0,
 )
 
 private fun calendarMonthGrid(month: UPCalendarMonth): List<UPCalendarGridCell> {
@@ -538,6 +579,8 @@ private fun calendarMonthGrid(month: UPCalendarMonth): List<UPCalendarGridCell> 
             month = date.get(Calendar.MONTH) + 1,
             day = date.get(Calendar.DAY_OF_MONTH),
             adjacent = date.get(Calendar.YEAR) != month.year || date.get(Calendar.MONTH) + 1 != month.month,
+            // `Date.getDay()`: Sunday is 0, which is what the formatter config carries.
+            week = date.get(Calendar.DAY_OF_WEEK) - 1,
         )
     }
 }

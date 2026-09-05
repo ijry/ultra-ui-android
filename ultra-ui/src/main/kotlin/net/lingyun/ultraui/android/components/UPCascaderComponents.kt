@@ -2,6 +2,7 @@ package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import androidx.compose.ui.zIndex
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
@@ -33,6 +36,10 @@ private const val CascaderComponentName: String = "UPCascader"
 
 /** `headerDirection`: a row of tabs, or a vertical `u-steps` list for long labels. */
 internal val UPCascaderHeaderDirections: Set<String> = setOf("row", "column")
+
+/** `uZIndex() { return this.zIndex ? this.zIndex : zIndex.popup }`; `zIndex.popup` is 10075. */
+internal fun upCascaderZIndex(zIndex: UPRawValue): Float =
+    zIndex.asFiniteFloatOrNull()?.takeIf { it != 0f } ?: 10_075f
 
 @Composable
 public fun UPCascader(
@@ -64,8 +71,11 @@ public fun UPCascader(
     // `:maskCloseAble` on the popup; a tap outside dismisses without confirming.
     val dismissOnMask = props.maskCloseAble && props.closeOnClickOverlay
 
-    Column(
-        modifier.fillMaxWidth().background(Color.White)
+    Box(
+        modifier.fillMaxWidth()
+            // `uZIndex() { return this.zIndex ? this.zIndex : zIndex.popup }` — 10075.
+            .zIndex(upCascaderZIndex(props.zIndex))
+            .background(Color.White)
             .then(
                 if (!dismissOnMask) {
                     Modifier
@@ -79,6 +89,7 @@ public fun UPCascader(
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCascader"))
             .upTestTag("cascader"),
     ) {
+        Column(Modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -93,6 +104,7 @@ public fun UPCascader(
                 onUpdateShow?.invoke(false)
             }.upTestTag("cascader-confirm"), style = TextStyle(color = UPTheme.Primary))
         }
+
         // `headerDirection="column"` stacks the levels down the sheet instead of side by side.
         UPCascaderLevels(vertical = headerDirection == "column") {
             repeat(columnCount) { level ->
@@ -127,6 +139,20 @@ public fun UPCascader(
                     }
                 }
             }
+        }
+        }
+        // `.u-popup__content__close { position: absolute }` — the close glyph floats over
+        // the sheet's top-right corner and claims no layout height, so nothing below shifts.
+        if (props.closeable) {
+            UPIcon(
+                UPIconProps(name = "close", size = 18, bold = true, color = "#303133"),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .upClickable { onCancel?.invoke(); onUpdateShow?.invoke(false) }
+                    .upTestTag("cascader-close"),
+                diagnostics = diagnostics,
+            )
         }
     }
 }

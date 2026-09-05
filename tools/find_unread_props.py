@@ -6,10 +6,12 @@ effect. A field the component never reads is a silent no-op — it type-checks, 
 passes props tests, and no screenshot changes, so nothing catches it. Both the
 u-tabbar-item and u-steps-item `iconSize` bugs had exactly this shape.
 
-Resolution is deliberately generous. A field counts as read if `props.<field>` or
-`.<field>` appears anywhere in the file defining its component's entry point, or —
-when that entry forwards the whole `props` object onward — anywhere in the library.
-That undercounts rather than overcounts, so what it does report is worth reading.
+A field counts as read when `props.<field>` (or a named argument forwarding it)
+appears in any declaration that actually receives this component's Props type: its
+composable, plus every helper, context class or support function typed against it.
+Scoping to the type instead of widening to the whole library matters — the earlier
+"whole library once props is forwarded" rule let `u-picker`'s `props.duration` stand
+in for `u-select`'s and `u-popup`'s, hiding 48 genuinely unread fields.
 
 Fields inert on Android by design (uni-app / WeChat-only knobs kept for interface
 compatibility) live in KNOWN_INERT with the reason.
@@ -120,6 +122,34 @@ KNOWN_INERT: dict[str, str] = {
     # never binds to its template, so no item is ever actually skipped.
     "List.pagingEnabled": "upstream u-list.vue never reads the prop",
     "List.preLoadScreen": "upstream u-list-item.vue computes `show` from it but never binds it",
+    # Same uni-app keyboard plumbing already registered for u-input/u-textarea: both are
+    # forwarded straight to `<input>` upstream, and Android leaves them to the IME.
+    "CodeInput.adjustPosition": "uni-app pushes the page up; Android uses windowSoftInputMode",
+    "Search.adjustPosition": "uni-app pushes the page up; Android uses windowSoftInputMode",
+    "Search.autoBlur": "uni-app App 3.0.0+ only (仅App3.0.0+有效)",
+    # Declared in props.js but absent from the template: the parent u-dropdown closes the
+    # menu through its own `closeOnClickMask`, and u-form-item only mentions `rightIcon`
+    # in its doc comment.
+    "DropdownItem.closeOnClickOverlay": "upstream u-dropdown-item.vue never reads it; the parent's closeOnClickMask closes the menu",
+    "FormItem.rightIcon": "upstream u-form-item.vue declares it but never renders it",
+    # These sheets render inline in the Android port, so there is no full-screen scrim to
+    # tint, size or dismiss. Lifting them into a real window-level overlay is tracked as
+    # the window-level popup gap, not a per-field fix.
+    "Picker.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
+    "Picker.overlayOpacity": "inline render; no window-level overlay to tint",
+    "DatetimePicker.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
+    "Calendar.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
+    "Calendar.overlay": "inline render; no window-level overlay to show",
+    "Calendar.overlayOpacity": "inline render; no window-level overlay to tint",
+    "Calendar.overlayStyle": "inline render; no window-level overlay to style",
+    "Select.overlay": "inline render; no window-level overlay to show",
+    "Select.overlayOpacity": "inline render; no window-level overlay to tint",
+    "Select.overlayStyle": "inline render; no window-level overlay to style",
+    # Declared in u-datetime-picker/props.js but never used by the component: the template
+    # forwards its own `innerDefaultIndex` (computed from the value) rather than the prop,
+    # and `loading` appears only in the doc comment — it is never handed to `<u-picker>`.
+    "DatetimePicker.defaultIndex": "upstream forwards innerDefaultIndex, never the prop",
+    "DatetimePicker.loading": "upstream u-datetime-picker.vue never passes it to u-picker",
 }
 
 
@@ -159,26 +189,36 @@ def reads_field(blob: str, field: str) -> bool:
     )
 
 
-def component_bodies(sources: dict[Path, str], name: str) -> str:
-    """Extract just the UP<name> composable bodies, not the whole file.
+DECLARATION_BOUNDARY = re.compile(
+    r"\n(?=@Composable|@[A-Za-z]+\n|public fun |private fun |internal fun "
+    r"|public class |private class |internal class |public data class "
+    r"|internal data class |private data class |public object |internal object "
+    r"|public val |internal val |private val )"
+)
+
+
+def typed_scopes(sources: dict[Path, str], name: str) -> str:
+    """Every declaration that receives an UP<name>Props value.
 
     Several components share one file (UPSwiper and UPCountTo both live in
-    UPStatusNumericComponents.kt). Searching the file as a whole let a sibling's
-    `props.autoplay` mask UPSwiper's own unread `autoplay`, so scope the text to the
-    function that actually receives this component's props.
+    UPStatusNumericComponents.kt), so the file as a whole is too wide: a sibling's
+    `props.autoplay` would mask UPSwiper's own unread `autoplay`. Widening to the
+    whole library the moment a component forwards `props` onward was worse still —
+    it let one component's `duration` vouch for every other one's.
+
+    Scoping by type keeps the forwarding case working (a helper declared as
+    `fun foo(props: UPSelectProps)` is included) without borrowing evidence from
+    unrelated components.
     """
+    needle = f"UP{name}Props"
+    typed = re.compile(rf":\s*{needle}\b")
     out = []
-    pattern = re.compile(
-        rf"public fun (?:[A-Za-z]+Scope\.)?UP{re.escape(name)}\s*\(", re.M
-    )
     for src in sources.values():
-        for match in pattern.finditer(src):
-            start = match.start()
-            # Walk to the matching close of the parameter list, then take the body up to
-            # the next top-level declaration.
-            rest = src[start:]
-            nxt = re.search(r"\n@Composable|\npublic fun |\nprivate fun |\ninternal fun ", rest[1:])
-            out.append(rest[: nxt.start() + 1] if nxt else rest)
+        if needle not in src:
+            continue
+        for chunk in DECLARATION_BOUNDARY.split(src):
+            if typed.search(chunk):
+                out.append(chunk)
     return "\n".join(out)
 
 
@@ -194,7 +234,6 @@ def main() -> int:
 
     sources = load_sources(args.main)
     stripped = {p: strip_props_declarations(s) for p, s in sources.items()}
-    whole_library = "\n".join(stripped.values())
     classes = find_props_classes(sources)
     entries = find_entry_files(sources)
 
@@ -207,12 +246,7 @@ def main() -> int:
         if not files:
             missing_entry.append(name)
             continue
-        blob = component_bodies(stripped, name)
-        # Widen to the whole library only when the component really forwards its entire
-        # props object onward. `= props` alone is too loose: it also matches
-        # `current = props.current`, which is a field read, not a forward.
-        if re.search(r"\(\s*props\s*[,)]|=\s*props\s*[,)\n]|\bprops\s*,\s*\w", blob):
-            blob = whole_library
+        blob = typed_scopes(stripped, name)
         for field in fields:
             if reads_field(blob, field):
                 continue

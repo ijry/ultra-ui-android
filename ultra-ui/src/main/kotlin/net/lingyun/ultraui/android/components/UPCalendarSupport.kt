@@ -1,6 +1,8 @@
 package net.lingyun.ultraui.android.components
 
+import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
+import net.lingyun.ultraui.android.core.report
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -70,6 +72,52 @@ internal fun calendarCustomMetadata(customList: List<UPRawValue>): Map<String, U
             disabled = item["disabled"].calendarBoolean(),
         )
     }.toMap()
+
+/**
+ * `formatter(config)` where `config` is
+ * `{ day, week, disabled, date, bottomInfo, dot, month }`. Upstream returns the same
+ * shape, so anything the callback omits keeps the value computed here. A non-callable or
+ * throwing formatter is reported and the unformatted day survives, matching how
+ * `formatUPTextSafely` treats `u-input`'s formatter.
+ */
+internal fun applyCalendarFormatter(
+    formatter: UPRawValue,
+    metadata: UPCalendarDayMetadata,
+    day: Int,
+    week: Int,
+    month: Int,
+    disabled: Boolean,
+    diagnostics: UPCompatibilityDiagnostics,
+    component: String,
+): UPCalendarDayMetadata {
+    if (formatter == null) return metadata
+    val function = formatter as? Function1<*, *> ?: run {
+        diagnostics.report(component, "formatter", formatter, "Formatter is not callable; using the unformatted day.")
+        return metadata
+    }
+    val config = mapOf<String, UPRawValue>(
+        "day" to day,
+        "week" to week,
+        "month" to month,
+        "date" to metadata.date,
+        "disabled" to disabled,
+        "bottomInfo" to metadata.bottomInfo,
+        "dot" to metadata.dot,
+    )
+    val result = runCatching {
+        @Suppress("UNCHECKED_CAST")
+        (function as (Map<String, UPRawValue>) -> Any?).invoke(config)
+    }.onFailure { throwable ->
+        diagnostics.report(component, "formatter", formatter, "Formatter failed: ${throwable.message ?: "unknown error"}.")
+    }.getOrNull() ?: return metadata
+    val formatted = result.rawMap()
+    return metadata.copy(
+        topInfo = formatted["topInfo"]?.toString() ?: metadata.topInfo,
+        bottomInfo = formatted["bottomInfo"]?.toString() ?: metadata.bottomInfo,
+        dot = formatted["dot"]?.calendarBoolean() ?: metadata.dot,
+        disabled = formatted["disabled"]?.calendarBoolean() ?: metadata.disabled,
+    )
+}
 
 internal fun resolveCalendarSelection(
     props: UPCalendarProps,

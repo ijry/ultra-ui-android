@@ -40,7 +40,17 @@ private data class UPIconResolution(
     val glyph: Char?,
     val labelPosition: String,
     val diagnostics: List<UPCompatibilityEvent>,
+    /** `isImg`: the name is a path, so an `<image>` replaces the glyph text. */
+    val image: Boolean = false,
 )
+
+/** `this.width ? addUnit(this.width) : addUnit(this.size)` — a blank extent defers to `size`. */
+private fun UPRawValue.upIconImageExtentOr(size: UPRawValue): UPRawValue =
+    when (this) {
+        null -> size
+        is String -> ifBlank { null } ?: size
+        else -> this
+    }
 
 /**
  * Native Compose counterpart of uview-plus `u-icon`.
@@ -53,6 +63,7 @@ public fun UPIcon(
     props: UPIconProps = UPIconProps(),
     modifier: Modifier = Modifier,
     onClick: ((UPRawValue) -> Unit)? = null,
+    loader: net.lingyun.ultraui.android.core.UPImageLoader = net.lingyun.ultraui.android.core.UPImageLoaders.Android,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
 ) {
     val resolution = remember(props) { resolveIcon(props) }
@@ -81,6 +92,28 @@ public fun UPIcon(
 
     @Composable
     fun Glyph() {
+        // `isImg` treats any name containing a slash as an image path, and `imgStyle`
+        // sizes it from `width`/`height` when given, falling back to `size` for both.
+        if (resolution.image) {
+            UPImage(
+                props = UPImageProps(
+                    src = props.name,
+                    // `<image :mode="imgMode">`: uni-app's own default takes over when blank.
+                    mode = props.imgMode.ifBlank { "scaleToFill" },
+                    width = props.width.upIconImageExtentOr(props.size),
+                    height = props.height.upIconImageExtentOr(props.size),
+                    // `<image>` has no placeholder slots, so neither icon appears here.
+                    showLoading = false,
+                    showError = false,
+                    bgColor = "transparent",
+                    customStyle = props.customStyle,
+                ),
+                loader = loader,
+                diagnostics = diagnostics,
+                modifier = Modifier.offset(y = topOffset).testTag("up-icon-img"),
+            )
+            return
+        }
         val glyph = resolution.glyph ?: return
         UPIconGlyph(
             glyph = glyph,
@@ -253,17 +286,9 @@ private fun resolveIcon(props: UPIconProps): UPIconResolution {
     val labelPosition = props.labelPos.takeIf { it in IconLabelPositions } ?: "right"
     if (props.name.isEmpty()) return UPIconResolution(glyph = null, labelPosition = labelPosition, diagnostics = diagnostics)
 
+    // `isImg() { return this.name.indexOf('/') !== -1 }`.
     if (props.name.contains('/')) {
-        return UPIconResolution(
-            glyph = null,
-            labelPosition = labelPosition,
-            diagnostics = diagnostics + UPCompatibilityEvent(
-                component = IconComponentName,
-                property = "name",
-                value = props.name,
-                reason = "Image icon sources are not supported without an Android image loader.",
-            ),
-        )
+        return UPIconResolution(glyph = null, labelPosition = labelPosition, diagnostics = diagnostics, image = true)
     }
     if (props.customPrefix != "uicon") {
         return UPIconResolution(

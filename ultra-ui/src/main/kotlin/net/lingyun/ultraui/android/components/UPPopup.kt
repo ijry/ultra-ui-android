@@ -1,7 +1,10 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -11,17 +14,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import net.lingyun.ultraui.android.core.UPColor
@@ -100,16 +115,61 @@ public fun UPPopup(
             )
         }
 
+        // `<u-transition :mode="pageInline ? 'none' : position" :duration>`. `position()`
+        // only consults `zoom` in centre mode; every other mode slides in from its own
+        // edge. The `entered` flag has to start false or `animateFloatAsState` would
+        // initialise at the end state and `duration` would never interpolate.
+        val transition = upPopupTransitionMode(mode, props.zoom, props.pageInline)
+        val transitionSpec = tween<Float>(durationMillis = upPopupTransitionDuration(props.duration))
+        var entered by remember { mutableStateOf(false) }
+        LaunchedEffect(transition) { entered = true }
+        val progress by animateFloatAsState(
+            targetValue = if (entered) 1f else 0f,
+            animationSpec = transitionSpec,
+            label = "up-popup-transition",
+        )
+        val (offsetXFraction, offsetYFraction) = upPopupTransitionOffsetFraction(transition)
+        // `touchable` adds the grab bar that resizes the bottom sheet and can fling it shut.
+        val dragEnabled = upPopupDragEnabled(props.touchable, mode)
+        var dragHeight by remember { mutableStateOf<Dp?>(null) }
+
         PopupPanel(
             mode = mode,
             shape = shape,
             backgroundColor = backgroundColor,
             minHeight = minHeight,
             maxHeight = maxHeight,
+            dragHeight = dragHeight,
             safeAreaInsetTop = props.safeAreaInsetTop,
             safeAreaInsetBottom = props.safeAreaInsetBottom,
-            modifier = style.toPopupModifier(mode, props.pageInline, onClick),
+            modifier = Modifier
+                .graphicsLayer {
+                    if (upPopupTransitionFades(transition)) alpha = progress
+                    if (transition == "fade-zoom") {
+                        val zoomScale = UPPopupZoomScale + (1f - UPPopupZoomScale) * progress
+                        scaleX = zoomScale
+                        scaleY = zoomScale
+                    }
+                    translationX = offsetXFraction * (1f - progress) * size.width
+                    translationY = offsetYFraction * (1f - progress) * size.height
+                }
+                .then(style.toPopupModifier(mode, props.pageInline, onClick)),
         ) {
+            if (props.safeAreaInsetTop) {
+                UPStatusBar(diagnostics = diagnostics)
+            }
+            if (dragEnabled) {
+                PopupDragHandle(
+                    minHeight = minHeight,
+                    maxHeight = maxHeight,
+                    currentHeight = dragHeight,
+                    onHeightChange = { dragHeight = it },
+                    onDismiss = {
+                        onUpdateShow?.invoke(false)
+                        onClose?.invoke()
+                    },
+                )
+            }
             if (props.closeable) {
                 PopupCloseButton(closeIconPos, onUpdateShow, onClose)
             }
@@ -125,6 +185,7 @@ private fun BoxScope.PopupPanel(
     backgroundColor: Color,
     minHeight: androidx.compose.ui.unit.Dp,
     maxHeight: androidx.compose.ui.unit.Dp?,
+    dragHeight: androidx.compose.ui.unit.Dp?,
     safeAreaInsetTop: Boolean,
     safeAreaInsetBottom: Boolean,
     modifier: Modifier,
@@ -144,6 +205,9 @@ private fun BoxScope.PopupPanel(
         "center" -> modifier
         else -> modifier
             .fillMaxWidth()
+            // A drag sets an explicit height; without one the sheet keeps sizing itself
+            // between `minHeight` and `maxHeight`.
+            .then(if (dragHeight != null) Modifier.height(dragHeight) else Modifier)
             .heightIn(min = minHeight, max = maxHeight ?: androidx.compose.ui.unit.Dp.Infinity)
     }
     Box(
@@ -163,6 +227,63 @@ private fun BoxScope.PopupPanel(
         ) {
             content()
         }
+    }
+}
+
+/**
+ * `.u-popup__content__touch-area` with its 100x5 indicator. Dragging resizes the sheet
+ * between `minHeight` and `maxHeight`; a long or fast drag downwards closes it.
+ */
+@Composable
+private fun PopupDragHandle(
+    minHeight: androidx.compose.ui.unit.Dp,
+    maxHeight: androidx.compose.ui.unit.Dp?,
+    currentHeight: androidx.compose.ui.unit.Dp?,
+    onHeightChange: (androidx.compose.ui.unit.Dp?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val windowHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    val minHeightPx = upPopupDragMinHeightPx(with(density) { minHeight.toPx() })
+    val maxHeightPx = upPopupDragMaxHeightPx(maxHeight?.let { with(density) { it.toPx() } }, windowHeightPx)
+    var panelHeightPx by remember { mutableFloatStateOf(0f) }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .upTestTag("popup-touch-area")
+            .pointerInput(minHeightPx, maxHeightPx) {
+                var startHeightPx = 0f
+                var startedAt = 0L
+                var travelled = 0f
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        startHeightPx = currentHeight?.let { with(density) { it.toPx() } } ?: panelHeightPx
+                        startedAt = System.nanoTime()
+                        travelled = 0f
+                    },
+                    onDragEnd = {
+                        val elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000L
+                        if (upPopupShouldCloseAfterDrag(travelled, elapsedMillis)) onDismiss()
+                    },
+                    onVerticalDrag = { _, dragAmount ->
+                        travelled += dragAmount
+                        upPopupDragHeightOrNull(startHeightPx, travelled, minHeightPx, maxHeightPx)?.let { next ->
+                            onHeightChange(with(density) { next.toDp() })
+                        }
+                    },
+                )
+            }
+            .onSizeChanged { size -> if (panelHeightPx == 0f) panelHeightPx = size.height.toFloat() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(100.dp)
+                .height(5.dp)
+                .background(UPTheme.Light, RoundedCornerShape(100.dp))
+                .upTestTag("popup-indicator"),
+        )
     }
 }
 

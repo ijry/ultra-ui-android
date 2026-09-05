@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,10 +35,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upStringOrDefault
@@ -70,6 +75,12 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
     LaunchedEffect(popupMode, diagnostics) {
         if (popupMode !in PickerInlinePopupModes) diagnostics.report(PickerComponentName, "popupMode", props.popupMode, "Inline render; sliding in from $popupMode needs a window-level overlay.")
     }
+    // `<u-popup :duration :zIndex>` wraps the wheel upstream. Inline there is no scrim, but
+    // the panel still owns its entry fade and its stacking. `entered` starts at the current
+    // visibility so a panel that is already open renders opaque immediately; the fade plays
+    // when the wheel actually opens, which is also the only case a user can perceive.
+    var entered by remember { mutableStateOf(visible) }
+    LaunchedEffect(visible) { entered = visible }
     Column(modifier.fillMaxWidth().upTestTag("picker-wrapper")) {
         if (props.hasInput) Box(Modifier.fillMaxWidth().upTestTag("picker-input")) {
             UPInput(
@@ -91,7 +102,12 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
         }
         if (!visible) return@Column
         val panelShape = upPickerPopupShape(popupMode, upRawDp(props.round, 0.dp).coerceAtLeast(0.dp))
-        Column(Modifier.fillMaxWidth().clip(panelShape).background(UPColor.parse(props.bgColor, Color.White), panelShape).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, PickerComponentName)).upTestTag("picker")) {
+        val panelAlpha by animateFloatAsState(
+            targetValue = if (entered) 1f else 0f,
+            animationSpec = tween(upPopupTransitionDuration(props.duration)),
+            label = "up-picker-fade",
+        )
+        Column(Modifier.fillMaxWidth().zIndex(props.zIndex.asFiniteFloatOrNull() ?: 10076f).alpha(panelAlpha).clip(panelShape).background(UPColor.parse(props.bgColor, Color.White), panelShape).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, PickerComponentName)).upTestTag("picker")) {
             if (props.showToolbar) Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 BasicText(props.cancelText, modifier = Modifier.upClickable(onClick = { showByClickInput = false; onCancel?.invoke(); onUpdateShow?.invoke(false); onClose?.invoke() }).upTestTag("picker-cancel"), style = TextStyle(color = UPColor.parse(props.cancelColor, UPTheme.Tips)))
                 BasicText(props.title, style = TextStyle(color = UPTheme.Main))
@@ -113,6 +129,14 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
             props.columns.forEachIndexed { columnIndex, rawColumn ->
                 val column = rawColumn.upItemsOrEmpty()
                 Box(Modifier.fillMaxWidth().height(itemHeight * visibleCount)) {
+                    // `.u-picker--loading` covers the whole wheel with an opaque panel and
+                    // a circle spinner, so no option is reachable while it is up.
+                    if (props.loading) {
+                        Box(Modifier.matchParentSize().background(Color.White).upTestTag("picker-loading-$columnIndex"), contentAlignment = Alignment.Center) {
+                            UPLoadingIcon(UPLoadingIconProps(show = true, mode = "circle"), diagnostics = diagnostics)
+                        }
+                        return@Box
+                    }
                     Column(
                         Modifier.fillMaxSize()
                             .verticalScroll(rememberScrollState())
@@ -297,6 +321,15 @@ private fun UPPaginationButton(text: String, icon: String, enabled: Boolean, pro
     }
 }
 
+/**
+ * `u-select`. The panel renders inline underneath the trigger rather than in a
+ * window-level overlay, so `overlay`/`overlayStyle`/`overlayOpacity` have nothing to
+ * apply to and stay documented as inert. Everything the panel itself owns is applied
+ * here: its cap (`maxHeight`, including `90vh`), stacking (`zIndex`), colours
+ * (`itemColor`, `iconColor`, `iconSize`), the outlined trigger (`border`) and the fade
+ * (`duration`, carried by the panel because the overlay that carries it upstream is
+ * absent).
+ */
 @Composable
 public fun UPSelect(props: UPSelectProps = UPSelectProps(), modifier: Modifier = Modifier, onUpdateCurrent: ((UPRawValue) -> Unit)? = null, onSelect: ((UPRawValue) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     var open by remember { mutableStateOf(false) }
@@ -310,21 +343,72 @@ public fun UPSelect(props: UPSelectProps = UPSelectProps(), modifier: Modifier =
     )
     // `normalizedOptionsWidth` sizes the options panel; empty leaves it to the parent.
     val optionsWidth = upSelectOptionsWidthDp(props.optionsWidth)?.dp
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val maxHeight = upSelectMaxHeightDp(
+        props.maxHeight,
+        configuration.screenHeightDp.toFloat(),
+        configuration.screenWidthDp.toFloat(),
+    )?.dp
+    // `resolvedItemColor` / `resolvedIconColor` fall back to the theme's main and content
+    // colours; the trigger text always uses main.
+    val itemColor = UPColor.parse(props.itemColor.ifBlank { null }, UPTheme.Main)
+    val iconColor = props.iconColor.ifBlank { "#606266" }
     Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSelect")).upTestTag("select")) {
-        BasicText(
-            upSelectTriggerText(props.showOptionsLabel, currentLabel, props.label),
-            modifier = Modifier.fillMaxWidth().upClickable(enabled = !props.disabled, onClick = { open = !open }).padding(12.dp).upTestTag("select-trigger"),
-        )
+        Row(
+            // `.u-select__label--border`: 1px outline, 4px radius, 8x10 padding, 36px floor.
+            Modifier
+                .fillMaxWidth()
+                .then(
+                    if (props.border) {
+                        Modifier
+                            .heightIn(min = 36.dp)
+                            .border(1.dp, UPTheme.Border, RoundedCornerShape(4.dp))
+                            .background(Color.White, RoundedCornerShape(4.dp))
+                    } else {
+                        Modifier
+                    },
+                )
+                .upClickable(enabled = !props.disabled, onClick = { open = !open })
+                .padding(horizontal = if (props.border) 10.dp else 12.dp, vertical = if (props.border) 8.dp else 12.dp)
+                .upTestTag("select-trigger"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            BasicText(
+                upSelectTriggerText(props.showOptionsLabel, currentLabel, props.label),
+                style = TextStyle(color = UPTheme.Main),
+            )
+            UPIcon(UPIconProps(name = "arrow-down", size = props.iconSize, color = iconColor), diagnostics = diagnostics)
+        }
         if (open) {
+            // `<u-overlay :duration="duration + 50">` is the only place upstream spends
+            // `duration`; with no overlay inline, the panel itself fades instead.
+            var entered by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { entered = true }
+            val opacity by animateFloatAsState(
+                targetValue = if (entered) 1f else 0f,
+                animationSpec = tween(props.duration.upIntOrDefault(300).coerceAtLeast(0)),
+                label = "up-select-fade",
+            )
             Column(
                 Modifier
+                    // `optionsWrapStyle` puts the wrap at `zIndex + 1`, above the overlay.
+                    .zIndex(upSelectOptionsZIndex(props.zIndex))
                     .then(if (optionsWidth != null) Modifier.width(optionsWidth) else Modifier.fillMaxWidth())
+                    // `.u-select__options` — 1px border, 4px radius, white panel.
+                    .border(1.dp, UPTheme.Border, RoundedCornerShape(4.dp))
+                    .background(Color.White, RoundedCornerShape(4.dp))
+                    .alpha(opacity)
+                    // `maxHeight` with `overflowY: auto`; `90vh` by default.
+                    .then(if (maxHeight != null) Modifier.heightIn(max = maxHeight) else Modifier)
+                    .verticalScroll(rememberScrollState())
                     .upTestTag("select-options"),
             ) {
                 props.options.forEach { option ->
                     BasicText(
                         actionOrOptionText(option, props.labelName),
-                        modifier = Modifier.fillMaxWidth().upClickable(onClick = { val value = option.upStringKeyMapOrEmpty()[props.keyName]; current = value; open = false; onUpdateCurrent?.invoke(value); onSelect?.invoke(option) }).padding(12.dp).upTestTag("select-option"),
+                        modifier = Modifier.fillMaxWidth().upClickable(onClick = { val value = option.upStringKeyMapOrEmpty()[props.keyName]; current = value; open = false; onUpdateCurrent?.invoke(value); onSelect?.invoke(option) }).padding(horizontal = 12.dp, vertical = 10.dp).upTestTag("select-option"),
+                        style = TextStyle(color = itemColor),
                     )
                 }
             }

@@ -41,6 +41,8 @@ import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upBooleanOrDefault
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upTestTag
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.math.abs
@@ -57,10 +59,19 @@ public fun UPNumberBox(
     onOverlimit: (() -> Unit)? = null,
     onPlus: (() -> Unit)? = null,
     onMinus: (() -> Unit)? = null,
+    /** `change` with the full `{ value, name, type }` payload upstream emits. */
+    onChangeEvent: ((Map<String, UPRawValue>) -> Unit)? = null,
+    /** `focus` / `blur`, both carrying `name` like upstream. */
+    onFocus: ((Map<String, UPRawValue>) -> Unit)? = null,
+    onBlur: ((Map<String, UPRawValue>) -> Unit)? = null,
+    /** `overlimit` reports which button was refused (`plus` / `minus`). */
+    onOverlimitType: ((String) -> Unit)? = null,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
     modifier: Modifier = Modifier,
 ) {
     val bounds = rememberNumberBoxBounds(props, diagnostics)
+    val fieldInteractions = remember { MutableInteractionSource() }
+    val focused by fieldInteractions.collectIsFocusedAsState()
     val rawExternal = resolveUPModelValue(props.modelValue, props.value)
     val externalValue = formatNumberBoxValue(
         parseNumberBoxValue(rawExternal) ?: bounds.min,
@@ -97,12 +108,25 @@ public fun UPNumberBox(
         NumberBoxAction.Minus -> props.disabled || props.disableMinus || currentNumber <= bounds.min
     }
 
+    // `emitChange(value, type)` sends `{ value, name, type }`; `type` is only set for a
+    // button press, matching upstream's "手动输入不支持" note.
+    fun changeEvent(raw: UPRawValue, action: NumberBoxAction?): Map<String, UPRawValue> = mapOf(
+        "value" to raw,
+        "name" to props.name,
+        "type" to when (action) {
+            NumberBoxAction.Plus -> "plus"
+            NumberBoxAction.Minus -> "minus"
+            null -> ""
+        },
+    )
+
     fun emitValue(raw: UPRawValue, action: NumberBoxAction? = null) {
         if (!props.asyncChange) {
             currentText = formatNumberBoxValue(parseNumberBoxValue(raw) ?: bounds.min, bounds)
         }
         onInput?.invoke(raw)
         onChange?.invoke(raw)
+        onChangeEvent?.invoke(changeEvent(raw, action))
         when (action) {
             NumberBoxAction.Plus -> onPlus?.invoke()
             NumberBoxAction.Minus -> onMinus?.invoke()
@@ -113,6 +137,7 @@ public fun UPNumberBox(
     fun step(action: NumberBoxAction) {
         if (isDisabled(action)) {
             onOverlimit?.invoke()
+            onOverlimitType?.invoke(if (action == NumberBoxAction.Plus) "plus" else "minus")
             return
         }
         val step = parseNumberBoxValue(props.step)?.takeIf { it.isFinite() && it > 0.0 } ?: 1.0
@@ -120,6 +145,21 @@ public fun UPNumberBox(
         val next = round((currentNumber + signedStep) * 1.0e10) / 1.0e10
         val clamped = clampNumberBoxValue(next, bounds)
         emitValue(numberBoxRawValue(clamped, bounds), action)
+    }
+
+    // `onFocus`/`onBlur` both carry `name`; `onBlur` also forces an empty field back to
+    // `min` (upstream: "为空时不立即修正，等失焦时再处理").
+    var wasFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(focused) {
+        if (focused == wasFocused) return@LaunchedEffect
+        wasFocused = focused
+        val payload = mapOf<String, UPRawValue>("value" to currentText, "name" to props.name)
+        if (focused) {
+            onFocus?.invoke(payload)
+        } else {
+            if (currentText.isEmpty()) emitValue(numberBoxRawValue(bounds.min, bounds))
+            onBlur?.invoke(payload)
+        }
     }
 
     val rootModifier = modifier
@@ -144,6 +184,7 @@ public fun UPNumberBox(
                 disabled = false,
                 onClick = { step(NumberBoxAction.Minus) },
                 onRepeat = if (props.longPress) ({ step(NumberBoxAction.Minus) }) else null,
+                iconStyle = props.iconStyle,
                 diagnostics = diagnostics,
             )
         }
@@ -175,6 +216,7 @@ public fun UPNumberBox(
                 .upTestTag("number-box-field"),
             enabled = !props.disabled && !props.disabledInput,
             singleLine = true,
+            interactionSource = fieldInteractions,
             textStyle = TextStyle(
                 color = if (props.disabled || props.disabledInput) resolvedDisabledColor else resolvedColor,
                 fontSize = 15.sp,
@@ -199,6 +241,7 @@ public fun UPNumberBox(
                 disabled = false,
                 onClick = { step(NumberBoxAction.Plus) },
                 onRepeat = if (props.longPress) ({ step(NumberBoxAction.Plus) }) else null,
+                iconStyle = props.iconStyle,
                 diagnostics = diagnostics,
             )
         }
@@ -323,6 +366,7 @@ private fun NumberBoxButton(
     disabled: Boolean,
     onClick: () -> Unit,
     onRepeat: (() -> Unit)?,
+    iconStyle: net.lingyun.ultraui.android.core.UPStyleInput,
     diagnostics: UPCompatibilityDiagnostics,
 ) {
     // `longPress` wires `@touchstart="onTouchStart"` alongside `@tap`: holding for 600ms
@@ -370,6 +414,8 @@ private fun NumberBoxButton(
                 color = "#%08X".format(color.value.toLong()),
                 size = 15,
                 bold = true,
+                // `<up-icon :customStyle="iconStyle">` on both the minus and plus glyphs.
+                customStyle = iconStyle,
             ),
             diagnostics = diagnostics,
         )

@@ -98,6 +98,30 @@ internal fun upSelectOptionsWidthDp(optionsWidth: UPRawValue): Float? {
 }
 
 /**
+ * `maxHeight` caps the options panel and defaults to `90vh`, a viewport unit CSS
+ * resolves against the window. [windowHeightDp] carries that height in; `px`, `rpx`
+ * and bare numbers fall through to the shared dimension parser.
+ */
+internal fun upSelectMaxHeightDp(maxHeight: UPRawValue, windowHeightDp: Float, windowWidthDp: Float): Float? {
+    val text = maxHeight.upStringValueOrEmpty().trim().lowercase()
+    if (text.isEmpty()) return null
+    if (text.endsWith("vh")) {
+        return text.removeSuffix("vh").trim().toFloatOrNull()
+            ?.div(100f)
+            ?.times(windowHeightDp)
+            ?.takeIf { it > 0f }
+    }
+    return net.lingyun.ultraui.android.core.UPUnit
+        .parseOrNull(maxHeight, androidx.compose.ui.unit.Dp(windowWidthDp))
+        ?.value
+        ?.takeIf { it > 0f }
+}
+
+/** `zIndex + 1` — upstream lifts the options wrap one step above its own overlay. */
+internal fun upSelectOptionsZIndex(zIndex: UPRawValue): Float =
+    (zIndex.asFiniteFloatOrNull() ?: 11_000f) + 1f
+
+/**
  * The trigger prints the selected option's label only when `showOptionsLabel` is set;
  * otherwise it always prints the static `label`, even after a selection.
  */

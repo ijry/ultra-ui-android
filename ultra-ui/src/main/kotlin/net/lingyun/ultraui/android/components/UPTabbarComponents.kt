@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +44,7 @@ import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upClickable
@@ -135,14 +140,22 @@ public fun UPTabbar(
         .then(if (props.safeAreaInsetBottom) Modifier.navigationBarsPadding() else Modifier)
         .upTestTag("tabbar-style-$styleType")
 
+    // `tabbarStyle` puts `zIndex` on the content view; `.u-tabbar--fixed` then lifts it out
+    // of the flow, which is why upstream needs the placeholder below. Window-level fixed
+    // positioning belongs to the host on Android, so the bar stays where the caller puts
+    // it — but `placeholder` still reserves the bar's measured height, and `zIndex` still
+    // decides what it covers among its siblings.
+    var contentHeightPx by remember { mutableIntStateOf(0) }
+    val placeholderHeight = with(LocalDensity.current) { contentHeightPx.toDp() }
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .zIndex(upTabbarZIndex(props.zIndex))
             .applyUPResolvedStyle(style)
             .upTestTag("tabbar"),
     ) {
         Row(
-            modifier = wrapperModifier,
+            modifier = wrapperModifier.onSizeChanged { size -> contentHeightPx = size.height },
             horizontalArrangement = if (styleType == "pill" || styleType == "card" || styleType == "glow" || styleType == "convex") {
                 Arrangement.spacedBy(4.dp)
             } else {
@@ -152,8 +165,25 @@ public fun UPTabbar(
         ) {
             CompositionLocalProvider(LocalUPTabbar provides context) { content() }
         }
+        // `setPlaceholderHeight() { if (!this.fixed || !this.placeholder) return }` — the
+        // anti-collapse spacer only exists when both flags are set.
+        if (upTabbarPlaceholderVisible(props.fixed, props.placeholder) && placeholderHeight > 0.dp) {
+            Spacer(
+                Modifier
+                    .fillMaxWidth()
+                    .height(placeholderHeight)
+                    .upTestTag("tabbar-placeholder"),
+            )
+        }
     }
 }
+
+/** `tabbarStyle.zIndex`; upstream's `u-tabbar` default is 1. */
+internal fun upTabbarZIndex(zIndex: UPRawValue): Float =
+    zIndex.asFiniteFloatOrNull() ?: 1f
+
+/** `if (!this.fixed || !this.placeholder) return` guards `setPlaceholderHeight`. */
+internal fun upTabbarPlaceholderVisible(fixed: Boolean, placeholder: Boolean): Boolean = fixed && placeholder
 
 @Composable
 public fun RowScope.UPTabbarItem(
