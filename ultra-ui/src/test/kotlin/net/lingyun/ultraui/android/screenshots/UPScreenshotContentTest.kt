@@ -16,16 +16,43 @@ import org.junit.Test
  * stops painting one of them fails here rather than passing a "nothing changed" check.
  */
 class UPScreenshotContentTest {
+    /** Inclusive pixel bounds, so containment reads the same way as the reference scans. */
+    private data class Box(val left: Int, val top: Int, val right: Int, val bottom: Int) {
+        val width: Int get() = right - left + 1
+        val height: Int get() = bottom - top + 1
+
+        fun contains(other: Box): Boolean =
+            other.left >= left && other.right <= right && other.top >= top && other.bottom <= bottom
+
+        fun contains(point: Pair<Int, Int>): Boolean =
+            point.first in left..right && point.second in top..bottom
+
+        fun centre(): Pair<Int, Int> = (left + right) / 2 to (top + bottom) / 2
+
+        fun middleThird(): Box = Box(
+            left = left + width / 3,
+            top = top + height / 3,
+            right = right - width / 3,
+            bottom = bottom - height / 3,
+        )
+    }
+
     private fun IntRange.midpoint(): Int = (first + last) / 2
 
     /** `Modifier.padding(16.dp)` in the previews, at the 2.625x density they render at. */
     private val PREVIEW_PADDING_PX = 42
 
-    private fun assertRatio(label: String, measured: Int, available: Int, expected: Double) {
+    private fun assertRatio(
+        label: String,
+        measured: Int,
+        available: Int,
+        expected: Double,
+        tolerance: Double = 0.06,
+    ) {
         val ratio = measured.toDouble() / available
         assertTrue(
             "$label measured ${measured}px of ${available}px (${"%.2f".format(ratio)}), expected ~$expected",
-            Math.abs(ratio - expected) < 0.06,
+            Math.abs(ratio - expected) < tolerance,
         )
     }
 
@@ -208,18 +235,121 @@ class UPScreenshotContentTest {
     }
 
     @Test
+    fun colSpanAndGridColumnsDivideTheRowEvenly() {
+        val reference = UPScreenshotReference.load("u-row col and grid")
+
+        // Three `span = 4` columns, then a `col = 3` grid of six items: the same three
+        // theme colours appear twice, the other three only in the grid.
+        for (color in listOf("2979ff", "19be6b", "ff9900")) {
+            assertEquals(
+                "expected $color in both the row and the grid",
+                2,
+                reference.rowBandsOf(color).size,
+            )
+        }
+        for (color in listOf("fa3534", "6739b6", "909399")) {
+            assertTrue("$color missing from the grid", reference.contains(color))
+        }
+
+        // Each of the three columns is a third of the content width, minus the 8px gutter.
+        val rowBand = reference.rowBandsOf("2979ff").first()
+        val widths = listOf("2979ff", "19be6b", "ff9900").map {
+            val run = requireNotNull(reference.widestRunInRow(it, rowBand.midpoint(), mergeGap = 8))
+            run.last - run.first + 1
+        }
+        val available = reference.width - 2 * PREVIEW_PADDING_PX
+        for ((index, measured) in widths.withIndex()) {
+            assertRatio("column $index", measured, available, 1.0 / 3, tolerance = 0.04)
+        }
+        // ...and they march left to right without overlapping.
+        val lefts = listOf("2979ff", "19be6b", "ff9900").map {
+            requireNotNull(reference.widestRunInRow(it, rowBand.midpoint(), mergeGap = 8)).first
+        }
+        assertEquals("columns are out of order: $lefts", lefts.sorted(), lefts)
+    }
+
+    @Test
+    fun theActionSheetDimsThePageAboveItsPanel() {
+        val reference = UPScreenshotReference.load("native action sheet")
+
+        // 45% black over white resolves to #8c8c8c, and it has to stop where the panel
+        // starts — a scrim covering the panel too would mean the sheet is behind it.
+        val scrim = reference.rowBandsOf("8c8c8c").maxBy { it.last - it.first }
+        assertTrue("the scrim should start at the top edge", scrim.first == 0)
+        assertTrue(
+            "the scrim should cover roughly the upper half, got $scrim",
+            scrim.last in (reference.height / 3)..(reference.height * 2 / 3),
+        )
+        // The panel below it is white and unmistakably tall.
+        val panelTop = scrim.last + 1
+        assertEquals("the panel should begin right below the scrim", "ffffff", reference.colorAt(reference.width / 2, panelTop + 2))
+    }
+
+    @Test
+    fun numberBoxDisabledStateRepaintsBothButtonsAndTheField() {
+        val reference = UPScreenshotReference.load("u-number-box limits")
+
+        // Three previews stacked: two enabled, one disabled. The enabled rows paint
+        // #ebecee behind minus/plus, the disabled row swaps in #f7f8fa.
+        val enabled = reference.rowBandsOf("ebecee")
+        val disabled = reference.rowBandsOf("f7f8fa")
+        assertEquals("expected two enabled number boxes, got $enabled", 2, enabled.size)
+        assertEquals("expected the disabled fill in two bands, got $disabled", 2, disabled.size)
+
+        // Both fills split into the same three columns: minus, field, plus.
+        for ((color, bands) in listOf("ebecee" to enabled, "f7f8fa" to disabled)) {
+            val columns = reference.columnBandsOf(color, bands.last())
+                .filter { it.last - it.first > 20 }
+            assertEquals("$color should form minus/field/plus, got $columns", 3, columns.size)
+        }
+        // The disabled preview sits last, below both enabled ones.
+        assertTrue("the disabled row should come last", disabled.last().first > enabled.last().first)
+    }
+
+    @Test
+    fun theSwiperLoadingSlidePaintsItsPlaceholderIcon() {
+        val reference = UPScreenshotReference.load("u-swiper loading")
+
+        // `loading = true` fills the slide with bgColor and puts a #909399 glyph in it.
+        val slideColumns = reference.columnBandsOf("f3f4f6", 0 until reference.height)
+        val slideRows = reference.rowBandsOf("f3f4f6")
+        assertTrue("slide background missing", slideColumns.isNotEmpty() && slideRows.isNotEmpty())
+        val slide = Box(
+            left = slideColumns.first().first,
+            top = slideRows.first().first,
+            right = slideColumns.last().last,
+            bottom = slideRows.last().last,
+        )
+        // `height = 120` at 2.625 px/dp, so the placeholder slide is a wide band.
+        val density = reference.densityFor(widthDp = 320)
+        assertRatio("slide height", slide.height, (120 * density).toInt(), 1.0, tolerance = 0.05)
+
+        val glyphColumns = reference.columnBandsOf("909399", 0 until reference.height)
+        val glyphRows = reference.rowBandsOf("909399")
+        assertTrue("no loading glyph found", glyphColumns.isNotEmpty() && glyphRows.isNotEmpty())
+        val glyph = Box(
+            left = glyphColumns.first().first,
+            top = glyphRows.first().first,
+            right = glyphColumns.last().last,
+            bottom = glyphRows.last().last,
+        )
+        // Assert containment rather than an exact centre: a glyph's ink box is offset from
+        // its layout box by the font's side bearings, so the ink is never dead centre.
+        assertTrue("glyph escapes the slide: $glyph vs $slide", slide.contains(glyph))
+        assertTrue(
+            "glyph should sit in the middle third of the slide, got $glyph in $slide",
+            slide.middleThird().contains(glyph.centre()),
+        )
+    }
+
+    @Test
     fun everyReferenceIsOpaqueAndNonEmpty() {
         // A blank or transparent reference would still pass validateDebugScreenshotTest,
         // so the floor is checked here instead.
-        val names = listOf(
-            "field parity subsection modes",
-            "field parity cell navbar and tag",
-            "field parity badge offset and number box",
-            "motion parity notice collapse sticky",
-            "motion parity slider geometry",
-            "tail field skeleton select readmore",
-            "tabs shapes and pagination",
-        )
+        // Every committed reference, not just this batch's: a blank one anywhere would
+        // otherwise sit in the tree indefinitely, quietly passing the "did it change" check.
+        val names = UPScreenshotReference.allNames()
+        assertTrue("expected the full reference set, found ${names.size}", names.size >= 28)
         for (name in names) {
             val reference = UPScreenshotReference.load(name)
             val counts = reference.colorCounts()

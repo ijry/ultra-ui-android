@@ -177,6 +177,13 @@ internal class UPScreenshotReference private constructor(
             return UPScreenshotReference(file.name, width, height, argb)
         }
 
+        /** Every committed reference PNG, by file name. */
+        fun allNames(): List<String> = referenceRoot().walkTopDown()
+            .filter { it.isFile && it.extension == "png" }
+            .map { it.name }
+            .sorted()
+            .toList()
+
         /** Walks up from the test working directory, which differs between Gradle and IDE runs. */
         private fun referenceRoot(): File {
             var directory: File? = File(System.getProperty("user.dir") ?: ".").absoluteFile
