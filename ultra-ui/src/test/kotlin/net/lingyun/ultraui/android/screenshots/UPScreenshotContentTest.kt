@@ -480,6 +480,65 @@ class UPScreenshotContentTest {
     }
 
     @Test
+    fun pickerMaskStyleTintsTheWholeColumnIncludingTheSelectedRow() {
+        val reference = UPScreenshotReference.load("picker toolbar right slot and mask")
+
+        // `maskStyle = rgba(0, 0, 0, 0.06)` covers the column, so every colour underneath
+        // it comes out multiplied by 0.94. Both the selected row's #eaf3ff highlight and
+        // the plain white background have to show their tinted form — and their untinted
+        // form must be gone, which is what proves the mask sits *above* the options.
+        assertTrue("tinted highlight #dce4f0 missing", reference.contains("dce4f0"))
+        assertTrue("tinted background #f0f0f0 missing", reference.contains("f0f0f0"))
+        assertEquals("the untinted highlight should be covered", 0, reference.countOf("eaf3ff"))
+
+        // The tinted highlight is one contiguous band, sitting inside the tinted column.
+        val highlight = reference.rowBandsOf("dce4f0").single()
+        val column = reference.rowBandsOf("f0f0f0").maxBy { it.last - it.first }
+        assertTrue(
+            "the highlight should border the tinted column: $highlight vs $column",
+            highlight.last + 1 == column.first || column.last + 1 == highlight.first,
+        )
+    }
+
+    @Test
+    fun theStatusBarKeepsItsOwnHeightAndColour() {
+        val reference = UPScreenshotReference.load("batch 9b navigation and status")
+
+        // `UPStatusBar(bgColor = "#f3f4f6", height = 8)` is the only #f3f4f6 in the preview.
+        val band = reference.rowBandsOf("f3f4f6").single()
+        val density = reference.densityFor(widthDp = 360)
+        assertRatio("status bar height", band.last - band.first + 1, (8 * density).toInt(), 1.0, tolerance = 0.15)
+
+        // The subsection below it paints its own track, so the two never merge.
+        val track = reference.rowBandsOf("eeeeef").maxBy { it.last - it.first }
+        assertTrue("the subsection track should follow the status bar", track.first > band.last)
+    }
+
+    @Test
+    fun calendarMarksTheDefaultDateAndTheSliderFillsBelowIt() {
+        val reference = UPScreenshotReference.load("batch 10 calendar and slider")
+
+        // `defaultDate = "2026-08-20"` fills one day cell with activeColor; the slider
+        // under it uses the same colour for its filled track, so there are two bands.
+        val bands = reference.rowBandsOf("3c9cff")
+        assertEquals("expected a selected day and a slider fill, got $bands", 2, bands.size)
+
+        // The day cell is a small square; the slider spans most of the content width.
+        val dayRun = requireNotNull(reference.widestRunInRow("3c9cff", bands[0].midpoint()))
+        val sliderRun = requireNotNull(reference.widestRunInRow("3c9cff", bands[1].midpoint()))
+        assertTrue(
+            "the slider fill should be far wider than a day cell: $dayRun vs $sliderRun",
+            (sliderRun.last - sliderRun.first) > (dayRun.last - dayRun.first) * 5,
+        )
+        // `value = 65` of 100, so the fill stops well short of the right edge.
+        val available = reference.width - 2 * PREVIEW_PADDING_PX
+        assertTrue(
+            "a 65% slider should not reach the right edge, got $sliderRun of $available",
+            sliderRun.last < reference.width - PREVIEW_PADDING_PX,
+        )
+    }
+
+    @Test
     fun everyReferenceIsOpaqueAndNonEmpty() {
         // A blank or transparent reference would still pass validateDebugScreenshotTest,
         // so the floor is checked here instead.

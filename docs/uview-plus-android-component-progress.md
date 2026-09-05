@@ -206,7 +206,7 @@
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
 1. **真机执行现有断言**：库内 245 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
-2. **视觉回归的可用性**：已经解决——参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。目前 19 项像素级断言覆盖 15 张参考图的关键颜色与几何，另有一项对全部 28 张做非空校验；剩下 13 张（picker 系列、navbar/status、calendar/cascader、swiper 的另外三张等）仍只有非空级证据。
+2. **视觉回归的可用性**：已经解决——参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。目前 22 项像素级断言覆盖 18 / 28 张参考图的关键颜色与几何，另有一项对全部 28 张做非空校验；剩下 10 张（cascader/tabbar、swiper 的另外三张、alert/notify、card/collapse、loading-icon、input trigger 两张等）仍只有非空级证据。
 3. **仍标「基础可用」的 22 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`、`u-select`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker` 系列）三类，需要先补基础设施再逐个收口。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
@@ -388,7 +388,7 @@ python3 tools/inspect_screenshot.py "tabs shapes" --ascii 656 690 44 118        
 用来肉眼确认字形——上面「共 100 条」的"共"字与三个数字轮廓清晰可辨，正是据此推翻了
 "渲染环境不画文本"的旧判断。
 
-同时新增 `UPScreenshotContentTest`（**19 项 JVM 单测**，走 `javax.imageio` 读回已提交的 PNG），
+同时新增 `UPScreenshotContentTest`（**22 项 JVM 单测**，走 `javax.imageio` 读回已提交的 PNG），
 把视觉断言变成可以 gate 提交的证据，而不是靠人眼：
 
 - 抗锯齿混合色占比 > 0.1%，证明文字真的被绘制（纯色块布局做不出这么多一次性混合色）
@@ -422,6 +422,13 @@ python3 tools/inspect_screenshot.py "tabs shapes" --ascii 656 690 44 118        
   同时含两色且亮色部分约占该字形一半（误差 < 8%）
 - `u-checkbox`/`u-radio` 只给勾选项填 `activeColor`，未勾选项只描 `inactiveColor` 边
 - `u-icon` 三个彩色图标各自保留自己的颜色（图标字体加载失败会只剩标签文字）
+- `u-picker` 的 `maskStyle = rgba(0,0,0,0.06)` 把整列（含选中行高亮）都压暗 6%：
+  `#eaf3ff` 高亮变成 `#dce4f0`、白底变成 `#f0f0f0`，且**原始 `#eaf3ff` 一个像素都不剩**
+  —— 这一条恰好证明遮罩层在选项之上，而不是被选项盖住
+- `u-status-bar` 的 `height = 8` 按密度换算后高度吻合（误差 < 15%），且下方
+  subsection 轨道与它不相接（说明两者没有合并成一块）
+- `u-calendar` 的 `defaultDate` 选中日填 activeColor，与其下 `u-slider` 的填充同色但
+  分成两段；日格是小方块、滑块横跨内容宽度（宽度差 > 5 倍），且 65% 不触右边缘
 - 「非空」这一项覆盖**全部 28 张**参考图（不只本轮新增的 7 张），空白参考图会被拦下
 
 其余限制仍然存在：这些断言核对的是"该画的颜色在不在、几何比例对不对"，不是与上游
