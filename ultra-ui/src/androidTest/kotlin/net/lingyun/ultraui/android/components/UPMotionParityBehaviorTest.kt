@@ -4,6 +4,8 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -218,6 +220,94 @@ class UPMotionParityBehaviorTest {
 
         assertTrue("disabled should remove the 60dp of sticky offset", disabled < enabled)
         assertEquals(60.dp.value, (enabled - disabled).value, 1f)
+    }
+
+    @Test
+    fun sliderHeightSetsTheTrackThicknessAndLengthCapsTheAxis() {
+        composeRule.setContent {
+            UPSlider(UPSliderProps(value = 40, height = 8, length = 200))
+        }
+
+        val bounds = composeRule.onNodeWithTag("up-slider").getUnclippedBoundsInRoot()
+        assertEquals(200.dp.value, (bounds.right - bounds.left).value, 1f)
+        // `innerStyleCpu.height` is `blockSize` for a single-value slider.
+        assertEquals(18.dp.value, (bounds.bottom - bounds.top).value, 1f)
+    }
+
+    @Test
+    fun aRangeSliderThatShowsItsValuesGetsTwentyFourExtraPixels() {
+        composeRule.setContent {
+            UPSlider(UPSliderProps(isRange = true, rangeValue = listOf(20, 60), showValue = true))
+        }
+
+        val bounds = composeRule.onNodeWithTag("up-slider").getUnclippedBoundsInRoot()
+        assertEquals(42.dp.value, (bounds.bottom - bounds.top).value, 1f)
+    }
+
+    @Test
+    fun sliderBlockStyleResizesTheThumb() {
+        composeRule.setContent {
+            UPSlider(UPSliderProps(value = 50, blockStyle = mapOf("width" to "34px", "height" to "34px")))
+        }
+
+        composeRule.onNodeWithTag("up-slider-thumb-start").assertHeightIsEqualTo(34.dp)
+    }
+
+    @Test
+    fun sliderUseNativeReportsItsDowngradeButStillRenders() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            UPSlider(
+                props = UPSliderProps(value = 30, useNative = true),
+                diagnostics = UPCompatibilityDiagnostics { events += it.property },
+            )
+        }
+
+        composeRule.onNodeWithTag("up-slider").assertExists()
+        composeRule.onNodeWithTag("up-slider-thumb-start").assertExists()
+        composeRule.runOnIdle { assertTrue(events.contains("useNative")) }
+    }
+
+    @Test
+    fun aRangeSliderIgnoresUseNativeEntirely() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            UPSlider(
+                props = UPSliderProps(isRange = true, rangeValue = listOf(10, 90), useNative = true),
+                diagnostics = UPCompatibilityDiagnostics { events += it.property },
+            )
+        }
+
+        composeRule.onNodeWithTag("up-slider-thumb-end").assertExists()
+        composeRule.runOnIdle { assertEquals(emptyList<String>(), events) }
+    }
+
+    @Test
+    fun listScrollIntoViewJumpsToTheMatchingAnchor() {
+        composeRule.setContent {
+            UPList(UPListProps(height = 120, scrollIntoView = "row-9")) {
+                repeat(10) { index ->
+                    UPListItem(props = UPListItemProps(anchor = "row-$index")) {
+                        UPGap(UPGapProps(height = 40, bgColor = "#eeeeee"))
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        // The last row can only be on screen if the list scrolled to its anchor.
+        composeRule.onNodeWithTag("up-list-item-row-9").assertIsDisplayed()
+    }
+
+    @Test
+    fun listItemsWithoutAnAnchorKeepTheGenericTag() {
+        composeRule.setContent {
+            UPList(UPListProps(height = 120)) {
+                UPListItem { UPGap(UPGapProps(height = 40)) }
+            }
+        }
+
+        composeRule.onNodeWithTag("up-list-item").assertExists()
     }
 
     @Test

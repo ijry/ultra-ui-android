@@ -143,3 +143,29 @@ fun UPMotionParityScreenshot() {
         }
     }
 }
+
+@PreviewTest
+@Preview(
+    name = "motion parity slider geometry",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+    widthDp = 360,
+    heightDp = 240,
+)
+@Composable
+fun UPMotionParitySliderScreenshot() {
+    Column(
+        Modifier.fillMaxSize().background(Color.White).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        UPSlider(UPSliderProps(value = 40))
+        UPSlider(UPSliderProps(value = 40, height = 8, length = 220))
+        UPSlider(
+            UPSliderProps(
+                value = 60,
+                blockStyle = mapOf("width" to "30px", "height" to "30px", "borderRadius" to "6px"),
+            ),
+        )
+        UPSlider(UPSliderProps(isRange = true, rangeValue = listOf(20, 70), showValue = true))
+    }
+}

@@ -96,8 +96,8 @@
 | 61 | 基础展示 | `u-line` | `UPLine` / `UPLineProps` | 基本完成 | 高（Props） | 横竖线、颜色、虚线和尺寸已有实现。 |
 | 62 | 布局与进度 | `u-line-progress` | `UPLineProgress` / `UPLineProgressProps` | 基本完成 | 高（Props） | 进度、颜色、圆角和文字已有实现。 |
 | 63 | 基础展示 | `u-link` | `UPLink` / `UPLinkProps` | 基本完成 | 高（Props） | 链接文字、下划线、图标和点击已有实现。 |
-| 64 | 列表与索引 | `u-list` | `UPList` / `UPListProps` | 基础可用 | 中 | `height`/`width` 限定视口、`scrollable`、`lowerThreshold`/`upperThreshold` 触边事件（按穿越沿触发一次）、`scrollTop`+`scrollWithAnimation` 程序化滚动、`refresherEnabled` 系列下拉刷新均已生效并有真机测试；未指定高度时可嵌入外层纵向滚动容器；`pagingEnabled`、`preLoadScreen`、`scrollIntoView` 仍未实现。 |
-| 65 | 列表与索引 | `u-list-item` | `UPListItem` / `UPListItemProps` | 基础可用 | 中 | 列表项容器可用；复杂 slot 与分割线待补。 |
+| 64 | 列表与索引 | `u-list` | `UPList` / `UPListProps` | 基本完成 | 高（Props） | `height`/`width` 限定视口、`scrollable`、`lowerThreshold`/`upperThreshold` 触边事件（按穿越沿触发一次）、`scrollTop`+`scrollWithAnimation` 程序化滚动、`refresherEnabled` 系列下拉刷新均已生效并有真机测试；`scrollIntoView` 按子项上报的 `anchor` 偏移滚动到对应位置（`scrollWithAnimation` 决定是否带动画），有真机断言；未指定高度时可嵌入外层纵向滚动容器。降级：`pagingEnabled` 上游 `u-list.vue` 自身从不读取；`preLoadScreen` 上游只在 `u-list-item.vue` 算出一个 `show` 标记却从不绑定到模板，因此实际不会跳过任何项。 |
+| 65 | 列表与索引 | `u-list-item` | `UPListItem` / `UPListItemProps` | 基本完成 | 高（Props） | 列表项容器可用；`anchor` 向父级 `UPList` 上报自身在滚动列内的偏移，供 `scrollIntoView` 定位，同时把 testTag 收敛为 `up-list-item-<anchor>`（无 anchor 时保持 `up-list-item`），有真机断言。复杂 slot 与分割线待补。 |
 | 66 | 基础能力 | `u-loading-icon` | `UPLoadingIcon` / `UPLoadingIconProps` | 基本完成 | 高（Props） | 原生 Compose 加载动画和 icon font 兼容已有测试。 |
 | 67 | 通知与状态 | `u-loading-page` | `UPLoadingPage` / `UPLoadingPageProps` | 基本完成 | 高（Props） | 加载页文字、图标、背景和状态已有实现。 |
 | 68 | 通知与状态 | `u-loadmore` | `UPLoadmore` / `UPLoadmoreProps` | 基本完成 | 高（Props） | 加载/没有更多/点击加载状态已有实现。 |
@@ -139,7 +139,7 @@
 | 104 | 媒体与内容 | `u-short-video` | — | 未开始 | 暂无 | 短视频播放器涉及 ExoPlayer 和生命周期。 |
 | 105 | 原生能力 | `u-signature` | — | 未开始 | 暂无 | 手写签名画布待实现。 |
 | 106 | 通知与状态 | `u-skeleton` | `UPSkeleton` / `UPSkeletonProps` | 基础可用 | 中 | 骨架行、头像、标题和动画开关已有；细节尺寸待对照。 |
-| 107 | 选择 | `u-slider` | `UPSlider` / `UPSliderProps` | 基础可用 | 中 | 单值、range、step 量化和 changing/change 基础手势已支持；vertical、原生无障碍语义和复杂样式仍待完善。 |
+| 107 | 选择 | `u-slider` | `UPSlider` / `UPSliderProps` | 基本完成 | 高（Props） | 单值、range、step 量化和 changing/change 手势之外：`height` 按上游 `sizeLocal` 语义覆盖 `size` 作为轨道厚度、`length` 限定轨道自身轴向长度（`auto` 交回父级测量）、`innerStyle` 作用于轨道行且行高按 `blockSize`（range 且 `showValue` 时 +24）计算、`blockStyle` 作用于滑块并可改其尺寸圆角，均有真机断言。降级：`useNative` 要求 uni-app 平台 `<slider>`，本库只依赖 Compose foundation，回落到自绘轨道并上报诊断（上游对 range 同样不用原生控件）。原生无障碍语义仍待完善。 |
 | 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基础可用 | 高（Props） | 状态栏高度和顶部 inset 已封装。 |
 | 109 | 导航 | `u-steps` | `UPSteps` / `UPStepsProps` | 基本完成 | 中 | `current` 驱动 finish/process/wait/error 四态、`direction` 控制横纵布局、`activeColor`/`inactiveColor`/`dot`/`activeIcon`/`inactiveIcon` 均已生效并有真机测试。 |
 | 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基本完成 | 中 | 按索引与父级 `current` 推导状态：已完成显示 ✓、当前步为实心序号、未达步为灰色序号、`error` 显示 ✕；`iconSize`（对齐上游 17）与 `itemStyle` 已生效。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 61 |
-| 基础可用 | 29 |
+| 基本完成 | 64 |
+| 基础可用 | 26 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -226,13 +226,14 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **224 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **231 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
-动效补齐批新增 12 项回归（`UPMotionParityBehaviorTest`），覆盖 `u-notice-bar` 逐条轮播的定时
+动效与几何补齐批新增 19 项回归（`UPMotionParityBehaviorTest`），覆盖 `u-notice-bar` 逐条轮播的定时
 切换与循环、单条不切换、`step` 走轮播、横向跑马灯真实位移，`u-column-notice`/`u-row-notice`
 两个封装各自转发间隔与速度，`u-collapse-item` 收起过程中面板仍在树内、`customStyle` 落在外层、
 零时长即时开合、标题行仍可开合，以及 `u-sticky` 的 `disabled` 撤掉偏移与 `u-action-sheet` 的
-`safeAreaInsetBottom`。这 12 项同样**只有编译级证据**
+`safeAreaInsetBottom`，以及 `u-slider` 的 `height`/`length`/`blockStyle` 几何、`useNative`
+降级诊断与 range 对它的免疫，和 `u-list` 的 `scrollIntoView` 锚点定位。这 19 项同样**只有编译级证据**
 （`compileDebugAndroidTestKotlin` 通过），按用户要求未在设备/模拟器上执行。再往前一批为
 `u-subsection` 新增 8 项回归（`UPSubsectionBehaviorTest`），覆盖两种 `mode` 的高度差异、
 滑块随点击与受控 `current` 平移、单项/空列表边界、`keyName` 与逐项颜色键、`disabled` 拦截点击、
@@ -312,7 +313,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 29 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 26 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据，视觉回归也受渲染环境限制（见下文）。
 
 > 为什么要做这件事：连续五轮工作中，每一轮都在标着「基础可用/基本完成」的组件里发现
@@ -333,8 +334,9 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `shapeMode` 与 `u-pagination` 完整 `layout` 新增 1 张截图参考图（`UPBatch9BTabsShapeScreenshot`），
 参考图总数 21 → 22。再往前一批为字段补齐批新增 10 项行为断言（编译级）与 2 张截图参考图
 （`FieldParityScreenshots`：cell/navbar/tag 与 badge 偏移/number-box），参考图总数 22 → 24。
-再往前一批为 `u-subsection` 两种形态新增 1 张参考图，参考图总数 24 → 25。最近一批为通知栏、
-折叠面板与吸顶容器新增 1 张参考图，参考图总数 25 → 26。
+再往前一批为 `u-subsection` 两种形态新增 1 张参考图，参考图总数 24 → 25。再往前一批为通知栏、
+折叠面板与吸顶容器新增 1 张参考图，参考图总数 25 → 26。最近一批为 `u-slider` 的四种几何组合
+新增 1 张参考图，参考图总数 26 → 27。
 需说明的限制：
 本仓库的 screenshotTest 渲染环境不绘制文本与大部分填色（已对照既有 `Batch9BScreenshots`
 基线确认同样表现，非本次改动引入的回归），因此这类参考图只能作为不崩溃与布局占位证据，
@@ -347,7 +349,8 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 当前扫描结果中，`u-tabbar`、`u-tabbar-item`、`u-swiper`、`u-picker`、`u-datetime-picker`、
 `u-tabs`、`u-pagination`、`u-image`、`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、
 `u-number-box`、`u-overlay`、`u-badge`、`u-tag`、`u-subsection`、`u-notice-bar`、
-`u-collapse-item`、`u-sticky` 与 `u-action-sheet` 已不再出现在未读字段清单；剩余未读字段
+`u-collapse-item`、`u-sticky`、`u-action-sheet`、`u-slider`、`u-list` 与 `u-list-item`
+已不再出现在未读字段清单；剩余未读字段
 仍需按组件逐项消化，不能仅以 Props 声明或编译通过替代行为证据。Batch 11 的两个表单组件没有新增未读字段：
 `u-form` 的 `borderBottom` 已登记为按设计不生效（上游只有一个不再被调用的 `propsChange` computed 引用它，
 `u-form-item` 从不读取父级该字段），`u-form-item` 的 `rightIcon` 上游声明后同样从未渲染——后者因为
@@ -359,7 +362,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：90 个 Props 类中有 **17 个字段无人读取**，另有 65 个已记录为按设计不生效
+当前状态：90 个 Props 类中有 **10 个字段无人读取**，另有 67 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义，以及上游自己也从不读取的字段，
 仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
@@ -387,7 +390,10 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 `u-collapse-item` 的 2 个（`duration`、`customStyle`）、`u-sticky` 的 2 个（`disabled`、`zIndex`）
 与 `u-action-sheet` 的 `safeAreaInsetBottom` 接上实现，另有 4 个登记为按设计不生效
 （`u-sticky.index`、`u-action-sheet.index`/`openType`、`u-collapse-item.cellCustomClass`），
-未读数降到 17。
+未读数降到 17。最新一批把 `u-slider` 的 3 个（`height`、`innerStyle`、`blockStyle`，另有
+`useNative` 走诊断降级）与 `u-list` 的 `scrollIntoView`、`u-list-item` 的 `anchor` 接上实现，
+另有 2 个登记为按设计不生效（`u-list.pagingEnabled` 上游自身不读、`u-list.preLoadScreen`
+上游算出 `show` 后从不绑定），未读数降到 10。
 
 > 数字为何从 134 涨到 205：脚本原先把**整个文件**当作搜索范围，同文件内的兄弟组件
 > （`UPSwiper` 与 `UPCountTo` 同在 `UPStatusNumericComponents.kt`）会互相掩盖——
@@ -396,12 +402,13 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 > 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
 > 才显形。**205 是更接近真相的数字，不是退步。**
 
-17 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+10 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
 也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。后续批次应优先
-消化本清单，而不是先增加新组件。按未读字段数排序，下一批优先目标是
-`u-list`/`u-slider`（各 3 个），其后是 `u-cascader`、`u-read-more`、`u-select`、`u-skeleton`
-（各 2 个），最后是 `u-back-top`、`u-count-to`、`u-list-item` 各 1 个。
+消化本清单，而不是先增加新组件。剩余 10 个字段分布在 6 个组件上：`u-cascader`
+（`headerDirection`、`maskCloseAble`）、`u-read-more`（`shadowStyle`、`textIndent`）、
+`u-select`（`optionsWidth`、`showOptionsLabel`）、`u-skeleton`（`avatarShape`、`rowsWidth`），
+以及 `u-back-top`（`duration`）与 `u-count-to`（`useEasing`）各 1 个。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

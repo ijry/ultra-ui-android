@@ -33,8 +33,11 @@ import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upTestTag
 import kotlin.math.abs
+
+private const val SliderComponentName: String = "UPSlider"
 
 @Composable
 public fun UPSlider(
@@ -86,12 +89,42 @@ public fun UPSlider(
     val inactive = UPColor.parse(props.inactiveColor, UPTheme.Border)
     val block = UPColor.parse(props.blockColor, Color.White)
     val blockSize = props.blockSize.rawFloat(18f).dp
-    val trackHeight = props.size.rawFloat(2f).coerceAtLeast(1f).dp
+    // `mounted() { sizeLocal = height !== '' ? height : size }`: `height` overrides `size`
+    // as the track thickness, so an explicit height wins even for a horizontal slider.
+    val trackHeight = upSliderTrackThickness(props.height, props.size).dp
+    // `length` sizes the track along its own axis; `auto` keeps the parent's measurement.
+    val explicitLength = upSliderLengthDp(props.length)?.dp
     val vertical = props.vertical
+    val blockStyle = rememberUPResolvedStyle(props.blockStyle, diagnostics, "$SliderComponentName.blockStyle")
+    val innerStyle = rememberUPResolvedStyle(props.innerStyle, diagnostics, "$SliderComponentName.innerStyle")
+    // `useNative` swaps in uni-app's platform `<slider>`, which only exists for the
+    // single-value case. This library depends on Compose foundation alone, so there is no
+    // platform slider to swap in; report the downgrade instead of silently ignoring it.
+    LaunchedEffect(props.useNative, props.isRange, diagnostics) {
+        if (upSliderUsesNative(props.useNative, props.isRange)) {
+            diagnostics.report(
+                SliderComponentName,
+                "useNative",
+                props.useNative,
+                "uni-app 原生 slider 无 Compose 等价物，回落到本组件自绘轨道。",
+            )
+        }
+    }
 
     BoxWithConstraints(
         modifier = modifier
-            .then(if (vertical) Modifier.width(blockSize + 20.dp).height(220.dp) else Modifier.fillMaxWidth().height(40.dp))
+            .then(
+                if (vertical) {
+                    Modifier.width(blockSize + 20.dp).height(explicitLength ?: 220.dp)
+                } else {
+                    Modifier
+                        .then(if (explicitLength != null) Modifier.width(explicitLength) else Modifier.fillMaxWidth())
+                        // `innerStyleCpu.height` is `blockSize` (+24 for a range slider that
+                        // also shows its values), not a fixed 40dp.
+                        .height(upSliderInnerHeightDp(props.blockSize, props.isRange, props.showValue).dp)
+                },
+            )
+            .applyUPResolvedStyle(innerStyle)
             .onSizeChanged { layoutSize = it }
             .pointerInput(props.disabled, min, max, step, range) { detectTapGestures { update(it, true) } }
             .pointerInput(props.disabled, min, max, step, range) {
@@ -104,7 +137,7 @@ public fun UPSlider(
             .upTestTag("slider"),
         contentAlignment = if (vertical) Alignment.BottomCenter else Alignment.CenterStart,
     ) {
-        val trackLength = if (vertical) 220.dp else maxWidth
+        val trackLength = if (vertical) (explicitLength ?: 220.dp) else maxWidth
         Box(
             (if (vertical) Modifier.fillMaxHeight().width(trackHeight) else Modifier.fillMaxWidth().height(trackHeight))
                 .background(inactive),
@@ -123,8 +156,8 @@ public fun UPSlider(
             }
                 .background(active),
         )
-        SliderThumb(thumbStartFraction, trackLength, blockSize, block, values.first(), props.showValue, "slider-thumb-start", vertical)
-        if (range) SliderThumb(thumbEndFraction, trackLength, blockSize, block, values.last(), props.showValue, "slider-thumb-end", vertical)
+        SliderThumb(thumbStartFraction, trackLength, blockSize, block, values.first(), props.showValue, "slider-thumb-start", vertical, blockStyle)
+        if (range) SliderThumb(thumbEndFraction, trackLength, blockSize, block, values.last(), props.showValue, "slider-thumb-end", vertical, blockStyle)
     }
 }
 
@@ -138,6 +171,7 @@ private fun androidx.compose.foundation.layout.BoxScope.SliderThumb(
     showValue: Boolean,
     tag: String,
     vertical: Boolean,
+    blockStyle: net.lingyun.ultraui.android.core.UPResolvedStyle,
 ) {
     Box(
         Modifier.then(
@@ -155,7 +189,12 @@ private fun androidx.compose.foundation.layout.BoxScope.SliderThumb(
                     )
             },
         )
-            .size(size).background(color, CircleShape).upTestTag(tag),
+            .size(size)
+            .background(color, CircleShape)
+            // `:style="[blockStyle, { height, width, backgroundColor }]"` — the inline
+            // geometry is listed after `blockStyle`, so it wins on conflicts.
+            .applyUPResolvedStyle(blockStyle)
+            .upTestTag(tag),
         contentAlignment = Alignment.Center,
     ) {
         if (showValue) BasicText(value.toString().removeSuffix(".0"), style = TextStyle(color = UPTheme.Main, fontSize = 9.sp))

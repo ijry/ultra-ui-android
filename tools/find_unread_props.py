@@ -115,6 +115,11 @@ KNOWN_INERT: dict[str, str] = {
     "CollapseItem.cellCustomClass": "CSS class name; no Compose equivalent",
     "ActionSheet.index": "Android-only compatibility alias; upstream resolves items by position",
     "ActionSheet.openType": "wechat open-ability button only (getUserInfo/contact/launchApp)",
+    # Declared upstream but never read there either: u-list.vue has no `this.pagingEnabled`,
+    # and `preLoadScreen` only feeds a `show` flag that u-list-item.vue computes and then
+    # never binds to its template, so no item is ever actually skipped.
+    "List.pagingEnabled": "upstream u-list.vue never reads the prop",
+    "List.preLoadScreen": "upstream u-list-item.vue computes `show` from it but never binds it",
 }
 
 

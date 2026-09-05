@@ -20,14 +20,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -40,6 +45,22 @@ import net.lingyun.ultraui.android.core.upBooleanOrDefault
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upTestTag
+import kotlin.math.roundToInt
+
+/**
+ * Lets a `UPListItem` publish where its `anchor` sits so the parent can honour
+ * `scrollIntoView`. uview does the same through `inject: ['uList']` plus a `$uGetRect`
+ * measurement of each item.
+ */
+@Immutable
+internal class UPListScope(private val onAnchorPositioned: (UPRawValue, Int) -> Unit) {
+    fun publish(anchor: UPRawValue, top: Int) {
+        if (anchor.upStringValueOrEmpty().isEmpty()) return
+        onAnchorPositioned(anchor, top)
+    }
+}
+
+internal val LocalUPList = staticCompositionLocalOf<UPListScope?> { null }
 
 @Composable
 public fun UPList(props: UPListProps = UPListProps(), modifier: Modifier = Modifier, onScroll: (() -> Unit)? = null, onScrollToLower: (() -> Unit)? = null, onScrollToUpper: (() -> Unit)? = null, onRefresherRefresh: (() -> Unit)? = null, onUpdateRefresherTriggered: ((Boolean) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
@@ -80,6 +101,18 @@ public fun UPList(props: UPListProps = UPListProps(), modifier: Modifier = Modif
             if (props.scrollWithAnimation) scrollState.animateScrollTo(target) else scrollState.scrollTo(target)
         }
     }
+    // `:scroll-into-view` scrolls to the child whose anchor matches. The items report
+    // their own offsets, because only they know where they ended up after layout.
+    val anchorOffsets = remember { mutableMapOf<String, Int>() }
+    val listScope = remember {
+        UPListScope { anchor, top -> anchorOffsets[anchor.upStringValueOrEmpty()] = top }
+    }
+    val requestedAnchor = props.scrollIntoView.trim()
+    LaunchedEffect(requestedAnchor, props.scrollWithAnimation, anchorOffsets[requestedAnchor]) {
+        val target = anchorOffsets[requestedAnchor] ?: return@LaunchedEffect
+        if (requestedAnchor.isEmpty()) return@LaunchedEffect
+        if (props.scrollWithAnimation) scrollState.animateScrollTo(target) else scrollState.scrollTo(target)
+    }
 
     Column(root) {
         if (props.refresherEnabled) {
@@ -87,14 +120,24 @@ public fun UPList(props: UPListProps = UPListProps(), modifier: Modifier = Modif
         }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val bodyModifier = if (maxHeight == Dp.Infinity) Modifier else Modifier.verticalScroll(scrollState)
-            Column(bodyModifier) {
-                content()
+            var bodyTop by remember { mutableStateOf(0) }
+            Column(
+                bodyModifier.onGloballyPositioned { bodyTop = it.positionInRoot().y.roundToInt() },
+            ) {
+                CompositionLocalProvider(LocalUPList provides listScope) {
+                    // The scroll offset of an item is its distance from the column's own
+                    // top, which stays stable while the column scrolls under the viewport.
+                    CompositionLocalProvider(LocalUPListBodyTop provides bodyTop) { content() }
+                }
                 // Anchors the bottom edge so callers and tests can scroll straight to it.
                 Box(Modifier.fillMaxWidth().height(1.dp).upTestTag("list-sentinel"))
             }
         }
     }
 }
+
+/** Root-space top of the scrolling column, so items can convert their own position. */
+internal val LocalUPListBodyTop = staticCompositionLocalOf { 0 }
 
 /**
  * uview hands pulling to the platform `scroll-view`. This library depends only on
@@ -137,7 +180,31 @@ private fun UPListRefresher(
 
 @Composable
 public fun UPListItem(props: UPListItemProps = UPListItemProps(), modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPListItem")).upTestTag("list-item")) { content() }
+    // `:anchor="`u-list-item-${anchor}`"` is what the parent's `scrollIntoView` targets.
+    val list = LocalUPList.current
+    val bodyTop = LocalUPListBodyTop.current
+    val anchor = props.anchor
+    Column(
+        modifier
+            .fillMaxWidth()
+            .then(
+                if (list == null || anchor.upStringValueOrEmpty().isEmpty()) {
+                    Modifier
+                } else {
+                    Modifier.onGloballyPositioned { coordinates ->
+                        list.publish(anchor, (coordinates.positionInRoot().y.roundToInt() - bodyTop).coerceAtLeast(0))
+                    }
+                },
+            )
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPListItem"))
+            .upTestTag(
+                if (anchor.upStringValueOrEmpty().isEmpty()) {
+                    "list-item"
+                } else {
+                    "list-item-${selectionTagSuffix(anchor)}"
+                },
+            ),
+    ) { content() }
 }
 
 @Composable

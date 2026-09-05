@@ -60,3 +60,39 @@ internal fun upNoticeTouchEnabled(disableTouch: Boolean, count: Int): Boolean =
 /** `animation.height(height).step({ duration })` on the collapse panel. */
 internal fun upCollapseDurationMillis(duration: UPRawValue): Int =
     duration.upIntOrDefault(300).coerceAtLeast(0)
+
+/**
+ * `mounted() { sizeLocal = height !== '' ? height : size }`. Upstream lets `height`
+ * override `size` for the track thickness, regardless of orientation.
+ */
+internal fun upSliderTrackThickness(height: UPRawValue, size: UPRawValue): Float {
+    val fromHeight = height.asFiniteFloatOrNull() ?: upSliderPxOrNull(height)
+    if (fromHeight != null && fromHeight > 0f) return fromHeight
+    return (size.asFiniteFloatOrNull() ?: upSliderPxOrNull(size) ?: 2f).coerceAtLeast(1f)
+}
+
+/**
+ * `innerStyleCpu.height`: the track row is as tall as the thumb, plus 24px of room for the
+ * two value labels a range slider prints above it.
+ */
+internal fun upSliderInnerHeightDp(blockSize: UPRawValue, isRange: Boolean, showValue: Boolean): Float {
+    val block = (blockSize.asFiniteFloatOrNull() ?: upSliderPxOrNull(blockSize) ?: 18f).coerceAtLeast(1f)
+    return if (isRange && showValue) block + 24f else block
+}
+
+/** `length` defaults to `auto`, which leaves the axis to the parent's measurement. */
+internal fun upSliderLengthDp(length: UPRawValue): Float? {
+    val text = length.upStringValueOrEmpty().trim()
+    if (text.isEmpty() || text.equals("auto", ignoreCase = true)) return null
+    return (length.asFiniteFloatOrNull() ?: upSliderPxOrNull(length))?.takeIf { it > 0f }
+}
+
+/** `<template v-if="!useNative || isRange">`: a range slider never uses the native one. */
+internal fun upSliderUsesNative(useNative: Boolean, isRange: Boolean): Boolean = useNative && !isRange
+
+/** `getPx` accepts a bare number or a `px` string; `rpx` is not used by these fields. */
+private fun upSliderPxOrNull(value: UPRawValue): Float? {
+    val text = value.upStringValueOrEmpty().trim().lowercase()
+    if (!text.endsWith("px")) return null
+    return text.removeSuffix("px").trim().toFloatOrNull()
+}

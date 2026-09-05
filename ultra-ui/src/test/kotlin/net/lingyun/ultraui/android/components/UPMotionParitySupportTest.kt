@@ -2,6 +2,7 @@ package net.lingyun.ultraui.android.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -71,6 +72,48 @@ class UPMotionParitySupportTest {
         assertFalse(upNoticeTouchEnabled(disableTouch = true, count = 3))
         assertFalse(upNoticeTouchEnabled(disableTouch = false, count = 1))
         assertFalse(upNoticeTouchEnabled(disableTouch = false, count = 0))
+    }
+
+    @Test
+    fun sliderHeightOverridesSizeForTheTrackThickness() {
+        // `sizeLocal = height !== '' ? height : size`.
+        assertEquals(2f, upSliderTrackThickness(UPSliderProps().height, UPSliderProps().size), 0f)
+        assertEquals(6f, upSliderTrackThickness(6, "2px"), 0f)
+        assertEquals(6f, upSliderTrackThickness("6px", "2px"), 0f)
+        assertEquals(4f, upSliderTrackThickness("", 4), 0f)
+        assertEquals(4f, upSliderTrackThickness("", "4px"), 0f)
+        // A zero or malformed pair still leaves a hairline to draw.
+        assertEquals(1f, upSliderTrackThickness("", 0), 0f)
+        assertEquals(2f, upSliderTrackThickness("", "thin"), 0f)
+    }
+
+    @Test
+    fun sliderRowLeavesRoomForRangeValueLabels() {
+        // `innerStyleCpu.height = (isRange && showValue) ? blockSize + 24 : blockSize`.
+        assertEquals(18f, upSliderInnerHeightDp(18, isRange = false, showValue = false), 0f)
+        assertEquals(18f, upSliderInnerHeightDp(18, isRange = true, showValue = false), 0f)
+        assertEquals(18f, upSliderInnerHeightDp(18, isRange = false, showValue = true), 0f)
+        assertEquals(42f, upSliderInnerHeightDp(18, isRange = true, showValue = true), 0f)
+        assertEquals(48f, upSliderInnerHeightDp("24px", isRange = true, showValue = true), 0f)
+        assertEquals(1f, upSliderInnerHeightDp(0, isRange = false, showValue = false), 0f)
+    }
+
+    @Test
+    fun sliderLengthOnlyOverridesTheAxisWhenItIsNotAuto() {
+        assertNull(upSliderLengthDp(UPSliderProps().length))
+        assertNull(upSliderLengthDp("auto"))
+        assertNull(upSliderLengthDp(""))
+        assertNull(upSliderLengthDp(0))
+        assertEquals(200f, upSliderLengthDp(200))
+        assertEquals(200f, upSliderLengthDp("200px"))
+    }
+
+    @Test
+    fun aRangeSliderNeverFallsBackToTheNativeControl() {
+        assertFalse(upSliderUsesNative(useNative = false, isRange = false))
+        assertFalse(upSliderUsesNative(useNative = false, isRange = true))
+        assertTrue(upSliderUsesNative(useNative = true, isRange = false))
+        assertFalse(upSliderUsesNative(useNative = true, isRange = true))
     }
 
     @Test
