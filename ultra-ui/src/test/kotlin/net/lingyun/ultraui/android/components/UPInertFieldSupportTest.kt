@@ -37,18 +37,58 @@ class UPInertFieldSupportTest {
 
     @Test
     fun onlyTheFadingTransitionsInterpolateOpacity() {
-        assertTrue(upPopupTransitionFades("fade"))
-        assertTrue(upPopupTransitionFades("fade-zoom"))
-        assertFalse(upPopupTransitionFades("slide-up"))
-        assertFalse(upPopupTransitionFades("none"))
+        assertTrue(upTransitionFades("fade"))
+        assertTrue(upTransitionFades("fade-zoom"))
+        assertFalse(upTransitionFades("slide-up"))
+        assertFalse(upTransitionFades("none"))
         // `translate3d` offsets, as fractions of the panel.
-        assertEquals(0f to 1f, upPopupTransitionOffsetFraction("slide-up"))
-        assertEquals(0f to -1f, upPopupTransitionOffsetFraction("slide-down"))
-        assertEquals(-1f to 0f, upPopupTransitionOffsetFraction("slide-left"))
-        assertEquals(1f to 0f, upPopupTransitionOffsetFraction("slide-right"))
-        assertEquals(0f to 0f, upPopupTransitionOffsetFraction("fade-zoom"))
+        assertEquals(0f to 1f, upTransitionOffsetFraction("slide-up"))
+        assertEquals(0f to -1f, upTransitionOffsetFraction("slide-down"))
+        assertEquals(-1f to 0f, upTransitionOffsetFraction("slide-left"))
+        assertEquals(1f to 0f, upTransitionOffsetFraction("slide-right"))
+        assertEquals(0f to 0f, upTransitionOffsetFraction("fade-zoom"))
         assertEquals(300, upPopupTransitionDuration(UPPopupProps().duration))
         assertEquals(0, upPopupTransitionDuration(-40))
+    }
+
+    @Test
+    fun everyTransitionModeUpstreamStylesIsRecognised() {
+        // `vue.ani-style.scss` ships eleven rules; `none` is what `pageInline` selects.
+        assertEquals(12, UPTransitionModes.size)
+        for (mode in listOf("fade", "zoom", "fade-zoom", "fade-up", "fade-down", "fade-left", "fade-right", "slide-up", "slide-down", "slide-left", "slide-right", "none")) {
+            assertTrue("$mode should be a known transition", mode in UPTransitionModes)
+        }
+    }
+
+    @Test
+    fun everyFadeRuleInterpolatesOpacityAndOnlyTheZoomRulesScale() {
+        for (mode in listOf("fade", "fade-zoom", "fade-up", "fade-down", "fade-left", "fade-right")) {
+            assertTrue("$mode sets opacity: 0 on entry", upTransitionFades(mode))
+        }
+        for (mode in listOf("zoom", "slide-up", "slide-down", "slide-left", "slide-right", "none")) {
+            assertFalse("$mode leaves opacity alone", upTransitionFades(mode))
+        }
+        assertTrue(upTransitionScales("zoom"))
+        assertTrue(upTransitionScales("fade-zoom"))
+        assertFalse(upTransitionScales("fade"))
+        assertFalse(upTransitionScales("slide-up"))
+        assertEquals(0.95f, UPTransitionZoomScale)
+    }
+
+    @Test
+    fun theFadeSlideRulesTranslateLikeTheirPlainSlideCounterparts() {
+        // `.u-fade-up-enter` and `.u-slide-up-enter` share `translate3d(0, 100%, 0)`.
+        assertEquals(upTransitionOffsetFraction("slide-up"), upTransitionOffsetFraction("fade-up"))
+        assertEquals(upTransitionOffsetFraction("slide-down"), upTransitionOffsetFraction("fade-down"))
+        assertEquals(upTransitionOffsetFraction("slide-left"), upTransitionOffsetFraction("fade-left"))
+        assertEquals(upTransitionOffsetFraction("slide-right"), upTransitionOffsetFraction("fade-right"))
+        // `zoom` and `fade-zoom` scale in place instead of translating.
+        assertEquals(0f to 0f, upTransitionOffsetFraction("zoom"))
+        assertEquals(0f to 0f, upTransitionOffsetFraction("fade-zoom"))
+        // `u-transition`'s own duration default is 300ms, as a string upstream.
+        assertEquals(300, upTransitionDuration(null))
+        assertEquals(300, upTransitionDuration("300"))
+        assertEquals(0, upTransitionDuration(-1))
     }
 
     @Test

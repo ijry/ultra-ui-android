@@ -128,7 +128,7 @@ public fun UPPopup(
             animationSpec = transitionSpec,
             label = "up-popup-transition",
         )
-        val (offsetXFraction, offsetYFraction) = upPopupTransitionOffsetFraction(transition)
+        val (offsetXFraction, offsetYFraction) = upTransitionOffsetFraction(transition)
         // `touchable` adds the grab bar that resizes the bottom sheet and can fling it shut.
         val dragEnabled = upPopupDragEnabled(props.touchable, mode)
         var dragHeight by remember { mutableStateOf<Dp?>(null) }
@@ -144,9 +144,9 @@ public fun UPPopup(
             safeAreaInsetBottom = props.safeAreaInsetBottom,
             modifier = Modifier
                 .graphicsLayer {
-                    if (upPopupTransitionFades(transition)) alpha = progress
-                    if (transition == "fade-zoom") {
-                        val zoomScale = UPPopupZoomScale + (1f - UPPopupZoomScale) * progress
+                    if (upTransitionFades(transition)) alpha = progress
+                    if (upTransitionScales(transition)) {
+                        val zoomScale = UPTransitionZoomScale + (1f - UPTransitionZoomScale) * progress
                         scaleX = zoomScale
                         scaleY = zoomScale
                     }

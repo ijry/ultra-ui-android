@@ -585,10 +585,20 @@ class UPScreenshotContentTest {
         assertTrue("notice text colour missing", reference.contains("f9ae3d"))
         assertTrue("the notice should sit in the lower half", notice.first > reference.height / 2)
 
-        // Card and collapse rows draw uview's border colour, in several separate bands.
-        val borders = reference.rowBandsOf("e4e7ed").filter { it.last - it.first > 20 }
-        assertTrue("expected several bordered rows, got $borders", borders.size >= 2)
-        assertTrue("borders should precede the notice", borders.first().first < notice.first)
+        // The card is the one component here that boxes itself in `.u-border` (#e4e7ed);
+        // `u-collapse` and its items divide themselves with `u-line`, whose own default is
+        // #d6d7d9. Two different colours, so a single band count cannot cover both.
+        val cardBox = reference.rowBandsOf("e4e7ed").filter { it.last - it.first > 20 }
+        assertEquals("expected exactly one boxed card, got $cardBox", 1, cardBox.size)
+
+        // One hairline opens the group and one closes each panel; the open panel adds its
+        // header underline, so an open + a closed item come to four.
+        val hairlines = reference.rowBandsOf("d6d7d9").filter {
+            reference.widestRunInRow("d6d7d9", it.first)?.let { run -> run.last - run.first > 400 } == true
+        }
+        assertEquals("expected four collapse hairlines, got $hairlines", 4, hairlines.size)
+        assertTrue("the card box should precede the collapse rows", cardBox.single().last < hairlines.first().first)
+        assertTrue("the collapse rows should precede the notice", hairlines.last().last < notice.first)
     }
 
     @Test

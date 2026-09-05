@@ -115,7 +115,6 @@ public fun UPCollapseItem(
                 .fillMaxWidth()
                 // `:customStyle="cellCustomStyle"` targets the `u-cell` header, not the wrapper.
                 .applyUPResolvedStyle(cellStyle)
-                .then(if (props.border && context?.border == true) Modifier.border(0.5.dp, UPTheme.Border) else Modifier)
                 .upTestTag("collapse-item-$itemTagSuffix-header")
                 .upClickable(enabled = clickable, onClick = ::toggle)
                 .padding(horizontal = 15.dp, vertical = 13.dp),
@@ -160,8 +159,10 @@ public fun UPCollapseItem(
                 )
             }
         }
-        // `setContentAnimate` animates the panel between 0 and its measured height over
-        // `duration` ms, so the body has to stay composed while it collapses.
+        // `<u-cell :border="parentData.border && showBorder">`: the header's underline is a
+        // `u-line` under the cell, and it only appears while the panel is open. Upstream
+        // delays it (10ms in, 290ms out) purely so the line does not visibly race the
+        // panel; the sequencing here is the same, driven by the reveal fraction instead.
         val durationMillis = upCollapseDurationMillis(props.duration)
         val revealed by animateFloatAsState(
             targetValue = if (open) 1f else 0f,
@@ -170,6 +171,9 @@ public fun UPCollapseItem(
         )
         // Once fully collapsed the panel leaves the tree entirely, matching upstream's
         // `height: 0` plus the test contract that a closed item exposes no content node.
+        if (context?.border == true && props.border && revealed > 0f) {
+            UPLine(diagnostics = diagnostics)
+        }
         if (open || revealed > 0f) {
             Box(
                 modifier = Modifier
@@ -188,6 +192,10 @@ public fun UPCollapseItem(
                     content()
                 }
             }
+        }
+        // `<u-line v-if="parentData.border">` closes every panel inside a bordered group.
+        if (context?.border == true) {
+            UPLine(diagnostics = diagnostics)
         }
     }
 }

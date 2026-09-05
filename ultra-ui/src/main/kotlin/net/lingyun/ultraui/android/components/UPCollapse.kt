@@ -127,6 +127,11 @@ public fun UPCollapse(
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, CollapseComponentName))
             .upTestTag("collapse"),
     ) {
+        // `<view class="u-collapse"><u-line v-if="border">` — the group's own border is a
+        // single hairline above the first panel, not a box around the whole group.
+        if (props.border) {
+            UPLine(diagnostics = diagnostics)
+        }
         CompositionLocalProvider(LocalUPCollapseContext provides context) {
             content()
         }

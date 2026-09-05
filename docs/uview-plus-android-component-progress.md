@@ -37,7 +37,7 @@
 | 2 | 辅助模块 | `u-action-sheet-data` | — | 未开始 | 暂无 | 操作菜单数据辅助目录，不单独作为 Android UI 组件。 |
 | 3 | 表单与协议 | `u-agreement` | — | 未开始 | 暂无 | 协议勾选/链接组合组件，待按上游字段建立。 |
 | 4 | 媒体与内容 | `u-album` | — | 未开始 | 暂无 | 相册选择与预览，涉及系统权限和媒体选择器。 |
-| 5 | 原生交互 | `u-alert` | `UPAlert` / `UPAlertProps` | 基础可用 | 中 | 原生确认提示封装；按钮回调已覆盖，复杂插槽仍待补齐。 |
+| 5 | 原生交互 | `u-alert` | `UPAlert` / `UPAlertProps` | 基本完成 | 高（Props） | 类型/主题/图标/关闭按钮与 `duration` 自动关闭之外，`transitionMode` 不再只做校验：按 `u-transition` 的十一种模式表真正驱动入场与离场（`fade*` 系插值不透明度、`zoom`/`fade-zoom` 取 `scale(0.95)`、`slide-*` 与 `fade-*` 按 `translate3d` 的整屏偏移起步），关闭时面板留在树内播完离场动画才移除，因而 `close` 先于 `closed`。均有真机断言，模式表有单测逐条对照。刻意差异：上游 `u-transition` 的 watcher 是 `immediate: true`，挂载即可见的横幅也会淡入；Android 侧首帧直接给稳定态，只有后续 `show` 切换才播动画——否则截图参考图（捕获第 0 帧）会变成全白，反而毁掉「类型配色确实被绘制」的像素证据。 |
 | 6 | 媒体与内容 | `u-avatar` | `UPAvatar` / `UPAvatarProps` | 基本完成 | 高（Props） | 图片、文字、图标和形状已有 Compose 实现与测试。降级：`randomBgColor` 未随机取色，`colorIndex` 缺省固定取第 0 号色（上游 `''` 表示随机），以保证截图可复现。 |
 | 7 | 媒体与内容 | `u-avatar-group` | `UPAvatarGroup` / `UPAvatarGroupProps` | 基本完成 | 高（Props） | 头像组基础布局已实现；溢出和间距视觉仍需上游对照。 |
 | 8 | 原生交互 | `u-back-top` | `UPBackTop` / `UPBackTopProps` | 基础可用 | 高（Props） | 返回顶部基础行为；`duration` 按上游 `uni.pageScrollTo` 的时长语义解析后随新增的 `onScrollToTop(durationMillis)` 回调交给宿主，有真机断言。父级滚动容器绑定仍需标准化——上游由 `uni` 全局 API 滚动页面，Android 的滚动容器归宿主所有。 |
@@ -62,8 +62,8 @@
 | 27 | 键盘与输入 | `u-code` | — | 未开始 | 暂无 | 验证码/代码展示辅助组件，待确认与 `u-code-input` 的边界。 |
 | 28 | 键盘与输入 | `u-code-input` | `UPCodeInput` / `UPCodeInputProps` | 基本完成 | 高（Props） | 输入长度、掩码、颜色和回调已有实现；原生焦点细节待补。 |
 | 29 | 布局 | `u-col` | `UPCol` / `UPColProps` | 基本完成 | 高（Props） | 栅格列宽、偏移和响应式基础字段已有实现。 |
-| 30 | 内容面板 | `u-collapse` | `UPCollapse` / `UPCollapseProps` | 基础可用 | 中 | 折叠状态和组上下文已有；动画和部分事件待补。 |
-| 31 | 内容面板 | `u-collapse-item` | `UPCollapseItem` / `UPCollapseItemProps` | 基本完成 | 高（Props） | 子项展开行为、插槽与图标之外，`duration` 驱动面板在 0 与测得高度之间的展开/收起动画（收起过程中面板仍在树内，动画结束才移除，下方兄弟节点随之滑动），`cellCustomStyle` 作用于标题行、`customStyle` 作用于外层，均有真机断言。刻意差异：上游 `<view class="u-collapse-item">` 从不绑定 `customStyle`（mixin 声明了但模板未用），Android 让它在外层生效。降级：`cellCustomClass` 是 CSS 类名，无 Compose 等价物。 |
+| 30 | 内容面板 | `u-collapse` | `UPCollapse` / `UPCollapseProps` | 基本完成 | 高（Props） | 折叠状态、手风琴模式、组上下文与 `change`/`open`/`close` 事件之外，`border` 按上游 `<view class="u-collapse"><u-line v-if="border">` 在组首画一条 hairline，并经上下文传给子项：每个面板尾部再补一条 `u-line`，展开的面板额外显示标题行下划线（上游用 10ms/290ms 延时避免下划线与面板抢跑，Android 侧按展开比例同序渲染）。子项动画在 `u-collapse-item` 行。有真机断言与像素级断言。 |
+| 31 | 内容面板 | `u-collapse-item` | `UPCollapseItem` / `UPCollapseItemProps` | 基本完成 | 高（Props） | 子项展开行为、插槽与图标之外，`duration` 驱动面板在 0 与测得高度之间的展开/收起动画（收起过程中面板仍在树内，动画结束才移除，下方兄弟节点随之滑动），`cellCustomStyle` 作用于标题行、`customStyle` 作用于外层，均有真机断言。刻意差异：上游 `<view class="u-collapse-item">` 从不绑定 `customStyle`（mixin 声明了但模板未用），Android 让它在外层生效。`border` 与父级 `border` 同时为真时，标题行在展开过程中显示下划线、面板尾部固定一条分隔线（均为 `u-line`，颜色取其默认 `#d6d7d9` 而非 `.u-border` 的 `#e4e7ed`——两者在上游本就是不同的值）。降级：`cellCustomClass` 是 CSS 类名，无 Compose 等价物。 |
 | 32 | 选择与日期 | `u-color-picker` | — | 未开始 | 暂无 | 颜色选择器，待建立颜色值和面板交互契约。 |
 | 33 | 通知与状态 | `u-column-notice` | `UPColumnNotice` / `UPColumnNoticeProps` | 基本完成 | 中 | 基于通知栏封装，随 `u-notice-bar` 一并补齐：`duration` 作为轮播间隔逐条切换并循环、`disableTouch=false` 时可上下拖动翻页，均有真机断言。 |
 | 34 | 工具 | `u-copy` | — | 未开始 | 暂无 | 剪贴板复制动作，待确认是否以无 UI action API 提供。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 72 |
-| 基础可用 | 18 |
+| 基本完成 | 74 |
+| 基础可用 | 16 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 271 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 274 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 18 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺的是自身字段而非基础设施）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 16 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,11 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **271 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **274 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-alert` 的过渡与 `u-collapse` 的分隔线新增 3 项回归（并入 `UPInertFieldBehaviorTest`），
+覆盖 `transitionMode="slide-up"` 真实上滑、关闭后面板留在树内播完离场动画才移除、
+`border` 在展开 + 收起两项时生成四条 hairline 而 `border=false` 时一条都没有。再往前一批为
 「声明了但从不读取」的二轮清理新增 18 项回归（`UPInertFieldBehaviorTest`），覆盖
 `u-popup` 的 `touchable` 手势条只在底部弹层出现、`duration` 驱动滑入、`safeAreaInsetTop`
 让出状态栏，`u-select` 的 `border` 描边与 36dp 下限、`maxHeight` 封顶、`iconSize` 箭头与
@@ -354,7 +357,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 18 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 16 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -552,7 +555,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 18 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 16 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

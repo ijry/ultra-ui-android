@@ -4,17 +4,40 @@ import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.upIntOrDefault
 
 /**
- * `u-popup`'s `position()` computed plus the bottom-sheet gesture it wires when
- * `touchable` is set. Both are pure so the mapping and the drag thresholds can be
+ * `u-transition`'s eleven animation modes as declared in `vue.ani-style.scss`, plus
+ * `u-popup`'s `position()` computed and the bottom-sheet gesture it wires when
+ * `touchable` is set. Everything here is pure so the tables and the drag thresholds can be
  * pinned by JVM tests instead of inferred from a running sheet.
  */
 
 /** `$u-zoom-scale: scale(0.95)` from `u-transition`'s stylesheet. */
-internal const val UPPopupZoomScale: Float = 0.95f
+internal const val UPTransitionZoomScale: Float = 0.95f
 
-/** `<u-transition :duration>`; upstream's popup defaults to 300ms. */
-internal fun upPopupTransitionDuration(duration: UPRawValue): Int =
+/**
+ * Every mode `u-transition` ships a stylesheet for, plus the `none` that `pageInline`
+ * selects. An unknown mode has no `.u-<name>-enter` rule upstream, so nothing animates.
+ */
+internal val UPTransitionModes: Set<String> = setOf(
+    "fade",
+    "zoom",
+    "fade-zoom",
+    "fade-up",
+    "fade-down",
+    "fade-left",
+    "fade-right",
+    "slide-up",
+    "slide-down",
+    "slide-left",
+    "slide-right",
+    "none",
+)
+
+/** `<u-transition :duration>`; the component's own default is 300ms. */
+internal fun upTransitionDuration(duration: UPRawValue): Int =
     duration.upIntOrDefault(300).coerceAtLeast(0)
+
+/** `<u-transition :duration>` as `u-popup` forwards it; the popup default is also 300ms. */
+internal fun upPopupTransitionDuration(duration: UPRawValue): Int = upTransitionDuration(duration)
 
 /**
  * `position()`: only `center` consults `zoom`, and `pageInline` opts out of the
@@ -29,20 +52,23 @@ internal fun upPopupTransitionMode(mode: String, zoom: Boolean, pageInline: Bool
     else -> "slide-up"
 }
 
-/** Only `fade` and `fade-zoom` interpolate opacity; the slides move at full opacity. */
-internal fun upPopupTransitionFades(transition: String): Boolean =
-    transition == "fade" || transition == "fade-zoom"
+/** Every `fade*` rule sets `opacity: 0` on entry; the bare slides and `zoom` do not. */
+internal fun upTransitionFades(transition: String): Boolean = transition.startsWith("fade")
+
+/** `zoom` and `fade-zoom` are the two rules carrying `transform: scale(0.95)`. */
+internal fun upTransitionScales(transition: String): Boolean =
+    transition == "zoom" || transition == "fade-zoom"
 
 /**
- * The entry offset as a fraction of the panel, from `translate3d`: `slide-up` starts one
- * full height below, `slide-down` one above, and the horizontal slides one width aside.
- * Returns `(x, y)`; `fade`/`fade-zoom`/`none` do not translate.
+ * The entry offset as a fraction of the element, from `translate3d`: `*-up` starts one
+ * full height below, `*-down` one above, and the horizontal ones one width aside.
+ * Returns `(x, y)`; `fade`, `zoom`, `fade-zoom` and `none` do not translate.
  */
-internal fun upPopupTransitionOffsetFraction(transition: String): Pair<Float, Float> = when (transition) {
-    "slide-up" -> 0f to 1f
-    "slide-down" -> 0f to -1f
-    "slide-left" -> -1f to 0f
-    "slide-right" -> 1f to 0f
+internal fun upTransitionOffsetFraction(transition: String): Pair<Float, Float> = when (transition) {
+    "slide-up", "fade-up" -> 0f to 1f
+    "slide-down", "fade-down" -> 0f to -1f
+    "slide-left", "fade-left" -> -1f to 0f
+    "slide-right", "fade-right" -> 1f to 0f
     else -> 0f to 0f
 }
 

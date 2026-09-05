@@ -3,6 +3,9 @@ package net.lingyun.ultraui.android.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -301,6 +304,58 @@ class UPInertFieldBehaviorTest {
 
         node("up-datetime-picker").assertExists()
         composeRule.runOnIdle { assertTrue("expected a formatter diagnostic, got $events", "formatter" in events) }
+    }
+
+    @Test
+    fun alertTransitionModeChoosesBetweenFadingAndSliding() {
+        composeRule.mainClock.autoAdvance = false
+        var visible by mutableStateOf(false)
+        composeRule.setContent {
+            UPAlert(UPAlertProps(title = "系统提示", transitionMode = "slide-up", modelValue = visible))
+        }
+
+        composeRule.runOnIdle { visible = true }
+        val start = node("up-alert").getUnclippedBoundsInRoot().top
+        composeRule.mainClock.advanceTimeBy(400L)
+        val settled = node("up-alert").getUnclippedBoundsInRoot().top
+        // `slide-up` starts one full banner height below its resting place.
+        assertTrue("slide-up should travel upwards: $start then $settled", settled <= start)
+    }
+
+    @Test
+    fun alertKeepsTheBannerMountedUntilTheLeaveAnimationEnds() {
+        composeRule.mainClock.autoAdvance = false
+        var visible by mutableStateOf(true)
+        composeRule.setContent {
+            UPAlert(UPAlertProps(title = "系统提示", closable = true, modelValue = visible), onClose = { visible = false })
+        }
+
+        composeRule.onNodeWithTag("up-alert-close").performClick()
+        composeRule.mainClock.advanceTimeBy(80L)
+        // `u-transition` removes the element only after the leave animation finishes.
+        node("up-alert").assertExists()
+        composeRule.mainClock.advanceTimeBy(500L)
+        node("up-alert").assertDoesNotExist()
+    }
+
+    @Test
+    fun collapseBorderDividesTheGroupWithHairlinesRatherThanBoxes() {
+        composeRule.setContent {
+            UPCollapse(UPCollapseProps(value = listOf("one"), border = true)) {
+                UPCollapseItem(UPCollapseItemProps(name = "one", title = "已展开")) { BasicText("内容") }
+                UPCollapseItem(UPCollapseItemProps(name = "two", title = "未展开")) { BasicText("内容") }
+            }
+        }
+        // One line opens the group, one closes each item, and the open item adds its
+        // header underline: four in total.
+        composeRule.onAllNodesWithTag("up-line", useUnmergedTree = true).assertCountEquals(4)
+
+        composeRule.setContent {
+            UPCollapse(UPCollapseProps(value = listOf("one"), border = false)) {
+                UPCollapseItem(UPCollapseItemProps(name = "one", title = "已展开")) { BasicText("内容") }
+            }
+        }
+        composeRule.onAllNodesWithTag("up-line", useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test

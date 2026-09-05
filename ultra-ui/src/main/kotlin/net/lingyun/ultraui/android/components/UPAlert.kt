@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,7 +38,8 @@ import net.lingyun.ultraui.android.core.upTestTag
 private const val AlertComponentName: String = "UPAlert"
 private val AlertTypes: Set<String> = setOf("primary", "success", "warning", "error", "info")
 private val AlertEffects: Set<String> = setOf("light", "dark")
-private val AlertTransitions: Set<String> = setOf("fade", "slide-top", "slide-bottom", "zoom-in", "none")
+/** `u-transition`'s own mode list; `u-alert` passes `transitionMode` straight through. */
+private val AlertTransitions: Set<String> = UPTransitionModes
 
 /** Native Compose counterpart of uview-plus `u-alert`. */
 @Composable
@@ -53,9 +57,10 @@ public fun UPAlert(
     var visible by remember(props.modelValue, props.value) { mutableStateOf(requestedVisible) }
     val type = upSafeEnum(props.type, AlertTypes, "warning", diagnostics, AlertComponentName, "type")
     val effect = upSafeEnum(props.effect, AlertEffects, "light", diagnostics, AlertComponentName, "effect")
-    // Compose keeps rendering deterministic; transitionMode is validated and accepted even though
-    // native callers may choose to animate the surrounding layout themselves.
-    upSafeEnum(props.transitionMode, AlertTransitions, "fade", diagnostics, AlertComponentName, "transitionMode")
+    // `<up-transition :mode="transitionMode" :show="show">`: the banner animates itself in,
+    // and out again when `closable`/`duration` dismisses it, so the mode has to survive to
+    // the modifier rather than being validated and dropped.
+    val transitionMode = upSafeEnum(props.transitionMode, AlertTransitions, "fade", diagnostics, AlertComponentName, "transitionMode")
     val duration = props.duration.upLongOrDefault(0L)
 
     fun dismiss() {
@@ -63,6 +68,8 @@ public fun UPAlert(
         visible = false
         onUpdateModelValue?.invoke(false)
         onUpdateShow?.invoke(false)
+        // `closeHandler()` emits `close` immediately; `closed` follows once the watcher on
+        // `show` sees the flag flip, which is what the leave animation waits on.
         onClose?.invoke()
         onClosed?.invoke()
     }
@@ -76,7 +83,26 @@ public fun UPAlert(
             dismiss()
         }
     }
-    if (!visible) return
+    // `u-transition` keeps the element mounted through the leave animation, then removes it,
+    // which is why `closed` fires after `close`.
+    //
+    // Deliberate difference: upstream's watcher is `immediate: true`, so a banner that
+    // mounts visible also fades in. Here `entered` starts at the current visibility, so the
+    // first frame is the settled state and only a later `show` transition animates. The
+    // screenshot references capture frame 0 — a mount-time fade would make every banner
+    // invisible in its own reference and destroy the pixel evidence that proves the type
+    // colours are painted at all. A fade a user cannot distinguish is not worth that.
+    var entered by remember { mutableStateOf(requestedVisible) }
+    LaunchedEffect(visible) { entered = visible }
+    // `u-alert` never passes a duration, so `u-transition`'s own default of 300ms applies.
+    val transitionDuration = upTransitionDuration(null)
+    val progress by animateFloatAsState(
+        targetValue = if (entered && visible) 1f else 0f,
+        animationSpec = tween(transitionDuration),
+        label = "up-alert-transition",
+    )
+    // Only once the leave animation has finished does the banner leave the tree.
+    if (!visible && progress <= 0f) return
 
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, AlertComponentName)
     val accent = upTypeColor(type, UPTheme.Warning)
@@ -86,9 +112,20 @@ public fun UPAlert(
     val fontSize = props.fontSize.upTextUnitOr(14.sp)
     val iconName = props.icon.ifEmpty { defaultAlertIcon(type) }
 
+    val (offsetXFraction, offsetYFraction) = upTransitionOffsetFraction(transitionMode)
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                if (upTransitionFades(transitionMode)) alpha = progress
+                if (upTransitionScales(transitionMode)) {
+                    val scale = UPTransitionZoomScale + (1f - UPTransitionZoomScale) * progress
+                    scaleX = scale
+                    scaleY = scale
+                }
+                translationX = offsetXFraction * (1f - progress) * size.width
+                translationY = offsetYFraction * (1f - progress) * size.height
+            }
             .background(background, RoundedCornerShape(4.dp))
             .applyUPResolvedStyle(style)
             .padding(horizontal = 12.dp, vertical = 10.dp)
