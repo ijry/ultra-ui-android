@@ -26,11 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
@@ -169,9 +170,17 @@ public fun UPTooltip(
 public fun UPSticky(props: UPStickyProps = UPStickyProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
     // uview offsets the sticky band by `offsetTop + customNavHeight`
     // (`u-sticky.vue`: stickyTop = getPx(offsetTop) + getPx(customNavHeight)).
-    val stickyTop = (upRawDp(props.offsetTop, 0.dp) + upRawDp(props.customNavHeight, 0.dp)).coerceAtLeast(0.dp)
+    // `disabled` skips the whole sticky treatment, so neither the top offset nor the
+    // stacking applies (`style()` returns an empty object upstream).
+    val stickyTop = if (props.disabled) {
+        0.dp
+    } else {
+        (upRawDp(props.offsetTop, 0.dp) + upRawDp(props.customNavHeight, 0.dp)).coerceAtLeast(0.dp)
+    }
     Box(
         modifier.background(UPColor.parse(props.bgColor, Color.Transparent))
+            // `uZindex` defaults to `zIndex.sticky` (970) and only a truthy `zIndex` overrides it.
+            .then(if (props.disabled) Modifier else Modifier.zIndex(upStickyZIndex(props.zIndex)))
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSticky"))
             .upTestTag("sticky")
             .padding(top = stickyTop),

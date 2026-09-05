@@ -109,3 +109,37 @@ fun UPFieldParitySubsectionScreenshot() {
         UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = 1, disabled = true))
     }
 }
+
+@PreviewTest
+@Preview(
+    name = "motion parity notice collapse sticky",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+    widthDp = 360,
+    heightDp = 320,
+)
+@Composable
+fun UPMotionParityScreenshot() {
+    Column(
+        Modifier.fillMaxSize().background(Color.White),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        UPNoticeBar(UPNoticeBarProps(text = listOf("系统维护通知，请及时保存"), direction = "row"))
+        UPNoticeBar(
+            UPNoticeBarProps(
+                text = listOf("第一条通知", "第二条通知"),
+                direction = "column",
+                mode = "closable",
+            ),
+        )
+        UPSticky(UPStickyProps(offsetTop = 8, bgColor = "#f3f4f6")) {
+            BasicText("吸顶区域")
+        }
+        UPCollapseItem(props = UPCollapseItemProps(title = "展开的面板", open = true, isLink = true)) {
+            BasicText("面板内容")
+        }
+        UPCollapseItem(props = UPCollapseItemProps(title = "收起的面板", open = false, isLink = true)) {
+            BasicText("隐藏内容")
+        }
+    }
+}

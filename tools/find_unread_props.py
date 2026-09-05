@@ -111,6 +111,10 @@ KNOWN_INERT: dict[str, str] = {
     "RadioGroup.label": "upstream u-radio-group.vue never renders the prop",
     "RadioGroup.name": "upstream u-radio-group.vue never reads the prop",
     "CheckboxGroup.name": "upstream u-checkbox-group.vue never reads the prop",
+    "Sticky.index": "upstream u-sticky.vue never reads the prop; only a caller-side tag",
+    "CollapseItem.cellCustomClass": "CSS class name; no Compose equivalent",
+    "ActionSheet.index": "Android-only compatibility alias; upstream resolves items by position",
+    "ActionSheet.openType": "wechat open-ability button only (getUserInfo/contact/launchApp)",
 }
 
 

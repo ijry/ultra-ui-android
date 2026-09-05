@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +33,7 @@ import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
+import kotlin.math.roundToInt
 
 private const val CollapseItemComponentName = "UPCollapseItem"
 
@@ -93,16 +98,23 @@ public fun UPCollapseItem(
         }
     }
 
+    val rootStyle = rememberUPResolvedStyle(props.customStyle, diagnostics, CollapseItemComponentName)
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.White)
-            .applyUPResolvedStyle(cellStyle)
+            // Deliberate difference: upstream's `<view class="u-collapse-item">` never binds
+            // `customStyle`, even though the mixin declares it and every sibling applies it.
+            // A silently ignored `customStyle` is the exact class of defect this port hunts,
+            // so it lands on the root here.
+            .applyUPResolvedStyle(rootStyle)
             .upTestTag("collapse-item"),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                // `:customStyle="cellCustomStyle"` targets the `u-cell` header, not the wrapper.
+                .applyUPResolvedStyle(cellStyle)
                 .then(if (props.border && context?.border == true) Modifier.border(0.5.dp, UPTheme.Border) else Modifier)
                 .upTestTag("collapse-item-$itemTagSuffix-header")
                 .upClickable(enabled = clickable, onClick = ::toggle)
@@ -148,14 +160,33 @@ public fun UPCollapseItem(
                 )
             }
         }
-        if (open) {
+        // `setContentAnimate` animates the panel between 0 and its measured height over
+        // `duration` ms, so the body has to stay composed while it collapses.
+        val durationMillis = upCollapseDurationMillis(props.duration)
+        val revealed by animateFloatAsState(
+            targetValue = if (open) 1f else 0f,
+            animationSpec = tween(durationMillis = durationMillis),
+            label = "up-collapse-item-height",
+        )
+        // Once fully collapsed the panel leaves the tree entirely, matching upstream's
+        // `height: 0` plus the test contract that a closed item exposes no content node.
+        if (open || revealed > 0f) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .upTestTag("collapse-item-$itemTagSuffix-content")
-                    .padding(horizontal = 15.dp, vertical = 12.dp),
+                    .clipToBounds()
+                    // Measure the body at its full size, then only claim the revealed slice of
+                    // that height so the siblings below slide with the animation.
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        val visible = (placeable.height * revealed).roundToInt().coerceAtLeast(0)
+                        layout(placeable.width, visible) { placeable.placeRelative(0, visible - placeable.height) }
+                    }
+                    .upTestTag("collapse-item-$itemTagSuffix-content"),
             ) {
-                content()
+                Box(modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp)) {
+                    content()
+                }
             }
         }
     }

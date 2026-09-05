@@ -74,7 +74,9 @@ public fun UPActionSheet(
                 .fillMaxWidth()
                 .heightIn(max = maxHeight)
                 .background(Color.White, panelShape)
-                .navigationBarsPadding()
+                // `<u-popup :safeAreaInsetBottom>`; false lets the sheet sit flush with the
+                // screen edge instead of clearing the navigation bar.
+                .then(if (props.safeAreaInsetBottom) Modifier.navigationBarsPadding() else Modifier)
                 .verticalScroll(rememberScrollState())
                 // uview styles the sheet panel, not the fullscreen overlay.
                 .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPActionSheet"))
