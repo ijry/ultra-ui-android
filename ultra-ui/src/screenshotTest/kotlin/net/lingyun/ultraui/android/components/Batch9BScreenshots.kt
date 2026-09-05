@@ -41,3 +41,16 @@ fun UPBatch9BStatusScreenshot() {
         BasicText("组件 9B")
     }
 }
+
+@PreviewTest
+@Preview(name = "batch 9b tabs shapes and pagination", showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 360, heightDp = 360)
+@Composable
+fun UPBatch9BTabsShapeScreenshot() {
+    Column(Modifier.fillMaxSize().background(Color.White).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        UPTabs(UPTabsProps(list = listOf("全部", "待付款", "已完成"), shapeMode = "capsule", scrollable = false))
+        UPTabs(UPTabsProps(list = listOf("全部", "待付款", "已完成"), shapeMode = "card", scrollable = false))
+        UPTabs(UPTabsProps(list = listOf("全部", "待付款", "已完成"), shapeMode = "pill-arrow", scrollable = false))
+        UPTabs(UPTabsProps(list = listOf("全部", "待付款", "已完成"), shapeMode = "tag", scrollable = false))
+        UPPagination(UPPaginationProps(total = 100, currentPage = 5, layout = "total, prev, pager, next, sizes"))
+    }
+}

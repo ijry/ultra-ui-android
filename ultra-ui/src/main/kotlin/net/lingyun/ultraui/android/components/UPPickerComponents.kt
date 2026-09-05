@@ -1,6 +1,7 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -35,6 +37,7 @@ import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upIntOrDefault
+import net.lingyun.ultraui.android.core.upStringOrDefault
 import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upTestTag
 
@@ -42,6 +45,14 @@ private const val PickerComponentName = "UPPicker"
 
 /** Popup modes an inline panel can still express through its corner rounding. */
 private val PickerInlinePopupModes = setOf("top", "bottom")
+
+private const val PaginationComponentName = "UPPagination"
+
+/** `.u-pagination` sets `font-size: 14px` and `color: $u-content-color` for every part. */
+private val PaginationTextStyle = TextStyle(color = UPTheme.Content, fontSize = 14.sp)
+
+/** `.u-pagination__pager__item--active` paints its own blue instead of the theme primary. */
+private const val PaginationActivePageColor = "#409eff"
 
 @Composable
 public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier = Modifier, onUpdateModelValue: ((List<UPRawValue>) -> Unit)? = null, onUpdateShow: ((Boolean) -> Unit)? = null, onChange: ((UPPickerEvent) -> Unit)? = null, onConfirm: ((UPPickerEvent) -> Unit)? = null, onCancel: (() -> Unit)? = null, onClose: (() -> Unit)? = null, toolbarRight: @Composable () -> Unit = {}, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
@@ -182,14 +193,106 @@ internal fun pickerModelValues(props: UPPickerProps, indexes: List<Int>): List<U
 
 @Composable
 public fun UPPagination(props: UPPaginationProps = UPPaginationProps(), modifier: Modifier = Modifier, onUpdateCurrentPage: ((Int) -> Unit)? = null, onCurrentChange: ((Int) -> Unit)? = null, onUpdatePageSize: ((Int) -> Unit)? = null, onSizeChange: ((Int) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
-    val size = props.pageSize.upIntOrDefault(10).coerceAtLeast(1)
+    val parts = upPaginationLayoutParts(props.layout)
+    val sizeOptions = upNormalizedPageSizes(props.pageSizes)
     val total = props.total.upIntOrDefault(0).coerceAtLeast(0)
-    val pages = ((total + size - 1) / size).coerceAtLeast(1)
-    var current by remember(props) { mutableIntStateOf(props.currentPage.upIntOrDefault(1).coerceIn(1, pages)) }
-    Row(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPPagination")).upTestTag("pagination"), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-        if (props.layout.contains("prev")) BasicText(props.prevText.ifEmpty { "上一页" }, modifier = Modifier.upClickable(enabled = current > 1, onClick = { current--; onUpdateCurrentPage?.invoke(current); onCurrentChange?.invoke(current) }).padding(8.dp))
-        if (props.layout.contains("pager")) (1..pages.coerceAtMost(7)).forEach { page -> BasicText(page.toString(), modifier = Modifier.background(if (page == current) UPTheme.Primary else Color.Transparent).upClickable(onClick = { current = page; onUpdateCurrentPage?.invoke(page); onCurrentChange?.invoke(page) }).padding(8.dp), style = TextStyle(color = if (page == current) Color.White else UPTheme.Main)) }
-        if (props.layout.contains("next")) BasicText(props.nextText.ifEmpty { "下一页" }, modifier = Modifier.upClickable(enabled = current < pages, onClick = { current++; onUpdateCurrentPage?.invoke(current); onCurrentChange?.invoke(current) }).padding(8.dp))
+    var pageSize by remember(props) { mutableIntStateOf(props.pageSize.upIntOrDefault(10).coerceAtLeast(1)) }
+    val totalPages = upPaginationTotalPages(total, pageSize)
+    var current by remember(props) { mutableIntStateOf(props.currentPage.upIntOrDefault(1).coerceIn(1, totalPages)) }
+    // uview declares `hideOnSinglePage` but never reads it; Android honors the documented meaning.
+    if (props.hideOnSinglePage && totalPages <= 1) return
+    // `goTo` drops the `'...'` markers, out-of-range pages and re-clicks on the active page.
+    val goTo: (UPRawValue) -> Unit = { raw ->
+        val page = raw.upIntOrDefault(0)
+        if (page in 1..totalPages && page != current) {
+            current = page
+            onUpdateCurrentPage?.invoke(page)
+            onCurrentChange?.invoke(page)
+        }
+    }
+    Row(
+        modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, PaginationComponentName)).upTestTag("pagination"),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (parts.contains("total") && total > 0) {
+            BasicText("共 $total 条", modifier = Modifier.padding(end = 10.dp).upTestTag("pagination-total"), style = PaginationTextStyle)
+        }
+        if (parts.contains("prev")) {
+            UPPaginationButton(props.prevText, "arrow-left", current > 1, props, "pagination-prev", diagnostics) { goTo(current - 1) }
+        }
+        if (parts.contains("pager")) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                upPaginationDisplayedPages(totalPages, current).forEachIndexed { index, page ->
+                    val label = page.upStringOrDefault()
+                    val isActive = page.upIntOrDefault(0) == current
+                    BasicText(
+                        label,
+                        modifier = Modifier
+                            .padding(horizontal = 2.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (isActive) UPColor.parse(PaginationActivePageColor, UPTheme.Primary) else Color.Transparent)
+                            .upClickable(enabled = label != "...", onClick = { goTo(page) })
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .upTestTag("pagination-page-$index"),
+                        style = PaginationTextStyle.copy(color = if (isActive) Color.White else UPTheme.Content),
+                    )
+                }
+            }
+        }
+        if (parts.contains("next")) {
+            UPPaginationButton(props.nextText, "arrow-right", current < totalPages, props, "pagination-next", diagnostics) { goTo(current + 1) }
+        }
+        if (parts.contains("sizes") && sizeOptions.isNotEmpty()) {
+            BasicText(
+                upPageSizeLabel(sizeOptions, pageSize),
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(UPColor.parse(props.buttonBgColor, UPTheme.Background))
+                    .border(1.dp, UPColor.parse(props.buttonBorderColor, UPTheme.Disabled), RoundedCornerShape(4.dp))
+                    .upClickable(
+                        onClick = {
+                            // `handleSizeChange` reads the picked option, falls back to the first
+                            // one and emits nothing for falsy sizes. A native tap cycles instead
+                            // of opening a `<select>`, which has no Android counterpart.
+                            val next = (upPageSizeIndex(sizeOptions, pageSize) + 1) % sizeOptions.size
+                            upPageSizeAt(sizeOptions, next)?.let { picked ->
+                                pageSize = picked
+                                onUpdatePageSize?.invoke(picked)
+                                onSizeChange?.invoke(picked)
+                            }
+                        },
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .upTestTag("pagination-sizes"),
+                style = PaginationTextStyle,
+            )
+        }
+    }
+}
+
+/** `.u-pagination__button` keeps its own background and border colors while disabled fades it. */
+@Composable
+private fun UPPaginationButton(text: String, icon: String, enabled: Boolean, props: UPPaginationProps, tag: String, diagnostics: UPCompatibilityDiagnostics, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(4.dp)
+    Box(
+        Modifier
+            .padding(horizontal = 3.dp)
+            .clip(shape)
+            .background(UPColor.parse(props.buttonBgColor, UPTheme.Background))
+            .border(1.dp, UPColor.parse(props.buttonBorderColor, UPTheme.Disabled), shape)
+            .alpha(if (enabled) 1f else 0.5f)
+            .upClickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .upTestTag(tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (text.isEmpty()) {
+            UPIcon(props = UPIconProps(name = icon, color = "#606266", size = 16), diagnostics = diagnostics)
+        } else {
+            BasicText(text, style = PaginationTextStyle)
+        }
     }
 }
 

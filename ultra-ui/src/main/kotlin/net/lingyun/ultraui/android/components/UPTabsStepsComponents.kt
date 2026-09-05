@@ -1,15 +1,21 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
@@ -19,12 +25,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,31 +43,174 @@ import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upDimension
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 
+private const val TabsComponentName: String = "UPTabs"
+
+/** `skewX(25deg)` from the `card` corner decoration, expressed as its horizontal shear. */
+private const val TabsCardCornerSkew: Float = 0.4663f
+
+/**
+ * Native Compose counterpart of uview-plus `u-tabs`.
+ *
+ * Keeps uview's nav structure: a wrapper carrying the shape background, a horizontally
+ * scrollable nav whose items size to their content, and one sliding line placed from the
+ * measured item widths instead of a line per item.
+ */
 @Composable
 public fun UPTabs(props: UPTabsProps = UPTabsProps(), modifier: Modifier = Modifier, onChange: ((Int) -> Unit)? = null, onClick: ((Int) -> Unit)? = null, onUpdateCurrent: ((UPRawValue) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     var current by remember { mutableIntStateOf(props.current.upIntOrDefault(0).coerceAtLeast(0)) }
     LaunchedEffect(props.current) { current = props.current.upIntOrDefault(0).coerceAtLeast(0) }
-    val style = rememberUPResolvedStyle(props.customStyle, diagnostics, "UPTabs")
-    Row(modifier.fillMaxWidth().applyUPResolvedStyle(style).upTestTag("tabs"), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-        props.list.forEachIndexed { index, item ->
-            val title = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
-            Column(
-                modifier = Modifier
-                    .then(if (props.scrollable) Modifier else Modifier.weight(1f))
-                    .upClickable(onClick = { current = index; onChange?.invoke(index); onClick?.invoke(index); onUpdateCurrent?.invoke(index) })
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .upTestTag("tabs-item-$index"),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                BasicText(title, style = TextStyle(color = if (index == current) UPTheme.Main else UPTheme.Content))
-                Spacer(Modifier.height(6.dp))
-                Box(Modifier.width(upDimension(props.lineWidth, 20.dp)).height(upDimension(props.lineHeight, 3.dp)).background(UPColor.parse(props.lineColor, if (index == current) UPTheme.Primary else Color.Transparent)))
+    val style = rememberUPResolvedStyle(props.customStyle, diagnostics, TabsComponentName)
+    val shapeMode = upTabsShapeMode(props.shapeMode, diagnostics, TabsComponentName)
+    // `lineBgSize` scales a background image. The native line paints a solid color, so the
+    // keyword only becomes an actual downgrade when `lineColor` is not a plain color.
+    val lineBgSize = upSafeEnum(props.lineBgSize, UPTabsLineBgSizes, "cover", diagnostics, TabsComponentName, "lineBgSize")
+    LaunchedEffect(lineBgSize, props.lineColor, diagnostics) {
+        if (props.lineColor.isNotEmpty() && UPColor.parseOrNull(props.lineColor) == null) {
+            diagnostics.report(TabsComponentName, "lineBgSize", lineBgSize, "background-size only scales background images; the native line paints a solid color.")
+        }
+    }
+
+    val density = LocalDensity.current
+    val itemWidths = remember(props.list.size) { mutableStateListOf<Float>().apply { repeat(props.list.size) { add(0f) } } }
+    val lineWidth = upDimension(props.lineWidth, 20.dp)
+    // `setLineLeft` animates the offset with the `duration` prop, so the line is a single
+    // node that slides rather than one line per item.
+    val lineOffset by animateDpAsState(
+        targetValue = upTabsLineOffset(itemWidths, current, lineWidth.value).dp,
+        animationSpec = tween(durationMillis = props.duration.upIntOrDefault(300).coerceAtLeast(0)),
+        label = "up-tabs-line",
+    )
+    val wrapperColor = upTabsShapeWrapperColor(shapeMode)
+    val wrapperShape = RoundedCornerShape(upTabsShapeWrapperRadius(shapeMode))
+    val navPadding = upTabsShapeNavPadding(shapeMode)
+    val scrollState = rememberScrollState()
+
+    Row(modifier.fillMaxWidth().applyUPResolvedStyle(style).upTestTag("tabs"), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .weight(1f)
+                .then(if (wrapperColor != null) Modifier.background(UPColor.parse(wrapperColor, Color.Transparent), wrapperShape) else Modifier)
+                .padding(upTabsShapeWrapperPadding(shapeMode)),
+        ) {
+            Box(if (props.scrollable) Modifier.horizontalScroll(scrollState) else Modifier.fillMaxWidth()) {
+                Box(Modifier.padding(top = navPadding.first, bottom = navPadding.second).upTestTag("tabs-nav")) {
+                    Row(
+                        modifier = if (props.scrollable) Modifier else Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(upTabsShapeItemSpacing(shapeMode)),
+                    ) {
+                        props.list.forEachIndexed { index, item ->
+                            val fields = item.upStringKeyMapOrEmpty()
+                            val title = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
+                            val disabled = fields["disabled"].upBooleanValue(false)
+                            val isActive = index == current
+                            val badge = fields["badge"].upStringKeyMapOrEmpty()
+                            val itemRadius = upTabsShapeItemRadius(shapeMode)
+                            // `card` rounds only its top corners so the item reads as a tab.
+                            val itemShape = if (shapeMode == "card") RoundedCornerShape(topStart = itemRadius, topEnd = itemRadius) else RoundedCornerShape(itemRadius)
+                            val activeColors = upTabsShapeActiveColors(shapeMode).map { UPColor.parse(it, Color.Transparent) }
+                            val itemColors = if (isActive) activeColors else listOfNotNull(upTabsShapeItemColor(shapeMode)?.let { UPColor.parse(it, Color.Transparent) })
+                            val textStyle = rememberUPResolvedStyle(if (isActive) props.activeStyle else props.inactiveStyle, diagnostics, TabsComponentName)
+                            val textColor = UPColor.parse(upTabsTextColorHex(shapeMode, isActive, disabled, props.activeStyle, props.inactiveStyle), UPTheme.Content)
+                            // `itemComputedStyle` only merges the shape height when the caller left `itemStyle` alone.
+                            val shapeHeight = upTabsShapeItemHeight(shapeMode).takeIf { !upTabsItemStyleDeclared(props.itemStyle) }
+                            Box(
+                                modifier = Modifier
+                                    .then(if (props.scrollable) Modifier else Modifier.weight(1f))
+                                    .onGloballyPositioned { coordinates ->
+                                        val measured = with(density) { coordinates.size.width.toDp() }.value
+                                        if (index < itemWidths.size && itemWidths[index] != measured) itemWidths[index] = measured
+                                    }
+                                    .then(if (shapeHeight != null) Modifier.height(shapeHeight) else Modifier)
+                                    .applyUPResolvedStyle(rememberUPResolvedStyle(props.itemStyle, diagnostics, TabsComponentName))
+                                    .then(
+                                        when {
+                                            itemColors.isEmpty() -> Modifier
+                                            itemColors.size == 1 -> Modifier.background(itemColors[0], itemShape)
+                                            else -> Modifier.background(Brush.horizontalGradient(itemColors), itemShape)
+                                        },
+                                    )
+                                    // uview emits `click` before the disabled guard, and skips
+                                    // `update:current`/`change` when the tab is already active.
+                                    .upClickable(
+                                        onClick = {
+                                            onClick?.invoke(index)
+                                            if (disabled || index == current) return@upClickable
+                                            current = index
+                                            onUpdateCurrent?.invoke(index)
+                                            onChange?.invoke(index)
+                                        },
+                                    )
+                                    .padding(horizontal = upTabsShapeItemPadding(shapeMode))
+                                    .upTestTag("tabs-item-$index"),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    val icon = fields["icon"].upStringValueOrEmpty()
+                                    if (icon.isNotEmpty()) UPIcon(props = UPIconProps(name = icon, customStyle = props.iconStyle), diagnostics = diagnostics)
+                                    val label: @Composable () -> Unit = {
+                                        BasicText(
+                                            title,
+                                            modifier = Modifier.applyUPResolvedStyle(textStyle),
+                                            style = TextStyle(color = textColor, fontSize = (textStyle.fontSize ?: 15.dp).value.sp, fontWeight = textStyle.fontWeight),
+                                            maxLines = 1,
+                                            softWrap = false,
+                                        )
+                                    }
+                                    if (upTabsBadgeVisible(badge)) UPBadge(props = upTabsItemBadgeProps(badge), content = label, diagnostics = diagnostics) else label()
+                                }
+                                if (isActive && shapeMode == "pill-arrow") {
+                                    // `__active-arrow`: a CSS border triangle hanging 6px below the pill.
+                                    Canvas(Modifier.align(Alignment.BottomCenter).offset(y = 6.dp).width(12.dp).height(6.dp)) {
+                                        drawPath(
+                                            Path().apply {
+                                                moveTo(0f, 0f)
+                                                lineTo(size.width, 0f)
+                                                lineTo(size.width / 2f, size.height)
+                                                close()
+                                            },
+                                            activeColors.lastOrNull() ?: UPTheme.Primary,
+                                        )
+                                    }
+                                }
+                                if (isActive && shapeMode == "card" && index < props.list.lastIndex) {
+                                    // `__card-corner`: a skewed strip overlapping the next card.
+                                    Canvas(Modifier.align(Alignment.CenterEnd).offset(x = 10.dp).width(20.dp).fillMaxHeight()) {
+                                        val shear = size.height / 2f * TabsCardCornerSkew
+                                        drawPath(
+                                            Path().apply {
+                                                moveTo(shear, 0f)
+                                                lineTo(size.width + shear, 0f)
+                                                lineTo(size.width - shear, size.height)
+                                                lineTo(-shear, size.height)
+                                                close()
+                                            },
+                                            activeColors.firstOrNull() ?: Color.Transparent,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (upTabsShowLine(shapeMode)) {
+                        Box(
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .offset(x = lineOffset, y = (-2).dp)
+                                .width(lineWidth)
+                                .height(upDimension(props.lineHeight, 3.dp))
+                                .background(UPColor.parse(props.lineColor, UPTheme.Primary), RoundedCornerShape(100.dp))
+                                .upTestTag("tabs-line"),
+                        )
+                    }
+                }
             }
         }
     }

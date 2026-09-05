@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -99,18 +102,32 @@ public fun UPImage(
         val loadedImage = state.image
         when {
             state.loading && props.showLoading -> {
-                UPLoadingIcon(
-                    props = UPLoadingIconProps(show = true, mode = "spinner", size = 24, color = "#909399"),
-                    modifier = Modifier.upTestTag("image-loading"),
-                    diagnostics = diagnostics,
-                )
+                // uview renders the loading slot as `<up-icon :name="loadingIcon">`, so the
+                // placeholder is the prop's glyph rather than a fixed spinner.
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .upTestTag("image-loading"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    UPIcon(
+                        props = UPIconProps(name = props.loadingIcon, color = "#909399", size = 26),
+                        diagnostics = diagnostics,
+                    )
+                }
             }
             loadedImage != null -> {
+                // `<u-transition mode="fade">` fades the loaded bitmap in over `duration` ms.
+                val opacity by animateFloatAsState(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = upImageFadeDuration(props.fade, props.duration)),
+                    label = "up-image-fade",
+                )
                 Image(
                     bitmap = loadedImage,
                     contentDescription = null,
                     contentScale = mode.toContentScale(),
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().alpha(opacity),
                 )
             }
             props.showError -> {
