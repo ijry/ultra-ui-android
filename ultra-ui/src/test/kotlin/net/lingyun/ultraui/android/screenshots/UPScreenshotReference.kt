@@ -19,6 +19,9 @@ internal class UPScreenshotReference private constructor(
     private val argb: IntArray,
 ) {
     /** `#rrggbb` at a pixel, alpha dropped because every reference is fully opaque. */
+    /** Pixels per dp, derived from the preview's own `widthDp`. */
+    fun densityFor(widthDp: Int): Double = width.toDouble() / widthDp
+
     fun colorAt(x: Int, y: Int): String {
         require(x in 0 until width && y in 0 until height) { "($x, $y) outside ${width}x$height" }
         return "%06x".format(argb[y * width + x] and 0xFFFFFF)
@@ -44,6 +47,26 @@ internal class UPScreenshotReference private constructor(
         for (y in 0 until height) {
             for (x in 0 until width) {
                 if ("%06x".format(argb[y * width + x] and 0xFFFFFF) == wanted) {
+                    rows += y
+                    break
+                }
+            }
+        }
+        return rows.toBands()
+    }
+
+    /**
+     * Rows where [color] appears within [columns], collapsed into contiguous bands.
+     *
+     * Needed whenever two siblings sit side by side: a whole-width scan merges their row
+     * ranges into one band, which hides the very vertical offset under test.
+     */
+    fun rowBandsOf(color: String, columns: IntRange): List<IntRange> {
+        val wanted = color.normalizedHex()
+        val rows = ArrayList<Int>()
+        for (y in 0 until height) {
+            for (x in columns) {
+                if (x in 0 until width && "%06x".format(argb[y * width + x] and 0xFFFFFF) == wanted) {
                     rows += y
                     break
                 }

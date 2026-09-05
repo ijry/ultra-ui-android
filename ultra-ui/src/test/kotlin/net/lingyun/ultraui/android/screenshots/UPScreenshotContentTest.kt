@@ -18,6 +18,17 @@ import org.junit.Test
 class UPScreenshotContentTest {
     private fun IntRange.midpoint(): Int = (first + last) / 2
 
+    /** `Modifier.padding(16.dp)` in the previews, at the 2.625x density they render at. */
+    private val PREVIEW_PADDING_PX = 42
+
+    private fun assertRatio(label: String, measured: Int, available: Int, expected: Double) {
+        val ratio = measured.toDouble() / available
+        assertTrue(
+            "$label measured ${measured}px of ${available}px (${"%.2f".format(ratio)}), expected ~$expected",
+            Math.abs(ratio - expected) < 0.06,
+        )
+    }
+
     @Test
     fun theRendererDrawsTextNotJustLayoutBoxes() {
         val reference = UPScreenshotReference.load("field parity subsection modes")
@@ -126,6 +137,74 @@ class UPScreenshotContentTest {
         val default = trackBands[0].last - trackBands[0].first
         val thick = trackBands[1].last - trackBands[1].first
         assertTrue("expected a thicker second track: $default then $thick", thick > default * 2)
+    }
+
+    @Test
+    fun skeletonRowsShrinkExactlyAsRowsWidthAsks() {
+        val reference = UPScreenshotReference.load("tail field skeleton select readmore")
+
+        // Every placeholder block shares the same fill, so the bands are avatar + 3 rows.
+        val bands = reference.rowBandsOf("e6e8eb")
+        assertEquals("expected an avatar row plus three text rows, got $bands", 4, bands.size)
+
+        // rowsWidth = listOf("100%", "80%", "40%") against a 945px-wide preview minus
+        // the 16dp padding on both sides.
+        val available = reference.width - 2 * PREVIEW_PADDING_PX
+        val widths = bands.drop(1).map {
+            val run = requireNotNull(reference.widestRunInRow("e6e8eb", it.midpoint()))
+            run.last - run.first + 1
+        }
+        assertRatio("first row", widths[0], available, 1.0)
+        assertRatio("second row", widths[1], available, 0.8)
+        assertRatio("third row", widths[2], available, 0.4)
+    }
+
+    @Test
+    fun badgeOffsetPushesTheLabelDownAndIn() {
+        val reference = UPScreenshotReference.load("field parity badge offset and number box")
+
+        // Two badges side by side, both painted in the default error colour.
+        val columns = reference.columnBandsOf("fa3534", 0 until reference.height)
+            .filter { it.last - it.first > 10 }
+        assertEquals("expected two badges, got $columns", 2, columns.size)
+
+        // Scan each badge's own column range: a whole-width row scan would merge the two
+        // overlapping y ranges into one band and hide the offset entirely.
+        val plainRows = reference.rowBandsOf("fa3534", columns[0]).single()
+        val offsetRows = reference.rowBandsOf("fa3534", columns[1]).single()
+
+        // offset = listOf(12, 20) is [top, right], so the second badge drops 12dp and
+        // pulls 20dp in from the right edge of its own 72dp box.
+        val density = reference.densityFor(widthDp = 360)
+        val expectedDrop = 12 * density
+        assertTrue(
+            "expected a ~${expectedDrop.toInt()}px drop, got ${offsetRows.first - plainRows.first}",
+            Math.abs((offsetRows.first - plainRows.first) - expectedDrop) < density * 3,
+        )
+        // Both boxes are 72dp wide with 24dp between them, so an un-offset badge would
+        // land exactly 96dp to the right; the shortfall is the 20dp right inset.
+        val pitch = 96 * density
+        val actualShift = columns[1].first - columns[0].first
+        val expectedInset = 20 * density
+        assertTrue(
+            "expected a ~${expectedInset.toInt()}px right inset, got ${pitch - actualShift}",
+            Math.abs((pitch - actualShift) - expectedInset) < density * 3,
+        )
+    }
+
+    @Test
+    fun theNoticeBarAndStickyKeepTheirOwnBackgrounds() {
+        val reference = UPScreenshotReference.load("motion parity notice collapse sticky")
+
+        // Two notice bars (row marquee + column carousel) on uview's warning palette.
+        val noticeBands = reference.rowBandsOf("fdf6ec")
+        assertEquals("expected two notice bars, got $noticeBands", 2, noticeBands.size)
+        assertTrue("notice text colour missing", reference.contains("f9ae3d"))
+        // The sticky container paints the bgColor the preview passed it.
+        val stickyBands = reference.rowBandsOf("f3f4f6")
+        assertEquals("expected one sticky band, got $stickyBands", 1, stickyBands.size)
+        // Sticky sits below both notice bars, as the preview stacks them.
+        assertTrue("sticky should follow the notice bars", stickyBands.single().first > noticeBands.last().last)
     }
 
     @Test
