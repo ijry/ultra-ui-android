@@ -3,6 +3,7 @@ package net.lingyun.ultraui.android.sample.pages
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
@@ -14,12 +15,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import net.lingyun.ultraui.android.components.UPButton
+import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPColumnNotice
 import net.lingyun.ultraui.android.components.UPColumnNoticeProps
 import net.lingyun.ultraui.android.components.UPCountDown
 import net.lingyun.ultraui.android.components.UPCountDownProps
 import net.lingyun.ultraui.android.components.UPCountTo
 import net.lingyun.ultraui.android.components.UPCountToProps
+import net.lingyun.ultraui.android.components.rememberUPCountDownController
 import net.lingyun.ultraui.android.components.UPIndexAnchor
 import net.lingyun.ultraui.android.components.UPIndexAnchorProps
 import net.lingyun.ultraui.android.components.UPIndexItem
@@ -77,6 +81,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
     var tab by remember { mutableStateOf(0) }
     var subsection by remember { mutableStateOf(0) }
     var select by remember { mutableStateOf<Any?>(null) }
+    val countDown = rememberUPCountDownController()
     SampleScaffold(title = "导航与更多", onBack = onBack, modifier = modifier) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             DemoSection("导航栏") { UPNavbar(UPNavbarProps(title = "订单详情")) }
@@ -106,7 +111,19 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("纵向通知") { UPColumnNotice(UPColumnNoticeProps(text = listOf("第一条通知", "第二条通知"))) }
             DemoSection("横向通知") { UPRowNotice(UPRowNoticeProps(text = "横向滚动通知")) }
             DemoSection("数字滚动") { UPCountTo(UPCountToProps(startVal = 0, endVal = 128, autoplay = false)) }
-            DemoSection("倒计时") { UPCountDown(UPCountDownProps(time = 61000, autoStart = false)) }
+            DemoSection("倒计时") {
+                UPCountDown(UPCountDownProps(time = 61000, autoStart = false), controller = countDown)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    UPButton(props = UPButtonProps(text = "开始", type = "primary", size = "mini"), onClick = { countDown.start() })
+                    UPButton(props = UPButtonProps(text = "暂停", size = "mini"), onClick = { countDown.pause() })
+                    UPButton(props = UPButtonProps(text = "重设", size = "mini"), onClick = { countDown.reset() })
+                }
+            }
+            DemoSection("倒计时插槽") {
+                UPCountDown(UPCountDownProps(time = 90061000, format = "DD天HH时mm分ss秒")) { time ->
+                    BasicText("剩余 ${time.days} 天 ${time.hours} 时 ${time.minutes} 分 ${time.seconds} 秒")
+                }
+            }
             DemoSection("选择器") { UPPicker(UPPickerProps(show = true, title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"))))) }
             DemoSection("选择器输入触发器") { UPPicker(UPPickerProps(hasInput = true, placeholder = "请选择城市", title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"), mapOf("text" to "上海", "value" to "sh"))))) }
             DemoSection("选择器列") { UPPickerColumn { BasicText("北京") } }

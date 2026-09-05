@@ -24,8 +24,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -367,12 +370,85 @@ public fun UPCountTo(props: UPCountToProps = UPCountToProps(), modifier: Modifie
     BasicText(formatNumber(value, props.decimals.upIntOrDefault(0), props.decimal, props.separator), modifier = modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCountTo")).upTestTag("count-to"), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.fontSize, 22.dp).value.sp, fontWeight = if (props.bold) FontWeight.Bold else FontWeight.Normal))
 }
 
+/**
+ * `u-count-down`. The clock is deadline based like upstream — `endTime = now + remainTime`
+ * re-read against the frame clock each tick — so a slow tick never accumulates drift.
+ * [controller] carries the documented `start()` / `pause()` / `reset()` ref methods, and
+ * [content] stands in for the scoped slot that receives the split time.
+ */
 @Composable
-public fun UPCountDown(props: UPCountDownProps = UPCountDownProps(), modifier: Modifier = Modifier, onChange: ((UPCountDownTime) -> Unit)? = null, onFinish: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
-    var remaining by remember(props) { mutableLongStateOf(props.time.upLongOrDefault(0L).coerceAtLeast(0L)) }
-    LaunchedEffect(props, props.autoStart) { while (props.autoStart && remaining > 0L) { delay(if (props.millisecond) 10L else 1000L); remaining = (remaining - if (props.millisecond) 10 else 1000).coerceAtLeast(0); onChange?.invoke(countdownTime(remaining)); if (remaining == 0L) onFinish?.invoke() } }
-    BasicText(formatCountdown(remaining, props.format, props.millisecond), modifier = modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCountDown")).upTestTag("count-down"))
-}
+public fun UPCountDown(
+    props: UPCountDownProps = UPCountDownProps(),
+    modifier: Modifier = Modifier,
+    controller: UPCountDownController? = null,
+    onChange: ((UPCountDownTime) -> Unit)? = null,
+    onFinish: (() -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: (@Composable (UPCountDownTime) -> Unit)? = null,
+) {
+    val total = props.time.upLongOrDefault(0L).coerceAtLeast(0L)
+    var remaining by remember { mutableLongStateOf(total) }
+    // `runing` gates the tick; `runToken` re-arms it, because `pause()` immediately
+    // followed by `start()` inside `reset()` collapses into a single observed value.
+    var running by remember { mutableStateOf(false) }
+    var runToken by remember { mutableIntStateOf(0) }
 
-private fun countdownTime(ms: Long) = UPCountDownTime((ms / 86_400_000).toInt(), (ms / 3_600_000 % 24).toInt(), (ms / 60_000 % 60).toInt(), (ms / 1_000 % 60).toInt(), (ms % 1000).toInt())
-private fun formatCountdown(ms: Long, format: String, millisecond: Boolean): String { val t = countdownTime(ms); return format.replace("DD", "%02d".format(t.days)).replace("HH", "%02d".format(t.hours + t.days * 24)).replace("mm", "%02d".format(t.minutes)).replace("ss", "%02d".format(t.seconds)).replace("SSS", "%03d".format(t.milliseconds)) }
+    fun setRemainTime(remain: Long) {
+        remaining = remain
+        onChange?.invoke(upCountDownParseTimeData(remain))
+        if (remain <= 0L) {
+            running = false
+            onFinish?.invoke()
+        }
+    }
+
+    fun start() {
+        if (running) return
+        running = true
+        runToken += 1
+    }
+
+    fun pause() {
+        running = false
+    }
+
+    fun reset() {
+        pause()
+        setRemainTime(total)
+        if (props.autoStart) start()
+    }
+
+    if (controller != null) {
+        val binding = UPCountDownController.Binding(start = ::start, pause = ::pause, reset = ::reset)
+        SideEffect { controller.attach(binding) }
+        DisposableEffect(controller) { onDispose { controller.detach() } }
+    }
+
+    // `mounted() { init() }` plus `watch: time(n) { reset() }`.
+    LaunchedEffect(total) { reset() }
+    // Keying on `running` makes a `pause()` cancel the pending tick outright, the way
+    // upstream's `clearTimeout()` does. The elapsed time comes from the frame clock
+    // rather than `System.currentTimeMillis()` so tests can drive it deterministically.
+    LaunchedEffect(running, runToken, props.millisecond) {
+        if (!running) return@LaunchedEffect
+        val interval = upCountDownTickIntervalMillis(props.millisecond)
+        val endAt = withFrameMillis { it } + remaining
+        while (running) {
+            delay(interval)
+            if (!running) break
+            val remain = (endAt - withFrameMillis { it }).coerceAtLeast(0L)
+            // `macroTick` skips repaints inside the same second; `microTick` never does.
+            if (props.millisecond || !upCountDownIsSameSecond(remain, remaining) || remain == 0L) setRemainTime(remain)
+            if (remain == 0L) break
+        }
+    }
+
+    val timeData = upCountDownParseTimeData(remaining)
+    Box(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCountDown")).upTestTag("count-down")) {
+        if (content != null) {
+            content(timeData)
+        } else {
+            BasicText(upCountDownParseFormat(props.format, timeData), modifier = Modifier.upTestTag("count-down-text"), style = TextStyle(color = UPTheme.Content, fontSize = 15.sp, lineHeight = 22.sp))
+        }
+    }
+}

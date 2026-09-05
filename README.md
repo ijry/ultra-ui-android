@@ -48,7 +48,7 @@ python3 tools/inspect_screenshot.py --list       # 截图参考图的配色直�
 
 ## 示例导航
 
-完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。当前 90 个组件已建立 Props/API（基本完成 68、基础可用 22），所有声明字段都已被读取或登记为按设计不生效。
+完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。当前 90 个组件已建立 Props/API（基本完成 69、基础可用 21），所有声明字段都已被读取或登记为按设计不生效。
 
 示例工程复刻 uview-plus 演示工程的分组体验，并保留已有独立示例：
 

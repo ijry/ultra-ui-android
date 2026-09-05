@@ -67,7 +67,7 @@
 | 32 | 选择与日期 | `u-color-picker` | — | 未开始 | 暂无 | 颜色选择器，待建立颜色值和面板交互契约。 |
 | 33 | 通知与状态 | `u-column-notice` | `UPColumnNotice` / `UPColumnNoticeProps` | 基本完成 | 中 | 基于通知栏封装，随 `u-notice-bar` 一并补齐：`duration` 作为轮播间隔逐条切换并循环、`disableTouch=false` 时可上下拖动翻页，均有真机断言。 |
 | 34 | 工具 | `u-copy` | — | 未开始 | 暂无 | 剪贴板复制动作，待确认是否以无 UI action API 提供。 |
-| 35 | 数值与时间 | `u-count-down` | `UPCountDown` / `UPCountDownProps` | 基础可用 | 中 | 时间格式和自动开始已有；start/pause/reset controller 待补。 |
+| 35 | 数值与时间 | `u-count-down` | `UPCountDown` / `UPCountDownProps` | 基本完成 | 高（Props） | 新增 `UPCountDownController` 提供上游 ref 上的 `start()`/`pause()`/`reset()`（`start()` 在运行中直接返回，`pause()` 保留余量，`reset()` 复位后按 `autoStart` 决定是否重开）；计时改为上游的截止时间基准（`endTime = 此刻 + 剩余`，每拍重新读时钟）而非固定递减，`millisecond` 在 30ms 宏拍与 50ms 微拍之间切换且宏拍按 `isSameSecond` 抑制同秒重绘；`format` 复刻 `parseFormat` 的降级链（缺 `DD` 则天折进小时，缺 `HH` 折进分钟，依此类推，`SSS` 补三位且只替换首个匹配），单测逐条对照 node 跑出的上游读数，另有 8 项真机断言与作用域插槽。 |
 | 36 | 数值与时间 | `u-count-to` | `UPCountTo` / `UPCountToProps` | 基本完成 | 高（Props） | 数字格式和回调之外，改为真实逐帧动画：`withFrameMillis` 每帧推进并回调 `onChange`，`useEasing` 在上游 ease-out-expo 曲线（`(c·(-2^(-10t/d)+1)·1024)/1023+b`）与线性斜坡之间切换，向上/向下计数都在 `endVal` 处收敛，`duration<=0` 直接跳到终值；单测逐点对照上游公式，另有真机断言。 |
 | 37 | 基础展示 | `u-coupon` | — | 未开始 | 暂无 | 优惠券展示/选择，待建立业务字段契约。 |
 | 38 | 媒体与内容 | `u-cropper` | — | 未开始 | 暂无 | 图片裁剪，待接入原生手势和输出 URI。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 68 |
-| 基础可用 | 22 |
+| 基本完成 | 69 |
+| 基础可用 | 21 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -196,7 +196,7 @@
 | 基础组件 | button、tag、badge、divider、gap、line、link、text、title、overlay、popup、modal、toast、cell、cell-group、image、avatar、avatar-group、empty、loading-page、loadmore、input、textarea、search、code-input、switch、rate、number-box、checkbox、checkbox-group、radio、radio-group、row、col、grid、grid-item、line-progress、circle-progress | 38 | 基本完成；仍需逐字段视觉回归。 |
 | 基础能力 | icon、loading-icon | 2 | 基本完成；自定义图片/字体能力存在平台降级。 |
 | Batch 9A 原生交互 | alert、action-sheet、notify、back-top、card、collapse、collapse-item、dropdown、dropdown-item、notice-bar | 10 | 混合；`collapse-item`、`notice-bar`、`dropdown` 系列已到「基本完成」，全局弹层与滚动语义仍需加强。 |
-| Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 混合；`navbar`、`tabs`、`subsection`、`list`、`skeleton`、`read-more`、`count-to`、`pagination` 等已到「基本完成」，`sticky`/`select` 等仍受窗口级弹层与宿主滚动限制。 |
+| Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 混合；`navbar`、`tabs`、`subsection`、`list`、`skeleton`、`read-more`、`count-to`、`count-down`、`pagination` 等已到「基本完成」，`sticky`/`select` 等仍受窗口级弹层与宿主滚动限制。 |
 | Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 混合；`cascader`、`slider`、`picker` 系列已到「基本完成」，滚轮视觉与窗口级固定仍需加强。 |
 | Batch 11 表单校验 | form、form-item | 2 | 基本完成；上游 async-validator 规则、六个 ref 方法与标签/错误布局均有真机断言。 |
 | Batch 12 字段补齐 | 跨批次：tabs、pagination、image、cell、modal、navbar、navbar-mini、number-box、overlay、badge、tag、subsection、notice-bar、collapse-item、sticky、action-sheet、slider、list、list-item、count-to、back-top、skeleton、select、read-more、cascader | 25 | 不新增组件，专门消化「声明了但从不读取」的字段。未读字段从 90 一路降到 0；期间发现的组件级缺陷（`u-subsection` 只有一排文字、`u-notice-bar` 从不滚动、`u-collapse-item` 无动画）已一并修复。 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 245 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 253 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 22 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`、`u-select`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker` 系列）三类，需要先补基础设施再逐个收口。
+3. **仍标「基础可用」的 21 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`、`u-select`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker` 系列）三类，需要先补基础设施再逐个收口。`u-count-down` 属于第四类——缺的是命令式 ref 方法而非基础设施——已在本轮补齐并升到「基本完成」，同类可先挑出来单独收口。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,9 +232,14 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **245 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **253 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
-收尾字段批新增 14 项回归（`UPTailFieldBehaviorTest`），覆盖 `u-count-to` 的逐帧推进与
+`u-count-down` 新增 8 项回归（`UPCountDownBehaviorTest`），覆盖 `autoStart` 两态、
+`pause()` 冻结余量而非让截止时间在后台继续跑、运行中重复 `start()` 不重置截止时间、
+`reset()` 复位后按 `autoStart` 决定是否重开、宏拍每秒一次重绘对比微拍连续重绘、
+到零时 `onFinish` 只触发且计时停在 0，以及 `mm:ss` 把 25 小时折成 1501 分钟与作用域插槽
+拿到拆分后的时间。全部经 `mainClock.autoAdvance = false` 手动推进，不含真实等待。
+再往前一批为收尾字段批新增 14 项回归（`UPTailFieldBehaviorTest`），覆盖 `u-count-to` 的逐帧推进与
 ease-out-expo 领先线性斜坡、`autoplay=false` 停在起始值，`u-back-top` 把滚动时长交给宿主，
 `u-skeleton` 的逐行宽度与末行 70% 回落、未知 `avatarShape` 诊断，`u-select` 的
 `showOptionsLabel` 与 `optionsWidth`，`u-read-more` 的 `textIndent` 与仅收起态生效的

@@ -58,6 +58,6 @@ class UPBatch9BBehaviorTest {
         }
         composeRule.onNodeWithTag("up-read-more").assertExists()
         composeRule.onNodeWithTag("up-count-to").assertTextContains("0")
-        composeRule.onNodeWithTag("up-count-down").assertTextContains("00:01:01")
+        composeRule.onNodeWithTag("up-count-down-text", useUnmergedTree = true).assertTextContains("00:01:01")
     }
 }
