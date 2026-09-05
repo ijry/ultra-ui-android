@@ -116,8 +116,8 @@
 | 81 | 选择与日期 | `u-pagination` | `UPPagination` / `UPPaginationProps` | 基本完成 | 高（Props） | `layout` 按 `total, prev, pager, next, sizes` 逐段解析并按序渲染，`pageSize`/`total` 驱动完整页码算法（`pagerCount` 限定窗口、省略号补位）、`buttonBgColor`/`buttonBorderColor` 作用于前后翻页按钮、`hideOnSinglePage` 单页时整体隐藏、`pageSizes` 提供每页条数轮转并回传 `onUpdatePageSize`/`onSizeChange`，均有真机断言。刻意差异：`hideOnSinglePage` 在上游只声明未被使用，Android 按字段语义真实实现；`sizes` 段上游是 `<select>` 下拉，Android 改为点击轮转候选值。 |
 | 82 | 内容与解析 | `u-parse` | — | 未开始 | 暂无 | HTML 富文本解析待确定原生实现边界。 |
 | 83 | 内容与解析 | `u-pdf-reader` | — | 未开始 | 暂无 | PDF 阅读器待接入 Android 原生 PDF 能力。 |
-| 84 | 选择与日期 | `u-picker` | `UPPicker` / `UPPickerProps` | 基本完成 | 中 | modelValue/value/defaultIndex 和事件 payload 已修正；列已按 `visibleItemCount × itemHeight` 固定高度并可滚动，选项在行内垂直居中；`hasInput` 渲染只读 `u-input` 触发器（文案经 `keyName` 还原对象列标签）并由覆盖层接管点击打开面板、`inputBorder` 映射 `u-input` 的 `surround`/`bottom`/`none`（布尔转枚举）、`inputProps` 逐键覆盖 18 个 `u-input` 字段（键名大小写与 `-`/`_` 归一，未知键上报诊断）、`toolbarRightSlot` 用 `toolbarRight` 插槽替换确认按钮、`maskStyle` 仅在显式传值时覆盖列遮罩、`popupMode` 经 `round` 决定面板圆角朝向。另补齐 `loading`（按上游 `.u-picker--loading` 用不透明面板 + circle 加载图标整列盖住，期间选项节点不存在因而不可点）、`duration`（面板淡入）与 `zIndex`（同级覆盖顺序）。降级：`maskClass` 为 CSS 类钩子，无原生等价。未完成：`popupMode` 的 `left`/`right`/`center` 与 `closeOnClickOverlay`/`overlayOpacity` 都依赖窗口级弹层，内联面板仅接受 `top`/`bottom` 并对其余值上报诊断——该层已证明可用（见 `u-tooltip`），搬迁是本组件自身的后续工作。惯性动画待补。 |
-| 85 | 选择与日期 | `u-picker-column` | `UPPickerColumn` / `UPPickerColumnProps` | 基础可用 | 中 | Props 为空契约的容器已提供，自定义内容与样式已有真机断言；原生列滚动待补。 |
+| 84 | 选择与日期 | `u-picker` | `UPPicker` / `UPPickerProps` | 基本完成 | 中 | modelValue/value/defaultIndex 和事件 payload 已修正；列已按 `visibleItemCount × itemHeight` 固定高度并可滚动，选项在行内垂直居中；`hasInput` 渲染只读 `u-input` 触发器（文案经 `keyName` 还原对象列标签）并由覆盖层接管点击打开面板、`inputBorder` 映射 `u-input` 的 `surround`/`bottom`/`none`（布尔转枚举）、`inputProps` 逐键覆盖 18 个 `u-input` 字段（键名大小写与 `-`/`_` 归一，未知键上报诊断）、`toolbarRightSlot` 用 `toolbarRight` 插槽替换确认按钮、`maskStyle` 仅在显式传值时覆盖列遮罩、`popupMode` 经 `round` 决定面板圆角朝向。另补齐 `loading`（按上游 `.u-picker--loading` 用不透明面板 + circle 加载图标整列盖住，期间选项节点不存在因而不可点）、`duration`（面板淡入）与 `zIndex`（同级覆盖顺序）。降级：`maskClass` 为 CSS 类钩子，无原生等价。未完成：`popupMode` 的 `left`/`right`/`center` 与 `closeOnClickOverlay`/`overlayOpacity` 都依赖窗口级弹层，内联面板仅接受 `top`/`bottom` 并对其余值上报诊断——该层已证明可用（见 `u-tooltip`），搬迁是本组件自身的后续工作。滚轮已改为带吸附的列表（见第 85 行 `u-picker-column`）。 |
+| 85 | 选择与日期 | `u-picker-column` | `UPPickerColumn` / `UPPickerColumnProps` | 基本完成 | 高（Props） | 上游该组件是 `<picker-view-column>` 的空壳（props 契约为空，只有 `customStyle`），真正的滚轮行为属于父级 `picker-view`——本轮已在 `u-picker` 侧实现：列改为带吸附的 `LazyColumn`，两端各留半个视口的内边距（这是首/末项能进入中央选中带的前提）、`indicatorStyle` 的等高选中带用双 hairline 画出、滚动停下即为 `change`（上游 `picker-view` 由滚动而非点击上报，并按索引数组差分找出变化的那一列）、选中项按 `fontWeight: bold` 加粗、列内 `disabled` 项按 0.35 透明度变暗且不可选、标签按 `.u-line-1` 单行省略。滚轮几何有 4 项单测、行为有 5 项真机断言。 |
 | 86 | 辅助模块 | `u-picker-data` | — | 未开始 | 暂无 | 选择器数据辅助目录，不单独作为 Android UI 组件。 |
 | 87 | 原生交互 | `u-popover` | `UPPopover` / `UPPopoverProps` | 基本完成 | 高（Props） | 改为按上游结构实现——`u-popover` 本身就是「填了 content 插槽、去掉复制按钮的 `up-tooltip`」，因此这里直接把 `text`/颜色三项/`direction`/`placement`/`triggerMode`/`show`/`zIndex`/`forcePosition` 转发给 `UPTooltip`（此前是各自独立的一套内联布局）。`direction` 是 tooltip 真正读取的字段，`placement` 只在 `direction` 为空时才起作用；`hover` 在 Android 无对应物，按既有约定映射为长按。随窗口级弹层落地，`zIndex` 与 `forcePosition` 均已生效。有真机断言。 |
 | 88 | 原生交互 | `u-popup` | `UPPopup` / `UPPopupProps` | 基本完成 | 高（Props） | Compose 弹层基础能力之外，本轮补齐入场过渡与底部手势：`position()` 计算表逐项复刻（仅 `center` 读 `zoom`，给出 `fade-zoom`/`fade`，其余方向给 `slide-up`/`slide-down`/`slide-left`/`slide-right`，`pageInline` 一律 `none`），`duration` 驱动位移与淡入（淡入只属于两种 fade，滑入按 `translate3d` 的整屏偏移起步，缩放取上游 `scale(0.95)`）；`touchable` 仅在 `mode="bottom"` 时生成 100×5 指示条的拖拽区，拖动在 `[minHeight, maxHeight]`（缺省 200px 与窗口 80%）内改高、越界保留原高不做 clamp，松手按上游阈值（位移 > 100px，或 > 30px 且速度 > 0.5px/ms）关闭；`safeAreaInsetTop` 让出状态栏。计算部分有单测逐条对照，行为有真机断言。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 84 |
-| 基础可用 | 6 |
+| 基本完成 | 85 |
+| 基础可用 | 5 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 301 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 306 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 6 行**：这些行的未读字段已为 0，剩下的差距集中在滚轮视觉（`u-picker-column`）与宿主页面滚动（`u-back-top` 需要滚动**别人**的容器）两类。**此前归纳的两大类「基础设施缺失」都已证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶。两次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 5 行**：这些行的未读字段已为 0，剩下的差距只有一类真正外生：`u-back-top` 需要滚动**别人**的容器，滚动状态归宿主。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,11 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **301 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **306 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-picker` 的吸附滚轮新增 5 项回归（`UPPickerWheelBehaviorTest`），覆盖选中带恰为一个
+`itemHeight` 且居于滚轮正中、首项起始即落在选中带内（证明两端留白生效）、滑动改变选中并
+上报 `change`、`disabled` 项不可选、`immediateChange=false` 时滑动静默但确认照样上报。再往前一批为
 `u-sticky` 的真实吸顶重写了 3 项回归，覆盖静止时吸顶带只占内容高度（不再把整页推下去）、
 滚过阈值后内容被钉住且 `fixed`/`unfixed` 各回传一次 `index`、`disabled` 永不吸顶。再往前一批为
 `u-tooltip`/`u-popover` 的窗口级弹层新增 11 项回归，覆盖透明遮罩阻断穿透并点击关闭、
@@ -375,7 +378,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 6 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 5 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -573,7 +576,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 6 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 5 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

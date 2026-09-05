@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -26,12 +32,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +52,7 @@ import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
+import net.lingyun.ultraui.android.core.upBooleanOrDefault
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upStringOrDefault
@@ -68,6 +80,15 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
     val visible = props.show || props.pageInline || (props.hasInput && showByClickInput)
     if (!props.hasInput && !visible) return
     val selected = remember(props) { mutableStateListOf<Int>().apply { addAll(resolvePickerIndexes(props)) } }
+    // `changeHandler` compares the new index array against the previous one and reports the
+    // first column that moved, because `picker-view` emits the whole array every time.
+    var lastIndexes by remember(props) { mutableStateOf(selected.toList()) }
+    LaunchedEffect(selected.toList()) {
+        val next = selected.toList()
+        val moved = upPickerChangedColumn(lastIndexes, next) ?: return@LaunchedEffect
+        lastIndexes = next
+        if (props.immediateChange) onChange?.invoke(pickerEvent(props, selected, moved, next[moved]))
+    }
     val popupMode = upPickerPopupMode(props.popupMode, diagnostics, PickerComponentName)
     LaunchedEffect(props.maskClass, diagnostics) {
         if (props.maskClass.isNotBlank()) diagnostics.report(PickerComponentName, "maskClass", props.maskClass, "CSS class hooks have no native Android equivalent; the wheel mask is styled through maskStyle instead.")
@@ -137,25 +158,75 @@ public fun UPPicker(props: UPPickerProps = UPPickerProps(), modifier: Modifier =
                         }
                         return@Box
                     }
-                    Column(
-                        Modifier.fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .upTestTag("picker-column-$columnIndex"),
+                    // `<picker-view>` is a snapping wheel: the selection lives in an
+                    // `indicatorStyle` band of exactly `itemHeight` in the middle, and a
+                    // scroll always comes to rest with one option centred there. A plain
+                    // scrolling column has neither, so the wheel is a snapping LazyColumn
+                    // with half-viewport padding at both ends — that padding is what lets
+                    // the first and last option reach the centre band at all.
+                    val listState = rememberLazyListState(
+                        initialFirstVisibleItemIndex = selected.getOrElse(columnIndex) { 0 },
+                    )
+                    val padding = itemHeight * upPickerWheelPaddingFraction(visibleCount)
+                    LazyColumn(
+                        state = listState,
+                        flingBehavior = rememberSnapFlingBehavior(listState, SnapPosition.Start),
+                        contentPadding = PaddingValues(vertical = padding),
+                        modifier = Modifier.fillMaxSize().upTestTag("picker-column-$columnIndex"),
                     ) {
-                        column.forEachIndexed { optionIndex, option ->
+                        itemsIndexed(column) { optionIndex, option ->
                             val label = actionOrOptionText(option, props.keyName, option.toString())
-                            // uview sets lineHeight = itemHeight, so the label sits centred in its row.
+                            // A column entry may carry its own `disabled` flag; upstream dims
+                            // it to 0.35 and never lets it be selected.
+                            val disabled = option.upStringKeyMapOrEmpty()["disabled"].upBooleanOrDefault(false)
+                            val isSelected = selected.getOrElse(columnIndex) { 0 } == optionIndex
                             Box(
                                 Modifier.fillMaxWidth().height(itemHeight)
-                                    .background(if (selected.getOrElse(columnIndex) { 0 } == optionIndex) Color(0xFFEAF3FF) else Color.Transparent)
-                                    .upClickable(onClick = { selected[columnIndex] = optionIndex; if (props.immediateChange) onChange?.invoke(pickerEvent(props, selected, columnIndex, optionIndex)) })
-                                    .padding(horizontal = 12.dp),
-                                contentAlignment = Alignment.CenterStart,
+                                    .alpha(if (disabled) UPPickerDisabledItemAlpha else 1f)
+                                    .background(if (isSelected) Color(0xFFEAF3FF) else Color.Transparent)
+                                    .upClickable(enabled = !disabled, onClick = { selected[columnIndex] = optionIndex })
+                                    .padding(horizontal = 12.dp)
+                                    .upTestTag("picker-option-$columnIndex-$optionIndex"),
+                                // `.u-picker__view__column__item` centres its text.
+                                contentAlignment = Alignment.Center,
                             ) {
-                                BasicText(label, style = TextStyle(color = UPTheme.Main, fontSize = 14.sp))
+                                BasicText(
+                                    label,
+                                    // `.u-line-1`: one line, ellipsised.
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    // `fontWeight: index1 === innerIndex[index] ? 'bold' : 'normal'`.
+                                    style = TextStyle(
+                                        color = UPTheme.Main,
+                                        fontSize = 16.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    ),
+                                )
                             }
                         }
                     }
+                    // The wheel drives the selection, so a settled scroll is a `change`:
+                    // upstream's `picker-view` reports on scroll, not on tap.
+                    LaunchedEffect(listState, column.size) {
+                        snapshotFlow { listState.firstVisibleItemIndex to listState.isScrollInProgress }
+                            .collect { (index, scrolling) ->
+                                if (scrolling) return@collect
+                                val landed = index.coerceIn(0, (column.size - 1).coerceAtLeast(0))
+                                if (selected.getOrElse(columnIndex) { 0 } == landed) return@collect
+                                selected[columnIndex] = landed
+                            }
+                    }
+                    // `indicatorStyle="height: itemHeight"`: a hairline-bounded band marking
+                    // where the selection sits. It takes no pointer input, so the options
+                    // underneath stay tappable.
+                    Box(
+                        Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth()
+                            .height(itemHeight)
+                            .upPickerIndicatorBand()
+                            .upTestTag("picker-indicator-$columnIndex"),
+                    )
                     // uview hands `mask-style` to picker-view, which paints it over the wheel.
                     // A plain Box takes no pointer input, so the options underneath stay tappable.
                     if (maskDeclared) Box(Modifier.matchParentSize().applyUPResolvedStyle(maskStyle).upTestTag("picker-mask-$columnIndex"))
@@ -414,4 +485,14 @@ public fun UPSelect(props: UPSelectProps = UPSelectProps(), modifier: Modifier =
             }
         }
     }
+}
+
+/**
+ * `indicatorStyle`: `<picker-view>` draws a band across the wheel marking the selection
+ * row. The platform default is a pair of hairlines, which is what this reproduces.
+ */
+private fun Modifier.upPickerIndicatorBand(): Modifier = drawBehind {
+    val stroke = 0.5.dp.toPx()
+    drawLine(UPTheme.Border, Offset(0f, stroke / 2f), Offset(size.width, stroke / 2f), strokeWidth = stroke)
+    drawLine(UPTheme.Border, Offset(0f, size.height - stroke / 2f), Offset(size.width, size.height - stroke / 2f), strokeWidth = stroke)
 }

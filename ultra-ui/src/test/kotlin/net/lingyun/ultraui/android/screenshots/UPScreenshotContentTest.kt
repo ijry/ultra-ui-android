@@ -491,13 +491,22 @@ class UPScreenshotContentTest {
         assertTrue("tinted background #f0f0f0 missing", reference.contains("f0f0f0"))
         assertEquals("the untinted highlight should be covered", 0, reference.countOf("eaf3ff"))
 
-        // The tinted highlight is one contiguous band, sitting inside the tinted column.
+        // The tinted highlight is one contiguous band sitting inside the tinted column, with
+        // the wheel's own indicator hairlines between the two — the hairlines are `#e4e7ed`
+        // tinted the same 6%, which is why the bands no longer touch directly.
         val highlight = reference.rowBandsOf("dce4f0").single()
-        val column = reference.rowBandsOf("f0f0f0").maxBy { it.last - it.first }
+        val columnBands = reference.rowBandsOf("f0f0f0")
+        val above = columnBands.filter { it.last < highlight.first }.maxByOrNull { it.last }
+        val below = columnBands.filter { it.first > highlight.last }.minByOrNull { it.first }
+        assertTrue("expected tinted column above the highlight, got $columnBands", above != null)
+        assertTrue("expected tinted column below the highlight, got $columnBands", below != null)
+        // At most a hairline's worth of rows separates them at each edge.
         assertTrue(
-            "the highlight should border the tinted column: $highlight vs $column",
-            highlight.last + 1 == column.first || column.last + 1 == highlight.first,
+            "the highlight should sit snug inside the column: $highlight between $above and $below",
+            highlight.first - requireNotNull(above).last <= 4 && requireNotNull(below).first - highlight.last <= 4,
         )
+        // The indicator band's own tinted hairlines are what fills that gap.
+        assertTrue("the indicator hairline is missing", reference.contains("d6d9df"))
     }
 
     @Test
