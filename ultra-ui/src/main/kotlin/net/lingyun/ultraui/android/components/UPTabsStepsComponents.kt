@@ -1,6 +1,7 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -10,9 +11,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
@@ -51,6 +55,8 @@ import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 
 private const val TabsComponentName: String = "UPTabs"
+
+private const val SubsectionComponentName: String = "UPSubsection"
 
 /** `skewX(25deg)` from the `card` corner decoration, expressed as its horizontal shear. */
 private const val TabsCardCornerSkew: Float = 0.4663f
@@ -224,15 +230,142 @@ public fun UPTabsItem(props: UPTabsItemProps = UPTabsItemProps(), modifier: Modi
     Box(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPTabsItem")).upTestTag("tabs-item")) { content() }
 }
 
+/**
+ * Native Compose counterpart of uview-plus `u-subsection`.
+ *
+ * `mode` drives two visually distinct controls: `button` floats a white pill inside a grey
+ * track, `subsection` outlines every item and slides an `activeColor` bar underneath the
+ * labels. The sliding bar is a real sibling of the items, animated over
+ * [UPSubsectionBarDurationMillis], so the widths are measured rather than assumed.
+ */
 @Composable
-public fun UPSubsection(props: UPSubsectionProps = UPSubsectionProps(), modifier: Modifier = Modifier, onChange: ((Int) -> Unit)? = null, onUpdateCurrent: ((UPRawValue) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
+public fun UPSubsection(
+    props: UPSubsectionProps = UPSubsectionProps(),
+    modifier: Modifier = Modifier,
+    onChange: ((Int) -> Unit)? = null,
+    onUpdateCurrent: ((UPRawValue) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+) {
     var current by remember { mutableIntStateOf(props.current.upIntOrDefault(0).coerceAtLeast(0)) }
     LaunchedEffect(props.current) { current = props.current.upIntOrDefault(0).coerceAtLeast(0) }
-    Row(modifier.fillMaxWidth().background(UPColor.parse(props.bgColor, Color(0xFFEEEEEF))).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSubsection")).upTestTag("subsection")) {
-        props.list.forEachIndexed { index, item ->
-            val label = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
-            Box(Modifier.weight(1f).upClickable(enabled = !props.disabled, onClick = { current = index; onChange?.invoke(index); onUpdateCurrent?.invoke(index) }).padding(8.dp), contentAlignment = Alignment.Center) {
-                BasicText(label, style = TextStyle(color = if (current == index) UPColor.parse(props.activeColor, UPTheme.Primary) else UPColor.parse(props.inactiveColor, UPTheme.Main)))
+    val mode = upSubsectionMode(props.mode, diagnostics, SubsectionComponentName)
+    val count = props.list.size
+    val barIndex = upSubsectionBarIndex(current, count)
+    val cornerRadius = 4.dp
+    val barColor = UPColor.parse(
+        upSubsectionBarColorHex(mode, props.disabled, props.activeColor),
+        UPTheme.Primary,
+    )
+    val itemBorderColor = upSubsectionItemBorderColorHex(mode, props.disabled, props.activeColor)
+        ?.let { UPColor.parse(it, UPTheme.Primary) }
+    val wrapperColor = upSubsectionWrapperColorHex(mode, props.bgColor)
+        ?.let { UPColor.parse(it, Color(0xFFEEEEEF)) }
+        ?: Color.Transparent
+    val fontSize = upDimension(props.fontSize, 12.dp).value.sp
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(upSubsectionHeightDp(mode).dp)
+            .background(wrapperColor, RoundedCornerShape(cornerRadius))
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, SubsectionComponentName))
+            .upTestTag("subsection")
+            .padding(upSubsectionWrapperPaddingDp(mode).dp),
+    ) {
+        if (count > 0) {
+            // `barStyle` sizes the bar to one item and slides it with `translateX`.
+            val slotWidth by animateFloatAsState(
+                targetValue = barIndex.toFloat(),
+                animationSpec = tween(durationMillis = UPSubsectionBarDurationMillis),
+                label = "up-subsection-bar",
+            )
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val itemWidth = maxWidth / count
+                val barShape = when (upSubsectionBarPosition(barIndex, count)) {
+                    // The outlined bar only rounds the outer edge it currently touches.
+                    "first" -> if (mode == "subsection") {
+                        RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius)
+                    } else {
+                        RoundedCornerShape(cornerRadius)
+                    }
+                    "last" -> if (mode == "subsection") {
+                        RoundedCornerShape(topEnd = cornerRadius, bottomEnd = cornerRadius)
+                    } else {
+                        RoundedCornerShape(cornerRadius)
+                    }
+                    "center" -> if (mode == "subsection") RoundedCornerShape(0.dp) else RoundedCornerShape(cornerRadius)
+                    else -> RoundedCornerShape(cornerRadius)
+                }
+                Box(
+                    modifier = Modifier
+                        .offset(x = itemWidth * slotWidth)
+                        .width(itemWidth)
+                        .fillMaxHeight()
+                        .background(barColor, barShape)
+                        .upTestTag("subsection-bar"),
+                )
+                Row(modifier = Modifier.fillMaxSize()) {
+                    props.list.forEachIndexed { index, item ->
+                        val label = actionOrOptionText(item, props.keyName, item.upStringValueOrEmpty())
+                        val active = current == index
+                        val textColor = upSubsectionTextColorHex(
+                            mode = mode,
+                            active = active,
+                            disabled = props.disabled,
+                            activeOverride = upSubsectionItemColorOverride(item, props.activeColorKeyName),
+                            inactiveOverride = upSubsectionItemColorOverride(item, props.inactiveColorKeyName),
+                            activeColor = props.activeColor,
+                            inactiveColor = props.inactiveColor,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                // `u-subsection__item--no-border-right` drops the shared edge so
+                                // adjacent items do not double the 1px outline.
+                                .then(
+                                    if (itemBorderColor == null) {
+                                        Modifier
+                                    } else {
+                                        Modifier.border(
+                                            width = 1.dp,
+                                            color = itemBorderColor,
+                                            shape = when {
+                                                count == 1 -> RoundedCornerShape(cornerRadius)
+                                                index == 0 -> RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius)
+                                                index == count - 1 -> RoundedCornerShape(topEnd = cornerRadius, bottomEnd = cornerRadius)
+                                                else -> RoundedCornerShape(0.dp)
+                                            },
+                                        )
+                                    },
+                                )
+                                .upClickable(
+                                    enabled = !props.disabled,
+                                    onClick = {
+                                        current = index
+                                        onUpdateCurrent?.invoke(index)
+                                        onChange?.invoke(index)
+                                    },
+                                )
+                                .padding(horizontal = 4.dp)
+                                .upTestTag("subsection-item-$index"),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            BasicText(
+                                label,
+                                style = TextStyle(
+                                    color = UPColor.parse(textColor, UPTheme.Main),
+                                    fontSize = fontSize,
+                                    fontWeight = if (upSubsectionBold(props.bold, active, props.disabled)) {
+                                        FontWeight.Bold
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                ),
+                            )
+                        }
+                    }
+                }
             }
         }
     }

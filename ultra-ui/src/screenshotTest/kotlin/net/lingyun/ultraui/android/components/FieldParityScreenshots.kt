@@ -88,3 +88,24 @@ fun UPFieldParityBadgeOffsetScreenshot() {
         UPNumberBox(props = UPNumberBoxProps(modelValue = 3, min = 0, max = 9, longPress = true))
     }
 }
+
+@PreviewTest
+@Preview(
+    name = "field parity subsection modes",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+    widthDp = 360,
+    heightDp = 240,
+)
+@Composable
+fun UPFieldParitySubsectionScreenshot() {
+    Column(
+        Modifier.fillMaxSize().background(Color.White).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = 0))
+        UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = 1, mode = "subsection"))
+        UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = 2, mode = "subsection"))
+        UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = 1, disabled = true))
+    }
+}
