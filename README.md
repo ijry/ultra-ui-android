@@ -37,9 +37,17 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 ./gradlew :ultra-ui:testDebugUnitTest :sample:assembleDebug --console=plain
 ```
 
+三个核查脚本在字段层面对照上游，有问题时以退出码 1 失败：
+
+```bash
+python3 tools/find_unread_props.py       # 声明了但组件从不读取的字段（当前 0 个）
+python3 tools/compare_uview_defaults.py  # 默认值漂移（当前 0 处未解释漂移）
+python3 tools/audit_status_claims.py     # 进度文档的标注是否有证据支撑（当前 0 行偏乐观）
+```
+
 ## 示例导航
 
-完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。
+完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。当前 90 个组件已建立 Props/API（基本完成 68、基础可用 22），所有声明字段都已被读取或登记为按设计不生效。
 
 示例工程复刻 uview-plus 演示工程的分组体验，并保留已有独立示例：
 

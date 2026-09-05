@@ -195,18 +195,24 @@
 | --- | --- | ---: | --- |
 | 基础组件 | button、tag、badge、divider、gap、line、link、text、title、overlay、popup、modal、toast、cell、cell-group、image、avatar、avatar-group、empty、loading-page、loadmore、input、textarea、search、code-input、switch、rate、number-box、checkbox、checkbox-group、radio、radio-group、row、col、grid、grid-item、line-progress、circle-progress | 38 | 基本完成；仍需逐字段视觉回归。 |
 | 基础能力 | icon、loading-icon | 2 | 基本完成；自定义图片/字体能力存在平台降级。 |
-| Batch 9A 原生交互 | alert、action-sheet、notify、back-top、card、collapse、collapse-item、dropdown、dropdown-item、notice-bar | 10 | 基础可用；全局弹层、滚动和动画语义仍需加强。 |
-| Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 基础可用；部分组件已做受控字段修正，但还不是完整上游行为复刻。 |
-| Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 基础可用；日期选择、级联、滑块和底部导航核心状态已覆盖，滚轮视觉、复杂样式和窗口级固定仍需加强。 |
+| Batch 9A 原生交互 | alert、action-sheet、notify、back-top、card、collapse、collapse-item、dropdown、dropdown-item、notice-bar | 10 | 混合；`collapse-item`、`notice-bar`、`dropdown` 系列已到「基本完成」，全局弹层与滚动语义仍需加强。 |
+| Batch 9B 导航与更多 | navbar、navbar-mini、status-bar、safe-bottom、tabs、tabs-item、subsection、steps、steps-item、list、list-item、index-list、index-item、index-anchor、scroll-list、popover、tooltip、sticky、swipe-action、swipe-action-item、swiper、swiper-indicator、skeleton、read-more、column-notice、row-notice、count-to、count-down、picker、picker-column、pagination、select | 32 | 混合；`navbar`、`tabs`、`subsection`、`list`、`skeleton`、`read-more`、`count-to`、`pagination` 等已到「基本完成」，`sticky`/`select` 等仍受窗口级弹层与宿主滚动限制。 |
+| Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 混合；`cascader`、`slider`、`picker` 系列已到「基本完成」，滚轮视觉与窗口级固定仍需加强。 |
 | Batch 11 表单校验 | form、form-item | 2 | 基本完成；上游 async-validator 规则、六个 ref 方法与标签/错误布局均有真机断言。 |
+| Batch 12 字段补齐 | 跨批次：tabs、pagination、image、cell、modal、navbar、navbar-mini、number-box、overlay、badge、tag、subsection、notice-bar、collapse-item、sticky、action-sheet、slider、list、list-item、count-to、back-top、skeleton、select、read-more、cascader | 25 | 不新增组件，专门消化「声明了但从不读取」的字段。未读字段从 90 一路降到 0；期间发现的组件级缺陷（`u-subsection` 只有一排文字、`u-notice-bar` 从不滚动、`u-collapse-item` 无动画）已一并修复。 |
 
 ## 下一批推荐顺序
 
-1. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
-2. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
-3. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
-4. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
-5. **选择增强**：`u-calendar-strip`、`u-keyboard`、`u-number-keyboard`、`u-car-keyboard`，并继续增强 Batch 10 滚轮、弹层和固定布局语义。
+未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
+
+1. **真机执行现有断言**：库内 245 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+2. **视觉回归的可用性**：当前 screenshotTest 渲染环境不画文本与多数填色，参考图只能作为布局占位证据。需要换一条真正能比对像素的路径（真机截图基线或换渲染后端）。
+3. **仍标「基础可用」的 22 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`、`u-select`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker` 系列）三类，需要先补基础设施再逐个收口。
+4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
+5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
+6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
+7. **内容解析与复杂业务**：`u-markdown`、`u-parse`、`u-tree`、`u-goods-sku`、`u-novel-reader`、`u-tabs-pro`。
+8. **选择增强**：`u-calendar-strip`、`u-keyboard`、`u-number-keyboard`、`u-car-keyboard`。
 
 ## 真机行为测试
 
@@ -288,6 +294,18 @@ CSS hook 降级诊断；再往前有 10 项结构与滚动约束回归，覆盖 
 >
 > 教训：整轮执行期间模拟器可能被外部回收，AGP 会把 `device offline` 报成某个用例 FAILED。
 > 判定回归前先确认设备仍在线（`adb devices`），再看是否有断言堆栈。
+
+> 教训：`animateFloatAsState` / `animateDpAsState` 的初值就是首帧的目标值，直接写
+> `targetValue = 最终值` 会让动画无从插值、`duration` 静默失效。`u-overlay` 与 `u-modal`
+> 都需要先 `remember { mutableStateOf(false) }` 一个 `entered` 标记，在 `LaunchedEffect(Unit)`
+> 里翻转，才能真正从 0 过渡到目标值。
+>
+> 教训：验证时长类字段必须关掉自动推进时钟（`composeRule.mainClock.autoAdvance = false`）
+> 再手动 `advanceTimeBy`，否则 `waitForIdle` 会一次性跑完动画，中间态无从断言。
+>
+> 教训：跨端色彩算法要按 `Double` 而不是 `Float` 复刻。上游 `genLightColor` 对 `#2979ff`
+> 在 95% 亮度下会算出 229.49999999999997 这种正好压在四舍五入边界上的通道值，用 `Float`
+> 精度会把某个通道多进一位，得到 `#e6efff` 而不是上游的 `#e5efff`。
 
 ## 维护规则
 
