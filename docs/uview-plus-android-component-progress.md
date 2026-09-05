@@ -87,9 +87,9 @@
 | 52 | 原生交互 | `u-guide` | — | 未开始 | 暂无 | 新手引导遮罩和高亮定位待实现。 |
 | 53 | 基础能力 | `u-icon` | `UPIcon` / `UPIconProps` | 基本完成 | 高（Props） | 已接入固定上游 icon font；`isImg`（name 含 `/`）按上游改渲 `<image>`，`imgMode` 透传成 `u-image` 的 mode、`width`/`height` 按 `imgStyle` 语义生效（留空时两边都回落 `size`），均有真机断言，图片加载走可注入的 `UPImageLoader`。降级：自定义图标字体（`customPrefix != "uicon"`）无法在内置字体里查形，仍走诊断。 |
 | 54 | 媒体与内容 | `u-image` | `UPImage` / `UPImageProps` | 基本完成 | 高（Props） | 加载、错误、裁剪模式和占位已有实现；`loadingIcon` 决定加载态图标、`fade` 与 `duration` 共同驱动加载完成后的淡入（`fade=false` 时时长归零），均有真机断言。刻意差异：上游 transition 时长写死 1000ms 且 `duration` 在模板中被注释掉，Android 让 `duration` 真实生效。降级：`showMenuByLongpress` 仅微信小程序有效，Android 保留字段但不生效，缺省 `false`；`errorIcon` 之外的自定义错误插槽待补。 |
-| 55 | 列表与索引 | `u-index-anchor` | `UPIndexAnchor` / `UPIndexAnchorProps` | 基础可用 | 中 | 索引锚点可渲染，选项对象名称、尺寸和自定义样式已有真机断言；联动滚动和 sticky 语义待补。 |
-| 56 | 列表与索引 | `u-index-item` | `UPIndexItem` / `UPIndexItemProps` | 基础可用 | 中 | 索引项容器可用，自定义内容与样式已有真机断言；完整索引定位待补。 |
-| 57 | 列表与索引 | `u-index-list` | `UPIndexList` / `UPIndexListProps` | 基础可用 | 中 | 右侧索引条已按 `indexList` 渲染并可点击（`onIndexClick` 回调索引字符与序号）、`activeColor`/`inactiveColor` 区分选中态、`itemMargin` 控制间距、`customNavHeight` 让出导航栏高度、`safeBottomFix` 避让底部安全区；均有真机断言。此前完全不渲染索引条。降级：`sticky` 锚点吸顶需宿主滚动容器回传偏移。 |
+| 55 | 列表与索引 | `u-index-anchor` | `UPIndexAnchor` / `UPIndexAnchorProps` | 基本完成 | 高（Props） | 文本（含选项对象的 `name`）、颜色、字号、背景与高度之外，锚点现在按 `indexList.anchors.push(this)` 的语义向父级上报自身偏移，索引条拖动即可滚到它；`parentSticky`（`indexList ? indexList.sticky : true`，独立使用时为真）以标记形式暴露在树上，宿主据此决定是否用自己的 sticky header API 固定。均有真机断言。降级：Compose 没有 CSS `position: sticky`，固定动作本身仍归宿主。 |
+| 56 | 列表与索引 | `u-index-item` | `UPIndexItem` / `UPIndexItemProps` | 基本完成 | 高（Props） | 上游该组件的 props 契约本身为空（只有 `customStyle`），职责是包裹锚点与内容并让父级测得偏移——定位逻辑现由内部的 `u-index-anchor` 上报完成（见第 55 行），因此本组件已无缺口。自定义内容与样式有真机断言。 |
+| 57 | 列表与索引 | `u-index-list` | `UPIndexList` / `UPIndexListProps` | 基本完成 | 高（Props） | 右侧索引条本轮从「可点击的一列文字」升级为完整交互：`indexList` 为空时按上游 `uIndexList()` 生成 A–Z 兜底（此前会整条不渲染）；整条索引条是**一个手势目标**而非 26 个按钮，按 `getIndexListLetter(pageY)` 换算触点落在哪个字母、两端越界各自钳到首/末字母、`setValueForTouch` 的同字母去抖照样生效；选中即按 `u-index-item-${charCodeAt(0)}` 找到对应锚点并滚动过去；`.u-index-list__indicator` 的 50×50 旋转气泡在按住期间放大显示当前字母、松手后按上游 `sleep(300)` 延时隐藏；激活字母按 `--active` 填 `activeColor` 圆片 + 白字。`activeColor`/`inactiveColor`/`itemMargin`/`customNavHeight`/`safeBottomFix`/`sticky` 全部生效。换算部分有 6 项单测逐条对照，交互有真机断言。 |
 | 58 | 键盘与输入 | `u-input` | `UPInput` / `UPInputProps` | 基本完成 | 高（Props） | `modelValue/value`、清除、密码、前后缀和常用样式已有测试；`selectionStart`/`selectionEnd`/`cursor` 已通过 `TextFieldValue` 生效（聚焦时应用、越界自动钳制）。降级：`adjustPosition`、`autoBlur`、`cursorSpacing`、`fixed`、`holdKeyboard`、`disableDefaultPadding`、`ignoreCompositionEvent`、`placeholderClass` 为 uni-app/小程序专有，保留字段但不生效。 |
 | 59 | 键盘与输入 | `u-keyboard` | — | 未开始 | 暂无 | 数字/自定义键盘容器待实现。 |
 | 60 | 媒体与内容 | `u-lazy-load` | — | 未开始 | 暂无 | 图片懒加载容器，待结合 Compose lazy layout。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 74 |
-| 基础可用 | 16 |
+| 基本完成 | 77 |
+| 基础可用 | 13 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 274 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 278 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 16 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-index-list`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 13 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-back-top`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,12 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **274 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **278 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-index-list` 的索引条交互新增 5 项、移除 1 项过时用例（`UPIndexScrollBehaviorTest` 6→10 项），
+覆盖空 `indexList` 生成 A–Z 兜底、拖动索引条依序走过每个字母且去抖后各报一次、
+放大气泡在按住时出现并在松手 300ms 后消失、`sticky` 两态各自的锚点标记、
+独立使用的锚点默认按吸顶态渲染。再往前一批为
 `u-alert` 的过渡与 `u-collapse` 的分隔线新增 3 项回归（并入 `UPInertFieldBehaviorTest`），
 覆盖 `transitionMode="slide-up"` 真实上滑、关闭后面板留在树内播完离场动画才移除、
 `border` 在展开 + 收起两项时生成四条 hairline 而 `border=false` 时一条都没有。再往前一批为
@@ -357,7 +361,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 16 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 13 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -491,7 +495,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：90 个 Props 类中有 **0 个字段无人读取**，另有 85 个已记录为按设计不生效
+当前状态：90 个 Props 类中有 **0 个字段无人读取**，另有 84 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义、内联渲染没有窗口级遮罩可作用的字段，
 以及上游自己也从不读取的字段，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
@@ -555,7 +559,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 16 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 13 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

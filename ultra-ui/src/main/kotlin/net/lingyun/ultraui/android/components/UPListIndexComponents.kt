@@ -1,6 +1,7 @@
 package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,11 +28,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextStyle
@@ -45,6 +49,8 @@ import net.lingyun.ultraui.android.core.upBooleanOrDefault
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upTestTag
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -207,49 +213,158 @@ public fun UPListItem(props: UPListItemProps = UPListItemProps(), modifier: Modi
     ) { content() }
 }
 
+/**
+ * Lets a `UPIndexAnchor` publish its own offset so the list can scroll to it, and lets the
+ * list tell every anchor whether `sticky` is on. uview does the same through
+ * `indexList.anchors.push(this)` plus a `$uGetRect` per anchor.
+ */
+@Immutable
+internal class UPIndexListScope(
+    val sticky: Boolean,
+    private val onAnchorPositioned: (String, Int) -> Unit,
+) {
+    fun publish(anchorId: String, top: Int) = onAnchorPositioned(anchorId, top)
+}
+
+internal val LocalUPIndexList = staticCompositionLocalOf<UPIndexListScope?> { null }
+
+/** Root-space top of the scrolling body, so anchors can convert their own position. */
+private val LocalUPIndexListBodyTop = staticCompositionLocalOf { 0 }
+
+/**
+ * `u-index-list`. The rail down the right edge is draggable like upstream: a touch picks
+ * the letter under it, both ends clamp, an unchanged letter is debounced away, and the
+ * matching anchor scrolls into view. `sticky` reaches the anchors through the context.
+ */
 @Composable
 public fun UPIndexList(
     props: UPIndexListProps = UPIndexListProps(),
     modifier: Modifier = Modifier,
     activeIndex: Int = -1,
     onIndexClick: ((UPRawValue, Int) -> Unit)? = null,
+    onSelect: ((UPRawValue) -> Unit)? = null,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
     content: @Composable () -> Unit,
 ) {
-    // uview draws a tappable index rail down the right edge from `indexList`; with no
-    // characters there is nothing to anchor, so the rail is omitted entirely.
+    // `uIndexList()` falls back to a generated A-Z rail when `indexList` is empty.
+    val entries = remember(props.indexList) { upIndexListEntries(props.indexList) }
     val itemMargin = upRawDp(props.itemMargin, 0.dp).coerceAtLeast(0.dp)
+    // A caller-supplied `activeIndex` stays authoritative; dragging owns it otherwise.
+    var draggedIndex by remember { mutableStateOf(-1) }
+    val selectedIndex = if (activeIndex >= 0) activeIndex else draggedIndex
+    var touching by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val anchorOffsets = remember { mutableMapOf<String, Int>() }
+    val coroutineScope = rememberCoroutineScope()
+    var railTop by remember { mutableStateOf(0f) }
+    var railHeight by remember { mutableStateOf(0f) }
+    var bodyTop by remember { mutableStateOf(0) }
+    val listScope = remember(props.sticky) {
+        UPIndexListScope(props.sticky) { anchorId, top -> anchorOffsets[anchorId] = top }
+    }
+
+    fun selectIndex(next: Int) {
+        if (!upIndexListShouldEmit(selectedIndex, next)) return
+        draggedIndex = next
+        val entry = entries.getOrNull(next) ?: return
+        onSelect?.invoke(entry)
+        onIndexClick?.invoke(entry, next)
+        // `scrollIntoView = `u-index-item-${charCodeAt(0)}``.
+        val offset = upIndexListAnchorId(entry)?.let { anchorOffsets[it] } ?: return
+        coroutineScope.launch { scrollState.animateScrollTo(offset) }
+    }
+
     Box(
         modifier.fillMaxWidth()
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPIndexList"))
             .upTestTag("index-list"),
     ) {
-        Column(Modifier.fillMaxWidth()) { content() }
-        if (props.indexList.isNotEmpty()) {
-            Column(
-                Modifier.align(Alignment.CenterEnd)
-                    // `customNavHeight` shifts the rail clear of a custom navbar, and
-                    // `safeBottomFix` keeps its tail above the bottom safe area.
-                    .padding(top = upRawDp(props.customNavHeight, 0.dp).coerceAtLeast(0.dp), end = 4.dp)
-                    .then(if (props.safeBottomFix) Modifier.navigationBarsPadding() else Modifier)
-                    .upTestTag("index-list-rail"),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(itemMargin),
-            ) {
-                props.indexList.forEachIndexed { index, entry ->
-                    val color = UPColor.parse(
-                        if (index == activeIndex) props.activeColor else props.inactiveColor,
-                        if (index == activeIndex) UPTheme.Primary else UPTheme.Content,
-                    )
-                    BasicText(
-                        entry.toString(),
-                        modifier = Modifier
-                            .upClickable(onClick = { onIndexClick?.invoke(entry, index) })
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                            .upTestTag("index-list-entry-$index"),
-                        style = TextStyle(color = color, fontSize = 12.sp),
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .onGloballyPositioned { bodyTop = it.positionInRoot().y.roundToInt() },
+        ) {
+            CompositionLocalProvider(
+                LocalUPIndexList provides listScope,
+                LocalUPIndexListBodyTop provides bodyTop,
+            ) { content() }
+        }
+        Column(
+            Modifier.align(Alignment.CenterEnd)
+                // `customNavHeight` shifts the rail clear of a custom navbar, and
+                // `safeBottomFix` keeps its tail above the bottom safe area.
+                .padding(top = upRawDp(props.customNavHeight, 0.dp).coerceAtLeast(0.dp), end = 4.dp)
+                .then(if (props.safeBottomFix) Modifier.navigationBarsPadding() else Modifier)
+                .onGloballyPositioned { coordinates ->
+                    railTop = coordinates.positionInRoot().y
+                    railHeight = coordinates.size.height.toFloat()
+                }
+                // `@touchstart/@touchmove/@touchend` on `.u-index-list__letter`: the whole
+                // rail is one gesture target, not 26 buttons.
+                .pointerInput(entries.size, railTop, railHeight) {
+                    detectVerticalDragGestures(
+                        onDragStart = { offset ->
+                            touching = true
+                            selectIndex(upIndexListLetterAt(railTop + offset.y, railTop, railHeight, entries.size))
+                        },
+                        onDragEnd = {
+                            coroutineScope.launch {
+                                delay(UPIndexListIndicatorHideDelayMillis)
+                                touching = false
+                            }
+                        },
+                        onDragCancel = { touching = false },
+                        onVerticalDrag = { change, _ ->
+                            touching = true
+                            selectIndex(upIndexListLetterAt(change.position.y + railTop, railTop, railHeight, entries.size))
+                        },
                     )
                 }
+                .upTestTag("index-list-rail"),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(itemMargin),
+        ) {
+            entries.forEachIndexed { index, entry ->
+                val active = index == selectedIndex
+                // `.u-index-list__letter__item--active` fills the disc with `activeColor`
+                // and prints the letter in white; inactive letters have no fill at all.
+                val activeFill = UPColor.parse(props.activeColor, UPTheme.Primary)
+                Box(
+                    Modifier
+                        .size(16.dp)
+                        .background(if (active) activeFill else Color.Transparent, RoundedCornerShape(50))
+                        .upClickable(onClick = { selectIndex(index) })
+                        .upTestTag("index-list-entry-$index"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        upIndexListEntryLabel(entry),
+                        style = TextStyle(
+                            color = if (active) Color.White else UPColor.parse(props.inactiveColor, UPTheme.Content),
+                            fontSize = 12.sp,
+                            lineHeight = 12.sp,
+                        ),
+                    )
+                }
+            }
+        }
+        // `.u-index-list__indicator`: a 50x50 rotated bubble that magnifies the letter
+        // under the finger, and lingers 300ms after release.
+        if (touching && selectedIndex >= 0) {
+            Box(
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 50.dp)
+                    .size(50.dp)
+                    .background(UPTheme.Content, RoundedCornerShape(topStartPercent = 50, topEndPercent = 50, bottomEndPercent = 0, bottomStartPercent = 50))
+                    .upTestTag("index-list-indicator"),
+                contentAlignment = Alignment.Center,
+            ) {
+                BasicText(
+                    upIndexListEntryLabel(entries[selectedIndex]),
+                    style = TextStyle(color = Color.White, fontSize = 28.sp, lineHeight = 28.sp),
+                )
             }
         }
     }
@@ -260,11 +375,41 @@ public fun UPIndexItem(props: UPIndexItemProps = UPIndexItemProps(), modifier: M
     Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, UPCompatibilityDiagnostics.None, "UPIndexItem")).upTestTag("index-item")) { content() }
 }
 
+/**
+ * `u-index-anchor`. `position: sticky` is what `sticky` on the parent switches, and the
+ * anchor also reports its own offset so a rail drag can scroll to it.
+ */
 @Composable
 public fun UPIndexAnchor(props: UPIndexAnchorProps = UPIndexAnchorProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     val label = actionOrOptionText(props.text, "name", props.text.upStringValueOrEmpty())
-    Box(modifier.fillMaxWidth().height(net.lingyun.ultraui.android.core.upDimension(props.height, 32.dp)).background(UPColor.parse(props.bgColor, Color(0xFFF1F1F1))).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPIndexAnchor")).padding(horizontal = 16.dp).upTestTag("index-anchor"), contentAlignment = Alignment.CenterStart) {
-        BasicText(label, style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.size, 14.dp).value.sp))
+    val list = LocalUPIndexList.current
+    val bodyTop = LocalUPIndexListBodyTop.current
+    val anchorId = remember(props.text) { upIndexListAnchorId(props.text) }
+    Box(
+        modifier.fillMaxWidth()
+            .then(
+                if (list == null || anchorId == null) {
+                    Modifier
+                } else {
+                    Modifier.onGloballyPositioned { coordinates ->
+                        list.publish(anchorId, (coordinates.positionInRoot().y.roundToInt() - bodyTop).coerceAtLeast(0))
+                    }
+                },
+            )
+            .height(net.lingyun.ultraui.android.core.upDimension(props.height, 32.dp))
+            .background(UPColor.parse(props.bgColor, Color(0xFFF1F1F1)))
+            .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPIndexAnchor"))
+            .padding(horizontal = 16.dp)
+            .upTestTag("index-anchor"),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        // `:class="{ 'u-index-anchor--sticky': parentSticky }"`, where `parentSticky` is
+        // `indexList ? indexList.sticky : true`. Compose has no CSS sticky, so the marker
+        // records which mode is in force and the host pins the anchor with its own
+        // sticky-header API; the tag is what makes the switch observable either way.
+        Box(Modifier.upTestTag(if (list?.sticky != false) "index-anchor-sticky" else "index-anchor-static")) {
+            BasicText(label, style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.size, 14.dp).value.sp))
+        }
     }
 }
 
