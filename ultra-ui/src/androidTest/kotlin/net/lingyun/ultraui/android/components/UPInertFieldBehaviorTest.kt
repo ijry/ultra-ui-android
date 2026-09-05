@@ -359,6 +359,60 @@ class UPInertFieldBehaviorTest {
     }
 
     @Test
+    fun cardEmitsAPerRegionClickAllCarryingItsIndex() {
+        val order = mutableListOf<String>()
+        composeRule.setContent {
+            UPCard(
+                props = UPCardProps(title = "订单", index = 7),
+                onClick = { order += "click:$it" },
+                onHeadClick = { order += "head:$it" },
+                onBodyClick = { order += "body:$it" },
+                onFootClick = { order += "foot:$it" },
+                foot = { BasicText("底部") },
+            ) { BasicText("正文") }
+        }
+
+        composeRule.onNodeWithTag("up-card-head").performClick()
+        composeRule.onNodeWithTag("up-card-body").performClick()
+        composeRule.onNodeWithTag("up-card-foot").performClick()
+        composeRule.runOnIdle {
+            assertEquals(listOf("head:7", "body:7", "foot:7"), order)
+        }
+    }
+
+    @Test
+    fun cardHeadAndFootExistOnTheirFlagsAlone() {
+        composeRule.setContent {
+            UPCard(props = UPCardProps(showHead = true, showFoot = true)) { BasicText("正文") }
+        }
+        // `v-if="showHead"` / `v-if="showFoot"` do not consult the slots.
+        node("up-card-head").assertExists()
+        node("up-card-foot").assertExists()
+
+        composeRule.setContent {
+            UPCard(props = UPCardProps(showHead = false, showFoot = false, title = "订单")) { BasicText("正文") }
+        }
+        node("up-card-head").assertDoesNotExist()
+        node("up-card-foot").assertDoesNotExist()
+    }
+
+    @Test
+    fun anEmptyCardFooterTakesNoPadding() {
+        composeRule.setContent {
+            UPCard(props = UPCardProps(showFoot = true, paddingFoot = 30)) { BasicText("正文") }
+        }
+        val empty = node("up-card-foot").getUnclippedBoundsInRoot().let { it.bottom - it.top }
+
+        composeRule.setContent {
+            UPCard(props = UPCardProps(showFoot = true, paddingFoot = 30), foot = { BasicText("底部") }) { BasicText("正文") }
+        }
+        val filled = node("up-card-foot").getUnclippedBoundsInRoot().let { it.bottom - it.top }
+        // `$slots.foot ? addUnit(paddingFoot || padding) : 0`.
+        assertEquals(0f, empty.value, 0.5f)
+        assertTrue("a filled footer should claim its padding, got $filled", filled.value >= 60f)
+    }
+
+    @Test
     fun theSelectTriggerKeepsItsChevronAndOptionsRemainTappable() {
         var selected: UPRawValue = null
         composeRule.setContent {

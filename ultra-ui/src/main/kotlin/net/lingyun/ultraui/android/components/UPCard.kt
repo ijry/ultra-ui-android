@@ -15,10 +15,13 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
@@ -42,6 +45,10 @@ public fun UPCard(
     props: UPCardProps = UPCardProps(),
     modifier: Modifier = Modifier,
     onClick: ((UPRawValue) -> Unit)? = null,
+    /** `head-click` / `body-click` / `foot-click`; each carries `index`, like `click`. */
+    onHeadClick: ((UPRawValue) -> Unit)? = null,
+    onBodyClick: ((UPRawValue) -> Unit)? = null,
+    onFootClick: ((UPRawValue) -> Unit)? = null,
     head: (@Composable () -> Unit)? = null,
     foot: (@Composable () -> Unit)? = null,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
@@ -86,13 +93,17 @@ public fun UPCard(
             .then(clickModifier)
             .upTestTag("card"),
     ) {
-        if (props.showHead && (head != null || props.title.isNotEmpty() || props.subTitle.isNotEmpty() || props.thumb.isNotEmpty())) {
+        // `v-if="showHead"` alone: the header exists whenever the flag is set, even with
+        // nothing in it, and `.u-border-bottom` is a single hairline rather than a box.
+        if (props.showHead) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (props.headBorderBottom) Modifier.border(0.5.dp, UPTheme.Border) else Modifier)
+                    .then(if (props.headBorderBottom) Modifier.upCardHairline(top = false) else Modifier)
                     .applyUPResolvedStyle(headStyle)
-                    .padding(horizontal = headerPadding, vertical = headerPadding),
+                    .then(if (onHeadClick == null) Modifier else Modifier.upClickable(onClick = { onHeadClick(props.index) }))
+                    .padding(horizontal = headerPadding, vertical = headerPadding)
+                    .upTestTag("card-head"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -111,16 +122,27 @@ public fun UPCard(
                             diagnostics = diagnostics,
                         )
                     }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    // `.u-flex-between` splits the row: title on the left, subtitle right.
+                    Box(modifier = Modifier.weight(1f)) {
                         if (props.title.isNotEmpty()) {
                             BasicText(
                                 props.title,
+                                // `.u-line-1`: `white-space: nowrap` + `text-overflow: ellipsis`.
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.upTestTag("card-title"),
                                 style = TextStyle(color = titleColor, fontSize = titleSize, fontWeight = FontWeight.Medium),
                             )
                         }
                     }
                     if (props.subTitle.isNotEmpty()) {
-                        BasicText(props.subTitle, style = TextStyle(color = subTitleColor, fontSize = subTitleSize))
+                        BasicText(
+                            props.subTitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.upTestTag("card-subtitle"),
+                            style = TextStyle(color = subTitleColor, fontSize = subTitleSize),
+                        )
                     }
                 }
             }
@@ -130,21 +152,27 @@ public fun UPCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .applyUPResolvedStyle(bodyStyle)
-                .padding(horizontal = bodyPadding, vertical = bodyPadding),
+                .then(if (onBodyClick == null) Modifier else Modifier.upClickable(onClick = { onBodyClick(props.index) }))
+                .padding(horizontal = bodyPadding, vertical = bodyPadding)
+                .upTestTag("card-body"),
         ) {
             Column(content = content)
         }
 
-        if (props.showFoot && foot != null) {
+        // `:style="[{padding: $slots.foot ? addUnit(paddingFoot || padding) : 0}]"`: the
+        // footer is present whenever `showFoot` is set, but an empty one takes no padding.
+        if (props.showFoot) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (props.footBorderTop) Modifier.border(0.5.dp, UPTheme.Border) else Modifier)
+                    .then(if (props.footBorderTop) Modifier.upCardHairline(top = true) else Modifier)
                     .applyUPResolvedStyle(footStyle)
-                    .padding(horizontal = footerPadding, vertical = footerPadding),
+                    .then(if (onFootClick == null) Modifier else Modifier.upClickable(onClick = { onFootClick(props.index) }))
+                    .then(if (foot == null) Modifier else Modifier.padding(horizontal = footerPadding, vertical = footerPadding))
+                    .upTestTag("card-foot"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                foot()
+                foot?.invoke()
             }
         }
     }
@@ -168,4 +196,11 @@ public fun UPCard(
         diagnostics = diagnostics,
         content = content,
     )
+}
+
+/** `.u-border-top` / `.u-border-bottom`: one 0.5px hairline, not a box outline. */
+private fun Modifier.upCardHairline(top: Boolean): Modifier = drawBehind {
+    val stroke = 0.5.dp.toPx()
+    val y = if (top) stroke / 2f else size.height - stroke / 2f
+    drawLine(UPTheme.Border, Offset(0f, y), Offset(size.width, y), strokeWidth = stroke)
 }
