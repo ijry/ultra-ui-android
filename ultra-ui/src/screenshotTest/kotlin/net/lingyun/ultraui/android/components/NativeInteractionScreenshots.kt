@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
@@ -44,8 +45,13 @@ public fun UPNativeAlertNotifyBackTopScreenshot(): Unit = NativeInteractionSurfa
         UPNotify(
             props = UPNotifyProps(message = "保存成功", duration = -1),
         )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            UPBackTop(props = UPBackTopProps(scrollTop = 800, text = "顶部"))
+        // `u-back-top` is `position: fixed` upstream; on Android the host anchors it and
+        // `bottom`/`right` become an inward offset from that corner.
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.fillMaxWidth().height(120.dp),
+            contentAlignment = Alignment.BottomEnd,
+        ) {
+            UPBackTop(props = UPBackTopProps(scrollTop = 800, text = "顶部", bottom = 8, right = 8))
         }
     }
 }

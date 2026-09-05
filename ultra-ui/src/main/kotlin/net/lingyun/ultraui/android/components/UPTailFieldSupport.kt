@@ -16,6 +16,15 @@ import kotlin.math.pow
 internal fun upBackTopScrollDurationMillis(duration: UPRawValue): Int =
     duration.upIntOrDefault(100).coerceAtLeast(0)
 
+/** `show() { return getPx(scrollTop) > getPx(top) }` — strictly greater, so `top` itself hides it. */
+internal fun upBackTopVisible(scrollTopPx: Float, topPx: Float): Boolean = scrollTopPx > topPx
+
+/** `.u-back-top { background-color: #E1E1E1 }`. */
+internal const val UPBackTopBackground: Long = 0xFFE1E1E1
+
+/** `backTopStyle`: a fixed 40x40 square, positioned by `bottom` / `right`. */
+internal const val UPBackTopSizeDp: Float = 40f
+
 /**
  * `easingFn(t, b, c, d) = (c * (-2^(-10t/d) + 1) * 1024) / 1023 + b` — upstream's
  * ease-out-expo. Returns the eased value at elapsed time [progress] of [duration].

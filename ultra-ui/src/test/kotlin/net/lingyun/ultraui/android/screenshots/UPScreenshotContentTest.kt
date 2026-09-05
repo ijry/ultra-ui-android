@@ -597,6 +597,18 @@ class UPScreenshotContentTest {
         val available = reference.width - 2 * PREVIEW_PADDING_PX
         val alertRun = requireNotNull(reference.widestRunInRow("fdf6ec", alert.midpoint()))
         assertRatio("alert width", alertRun.last - alertRun.first + 1, available, 1.0, tolerance = 0.05)
+
+        // `u-back-top` paints `.u-back-top`'s own #E1E1E1 — white would be invisible on a
+        // white page, which is what it used before — in a fixed 40x40 square.
+        val button = reference.rowBandsOf("e1e1e1").single()
+        val density = reference.densityFor(widthDp = 360)
+        assertRatio("back-top height", button.last - button.first + 1, (40 * density).toInt(), 1.0, tolerance = 0.05)
+        val buttonRun = requireNotNull(reference.widestRunInRow("e1e1e1", button.midpoint()))
+        assertRatio("back-top width", buttonRun.last - buttonRun.first + 1, (40 * density).toInt(), 1.0, tolerance = 0.05)
+        // `right = 8` insets it from its *anchor's* right edge, which in this preview is the
+        // 16dp-padded column — so the gap to the image edge is that padding plus the inset.
+        val insetFromAnchor = reference.width - PREVIEW_PADDING_PX - buttonRun.last - 1
+        assertRatio("back-top right inset", insetFromAnchor, (8 * density).toInt(), 1.0, tolerance = 0.1)
     }
 
     @Test

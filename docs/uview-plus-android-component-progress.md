@@ -40,7 +40,7 @@
 | 5 | 原生交互 | `u-alert` | `UPAlert` / `UPAlertProps` | 基本完成 | 高（Props） | 类型/主题/图标/关闭按钮与 `duration` 自动关闭之外，`transitionMode` 不再只做校验：按 `u-transition` 的十一种模式表真正驱动入场与离场（`fade*` 系插值不透明度、`zoom`/`fade-zoom` 取 `scale(0.95)`、`slide-*` 与 `fade-*` 按 `translate3d` 的整屏偏移起步），关闭时面板留在树内播完离场动画才移除，因而 `close` 先于 `closed`。均有真机断言，模式表有单测逐条对照。刻意差异：上游 `u-transition` 的 watcher 是 `immediate: true`，挂载即可见的横幅也会淡入；Android 侧首帧直接给稳定态，只有后续 `show` 切换才播动画——否则截图参考图（捕获第 0 帧）会变成全白，反而毁掉「类型配色确实被绘制」的像素证据。 |
 | 6 | 媒体与内容 | `u-avatar` | `UPAvatar` / `UPAvatarProps` | 基本完成 | 高（Props） | 图片、文字、图标和形状已有 Compose 实现与测试。降级：`randomBgColor` 未随机取色，`colorIndex` 缺省固定取第 0 号色（上游 `''` 表示随机），以保证截图可复现。 |
 | 7 | 媒体与内容 | `u-avatar-group` | `UPAvatarGroup` / `UPAvatarGroupProps` | 基本完成 | 高（Props） | 头像组基础布局已实现；溢出和间距视觉仍需上游对照。 |
-| 8 | 原生交互 | `u-back-top` | `UPBackTop` / `UPBackTopProps` | 基础可用 | 高（Props） | 返回顶部基础行为；`duration` 按上游 `uni.pageScrollTo` 的时长语义解析后随新增的 `onScrollToTop(durationMillis)` 回调交给宿主，有真机断言。父级滚动容器绑定仍需标准化——上游由 `uni` 全局 API 滚动页面，Android 的滚动容器归宿主所有。 |
+| 8 | 原生交互 | `u-back-top` | `UPBackTop` / `UPBackTopProps` | 基本完成 | 高（Props） | 新增可选的 `scrollState` 参数后**不再需要宿主代劳**：传入宿主的 `ScrollState`，组件自己读偏移判显隐（`getPx(scrollTop) > getPx(top)`，相等仍隐藏）、自己执行 `animateScrollTo(0, tween(duration))`——即上游的 `uni.pageScrollTo`；不传则保留 `scrollTop` + `onScrollToTop(durationMillis)` 的旧路径，供滚动容器不是 Compose `ScrollState` 的宿主使用。同时修正三处偏离：底色改用 `.u-back-top` 自己的 `#E1E1E1`（此前是白色，在白底页面上完全看不见）、按钮固定 40×40 且文字按 `.u-back-top__tips` 12px + `scale(0.8)` 排在图标**下方**（此前是横向排列且尺寸随内容变化）、`bottom`/`right` 改为从宿主锚点向内的偏移（此前当成自身内边距，把按钮撑到 140dp 并被裁剪——`position: fixed` 的偏移不参与布局）。另按 `<u-transition mode="fade">` 淡入淡出，离场动画播完才移出树。有 6 项真机断言与像素级断言。 |
 | 9 | 基础展示 | `u-badge` | `UPBadge` / `UPBadgeProps` | 基本完成 | 高（Props） | 类型、颜色、徽标位置和最大值已有实现；`offset` 在 `absolute=true` 时按 `[top, right]` 内推徽标（只给一个值时两边同用），有真机断言。 |
 | 10 | 原生能力 | `u-barcode` | — | 未开始 | 暂无 | 条形码生成，待接入 Android 原生/成熟编码库。 |
 | 11 | 布局 | `u-box` | — | 未开始 | 暂无 | 通用容器目录，待确认上游公开 Props 后实现。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 86 |
-| 基础可用 | 4 |
+| 基本完成 | 87 |
+| 基础可用 | 3 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 313 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 319 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 4 行**：这些行的未读字段已为 0，剩下的差距只有一类真正外生：`u-back-top` 需要滚动**别人**的容器，滚动状态归宿主。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 3 行**：这些行的未读字段已为 0，**已经没有一类差距是真正外生的**：`u-back-top` 曾被记为「滚动容器归宿主」，但只要宿主把自己的 `ScrollState` 传进来，组件就能自读偏移、自行滚动——这是一个参数的事。剩下 3 行都是上游 props 契约本就近乎为空的容器（`u-safe-bottom`、`u-status-bar`、`u-tabs-item`），它们没有可复刻的字段，升级与否只是标注口径问题。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）、`u-back-top`（缺一个 `scrollState` 参数）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,11 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **313 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **319 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-back-top` 新增 6 项回归（`UPBackTopBehaviorTest`），覆盖固定 40×40 尺寸、`scrollState`
+同时驱动显隐与点击后的滚动、不传时时长随回调、离场动画播完才移出树、阈值是严格大于、
+`bottom`/`right` 只偏移不撑大。再往前一批为
 `u-action-sheet` 新增 7 项回归（`UPActionSheetBehaviorTest`），覆盖 header 关闭按钮走
 `cancel`、无标题则整个 header 不存在、分隔线数量随 `description` 变化、`loading` 项显示
 spinner 且不可选、`closeOnClickOverlay=false` 时遮罩不关而取消按钮关、自定义内容整体替换
@@ -382,7 +385,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 4 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 3 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -580,7 +583,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 4 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 3 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进
