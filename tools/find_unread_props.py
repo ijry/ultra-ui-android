@@ -86,16 +86,6 @@ KNOWN_INERT: dict[str, str] = {
     # Android side reports it via onUpdateScrolling; consuming it as an input would mean
     # driving the host's scroll container, which belongs to the host.
     "SwipeActionItem.scrolling": "outbound v-model flag; reported via onUpdateScrolling",
-    # tooltip/popover render inline next to their trigger rather than in a window-level
-    # overlay, so there is no stacking context to apply these to. Lifting them into a
-    # real overlay is tracked as the window-level popup gap, not a per-field fix.
-    "Tooltip.zIndex": "inline render; no window-level overlay to stack in",
-    "Tooltip.overlay": "inline render; no window-level overlay to stack in",
-    "Tooltip.singleton": "needs a window-level popup registry",
-    "Tooltip.showToast": "copy feedback toast is the host app's call",
-    "Tooltip.forcePosition": "absolute repositioning needs a window-level overlay",
-    "Popover.zIndex": "inline render; no window-level overlay to stack in",
-    "Popover.forcePosition": "absolute repositioning needs a window-level overlay",
     # `menu` has no counterpart in upstream u-dropdown/props.js; it is an Android-only
     # alias kept so older generated templates keep compiling.
     "Dropdown.menu": "Android-only compatibility alias; no upstream field",
@@ -129,19 +119,21 @@ KNOWN_INERT: dict[str, str] = {
     # in its doc comment.
     "DropdownItem.closeOnClickOverlay": "upstream u-dropdown-item.vue never reads it; the parent's closeOnClickMask closes the menu",
     "FormItem.rightIcon": "upstream u-form-item.vue declares it but never renders it",
-    # These sheets render inline in the Android port, so there is no full-screen scrim to
-    # tint, size or dismiss. Lifting them into a real window-level overlay is tracked as
-    # the window-level popup gap, not a per-field fix.
-    "Picker.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
-    "Picker.overlayOpacity": "inline render; no window-level overlay to tint",
-    "DatetimePicker.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
-    "Calendar.closeOnClickOverlay": "inline render; no window-level overlay to dismiss",
-    "Calendar.overlay": "inline render; no window-level overlay to show",
-    "Calendar.overlayOpacity": "inline render; no window-level overlay to tint",
-    "Calendar.overlayStyle": "inline render; no window-level overlay to style",
-    "Select.overlay": "inline render; no window-level overlay to show",
-    "Select.overlayOpacity": "inline render; no window-level overlay to tint",
-    "Select.overlayStyle": "inline render; no window-level overlay to style",
+    # These sheets still render inline, so there is no full-screen scrim to tint, size or
+    # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
+    # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is
+    # available. Lifting each sheet into it is a per-component change, not a per-field one,
+    # so the fields stay registered here until their sheet moves.
+    "Picker.closeOnClickOverlay": "still inline; no scrim to dismiss until the sheet moves into a Popup",
+    "Picker.overlayOpacity": "still inline; no scrim to tint until the sheet moves into a Popup",
+    "DatetimePicker.closeOnClickOverlay": "still inline; no scrim to dismiss until the sheet moves into a Popup",
+    "Calendar.closeOnClickOverlay": "still inline; no scrim to dismiss until the sheet moves into a Popup",
+    "Calendar.overlay": "still inline; no scrim to show until the sheet moves into a Popup",
+    "Calendar.overlayOpacity": "still inline; no scrim to tint until the sheet moves into a Popup",
+    "Calendar.overlayStyle": "still inline; no scrim to style until the sheet moves into a Popup",
+    "Select.overlay": "still inline; no scrim to show until the panel moves into a Popup",
+    "Select.overlayOpacity": "still inline; no scrim to tint until the panel moves into a Popup",
+    "Select.overlayStyle": "still inline; no scrim to style until the panel moves into a Popup",
     # Declared in u-datetime-picker/props.js but never used by the component: the template
     # forwards its own `innerDefaultIndex` (computed from the value) rather than the prop,
     # and `loading` appears only in the doc comment — it is never handed to `<u-picker>`.

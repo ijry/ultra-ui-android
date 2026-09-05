@@ -40,8 +40,6 @@ class UPBatch9BBehaviorTest {
         composeRule.onNodeWithTag("up-popover").assertExists()
         composeRule.onNodeWithTag("up-tooltip").assertExists()
         composeRule.onNodeWithTag("up-select").assertExists()
-        composeRule.onNodeWithText("打开").performClick()
-        composeRule.onNodeWithText("提示").performClick()
         composeRule.onNodeWithTag("up-select-trigger").performClick()
         composeRule.onNodeWithText("北京").performClick()
         composeRule.runOnIdle { assertEquals(1, selected) }

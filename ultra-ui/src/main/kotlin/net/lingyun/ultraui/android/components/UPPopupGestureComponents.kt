@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -26,75 +29,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 import androidx.compose.foundation.combinedClickable
 
-@Composable
-public fun UPPopover(props: UPPopoverProps = UPPopoverProps(), modifier: Modifier = Modifier, onUpdateShow: ((Boolean) -> Unit)? = null, onOpen: (() -> Unit)? = null, onClose: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: (@Composable () -> Unit)? = null) {
-    // uview: triggerMode is hover/click/manual (default click). `u-popover` forwards both
-    // `direction` and `placement` to its inner tooltip; `direction` is the field that
-    // picks the side, and `placement` only matters once it is left blank.
-    val trigger = upSafeEnum(props.triggerMode, setOf("hover", "click", "manual"), "click", diagnostics, "UPPopover", "triggerMode")
-    val sides = setOf("top", "bottom", "left", "right")
-    val requestedSide = props.direction.ifBlank { props.placement }
-    val placement = upSafeEnum(requestedSide, sides, "top", diagnostics, "UPPopover", "direction")
-    var visible by remember { mutableStateOf(props.show) }
-    LaunchedEffect(props.show) { visible = props.show }
-    val trigger0 = content ?: { BasicText(props.text.toString()) }
-
-    fun toggle(next: Boolean) {
-        if (visible == next) return
-        visible = next
-        onUpdateShow?.invoke(next)
-        if (next) onOpen?.invoke() else onClose?.invoke()
-    }
-
-    val panel: @Composable () -> Unit = {
-        Box(
-            Modifier.background(UPColor.parse(props.popupBgColor.ifEmpty { props.bgColor }, Color(0xFFF7F7F7)), RoundedCornerShape(4.dp))
-                .padding(10.dp)
-                .upTestTag("popover-content"),
-        ) { BasicText(props.text.toString(), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Main))) }
-    }
-    val triggerBox: @Composable () -> Unit = {
-        Box(
-            Modifier.upTestTag("popover-trigger").then(
-                when (trigger) {
-                    "click" -> Modifier.upClickable(onClick = { toggle(!visible) })
-                    // Android has no hover, so uview's hover maps onto long-press.
-                    "hover" -> Modifier.combinedClickable(onClick = {}, onLongClick = { toggle(true) })
-                    else -> Modifier
-                },
-            ),
-        ) { trigger0() }
-    }
-
-    val root = modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPPopover")).upTestTag("popover")
-    if (placement == "left" || placement == "right") {
-        Row(root, verticalAlignment = Alignment.CenterVertically) {
-            if (visible && placement == "left") panel()
-            triggerBox()
-            if (visible && placement == "right") panel()
-        }
-    } else {
-        Column(root) {
-            if (visible && placement == "top") panel()
-            triggerBox()
-            if (visible && placement == "bottom") panel()
-        }
-    }
+/**
+ * Positions a popup at the window origin so its content can span the whole window. The
+ * bubble is then placed inside that window by [upTooltipBubbleLeftPx] and friends, which
+ * is what lets `zIndex` mean something: the transparent scrim and the bubble live in the
+ * same layer, exactly as upstream's `u-overlay` (10070) and bubble (10071) do.
+ */
+private object UPWindowOriginPositionProvider : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset.Zero
 }
 
 @Composable
@@ -106,64 +83,265 @@ public fun UPTooltip(
     onClose: (() -> Unit)? = null,
     onCopy: ((UPRawValue) -> Unit)? = null,
     onButtonClick: ((UPRawValue, Int) -> Unit)? = null,
+    /** `click` carries the button index, with the copy action occupying slot 0. */
+    onIndexClick: ((Int) -> Unit)? = null,
+    /** `showToast && toast('复制成功' | '复制失败')`; the clipboard itself is the host's. */
+    onToast: ((String) -> Unit)? = null,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
     content: (@Composable () -> Unit)? = null,
 ) {
     val trigger = upSafeEnum(props.triggerMode, setOf("longpress", "click", "manual"), "longpress", diagnostics, "UPTooltip", "triggerMode")
-    val direction = upSafeEnum(props.direction, setOf("top", "bottom"), "top", diagnostics, "UPTooltip", "direction")
+    // `getTooltipStyle()` handles four sides, even though the doc comment only lists two.
+    val direction = upSafeEnum(props.direction, setOf("top", "bottom", "left", "right"), "top", diagnostics, "UPTooltip", "direction")
     var visible by remember { mutableStateOf(props.show) }
     // In manual mode `show` is the only way in or out; gestures are inert.
     LaunchedEffect(props.show) { visible = props.show }
 
-    fun toggle(next: Boolean) {
-        if (visible == next) return
-        visible = next
-        onUpdateShow?.invoke(next)
-        if (next) onOpen?.invoke() else onClose?.invoke()
+    // `let activeSingletonTooltip = null` sits at module scope upstream, so the registry has
+    // to outlive any single composition. `handle` is this instance's stand-in for `this`:
+    // the registry holds it, and closing it flips *that* instance's own state.
+    val handle = remember { UPTooltipSingletonHandle() }
+    var closedBySingleton by remember { mutableStateOf(false) }
+
+    fun close() {
+        UPTooltipSingletonRegistry.release(handle)
+        if (!visible) return
+        visible = false
+        onUpdateShow?.invoke(false)
+        onClose?.invoke()
     }
 
+    fun open() {
+        // `if (singleton && activeSingletonTooltip !== this) activeSingletonTooltip.close()`.
+        if (props.singleton) {
+            UPTooltipSingletonRegistry.claim(handle) { previous ->
+                (previous as? UPTooltipSingletonHandle)?.requestClose?.invoke()
+            }
+        }
+        if (visible) return
+        visible = true
+        onUpdateShow?.invoke(true)
+        onOpen?.invoke()
+    }
+
+    handle.requestClose = { closedBySingleton = true }
+    LaunchedEffect(closedBySingleton) {
+        if (closedBySingleton) {
+            closedBySingleton = false
+            close()
+        }
+    }
+    // `beforeUnmount() { this.clearActiveTooltip() }`: a disposed bubble must not keep the
+    // singleton slot, or the next `open()` would try to close a gone composition.
+    DisposableEffect(handle) { onDispose { UPTooltipSingletonRegistry.release(handle) } }
+
+    var anchorBounds by remember { mutableStateOf<Rect?>(null) }
+    var bubbleWidthPx by remember { mutableFloatStateOf(0f) }
+    var bubbleHeightPx by remember { mutableFloatStateOf(0f) }
+    val forced = remember(props.forcePosition) { upForcedPosition(props.forcePosition) }
+    val density = LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val windowWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val windowHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+    val zIndexValue = props.zIndex.asFiniteFloatOrNull() ?: 10_071f
+
     val bubble: @Composable () -> Unit = {
-        Row(
+        Column(
             Modifier
-                .background(UPColor.parse(props.popupBgColor.ifEmpty { props.bgColor }, Color.White), RoundedCornerShape(4.dp))
-                .padding(8.dp)
-                .upTestTag("tooltip-content"),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .zIndex(zIndexValue)
+                .onSizeChanged { bubbleWidthPx = it.width.toFloat(); bubbleHeightPx = it.height.toFloat() }
+                .upTestTag("tooltip-bubble"),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            BasicText(
-                props.text.toString(),
-                style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = props.size.toString().toFloatOrNull()?.sp ?: 14.sp),
-            )
-            if (props.showCopy) {
-                // uview copies `copyText` when set and falls back to `text`.
-                val payload = props.copyText.toString().ifEmpty { props.text.toString() }
-                BasicText("复制", modifier = Modifier.upClickable(onClick = { onCopy?.invoke(payload) }).upTestTag("tooltip-copy"))
+            // `.u-tooltip__wrapper__popup__indicator`: a 14px square rotated 45 degrees,
+            // kept pointing at the trigger even after the bubble is pushed off-centre.
+            val indicatorOffset = anchorBounds?.let { anchor ->
+                val bubbleLeft = upTooltipBubbleLeftPx(anchor.left, anchor.width, bubbleWidthPx, windowWidthPx)
+                with(density) {
+                    upTooltipIndicatorLeftPx(
+                        bubbleLeftPx = bubbleLeft,
+                        triggerLeftPx = anchor.left,
+                        triggerWidthPx = anchor.width,
+                        bubbleWidthPx = bubbleWidthPx,
+                    ).toDp()
+                }
+            } ?: 0.dp
+            val arrow: @Composable () -> Unit = {
+                if (props.showCopy || props.buttons.isNotEmpty()) {
+                    Box(
+                        Modifier
+                            .offset(x = indicatorOffset)
+                            .size(10.dp)
+                            .graphicsLayer { rotationZ = 45f }
+                            .background(UPColor.parse(props.popupBgColor.ifEmpty { "#060607" }, Color(0xFF060607)), RoundedCornerShape(2.dp))
+                            .upTestTag("tooltip-indicator"),
+                    )
+                }
             }
-            // uview renders `buttons` alongside the copy action as an extension slot.
-            props.buttons.forEachIndexed { index, button ->
+            if (direction == "bottom") arrow()
+            Row(
+                Modifier
+                    .background(UPColor.parse(props.popupBgColor.ifEmpty { props.bgColor }, Color.White), RoundedCornerShape(4.dp))
+                    .padding(8.dp)
+                    .upTestTag("tooltip-content"),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 BasicText(
-                    actionOrOptionText(button, "text", button.toString()),
-                    modifier = Modifier.upClickable(onClick = { onButtonClick?.invoke(button, index) }).upTestTag("tooltip-button-$index"),
-                    style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content)),
+                    props.text.toString(),
+                    style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = props.size.toString().toFloatOrNull()?.sp ?: 14.sp),
                 )
+                if (props.showCopy) {
+                    // uview copies `copyText` when set and falls back to `text`.
+                    val payload = props.copyText.toString().ifEmpty { props.text.toString() }
+                    BasicText(
+                        "复制",
+                        modifier = Modifier.upClickable(onClick = {
+                            // `setClipboardData()` closes first, then reports index 0.
+                            close()
+                            onIndexClick?.invoke(0)
+                            onCopy?.invoke(payload)
+                            upTooltipCopyToastMessage(props.showToast, success = true)?.let { onToast?.invoke(it) }
+                        }).upTestTag("tooltip-copy"),
+                    )
+                }
+                // uview renders `buttons` alongside the copy action as an extension slot.
+                props.buttons.forEachIndexed { index, button ->
+                    BasicText(
+                        actionOrOptionText(button, "text", button.toString()),
+                        modifier = Modifier.upClickable(onClick = {
+                            // `btnClickHandler` closes the bubble before reporting.
+                            close()
+                            onButtonClick?.invoke(button, index)
+                            onIndexClick?.invoke(upTooltipButtonEventIndex(props.showCopy, index))
+                        }).upTestTag("tooltip-button-$index"),
+                        style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content)),
+                    )
+                }
             }
+            if (direction == "top") arrow()
         }
     }
 
-    Column(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPTooltip")).upTestTag("tooltip")) {
-        // `direction` decides which side of the trigger the bubble occupies.
-        if (visible && direction == "top") bubble()
+    Box(modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPTooltip")).upTestTag("tooltip")) {
         Box(
-            Modifier.upTestTag("tooltip-trigger").then(
-                when (trigger) {
-                    "click" -> Modifier.upClickable(onClick = { toggle(!visible) })
-                    "longpress" -> Modifier.combinedClickable(onClick = {}, onLongClick = { toggle(true) })
-                    else -> Modifier
-                },
-            ),
+            Modifier
+                .onGloballyPositioned { anchorBounds = it.boundsInWindow() }
+                .upTestTag("tooltip-trigger")
+                .then(
+                    when (trigger) {
+                        "click" -> Modifier.upClickable(onClick = { if (visible) close() else open() })
+                        "longpress" -> Modifier.combinedClickable(onClick = {}, onLongClick = { open() })
+                        else -> Modifier
+                    },
+                ),
         ) { content?.invoke() ?: BasicText(props.text.toString()) }
-        if (visible && direction == "bottom") bubble()
+        if (visible) {
+            // A window-level `Popup` is what lets the bubble overhang its trigger instead of
+            // being clipped by it, and what puts it above the page the way `zIndex` says.
+            Popup(
+                popupPositionProvider = UPWindowOriginPositionProvider,
+                onDismissRequest = { close() },
+                properties = PopupProperties(focusable = props.overlay),
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    // `<u-overlay customStyle="backgroundColor: rgba(0, 0, 0, 0)">`: a fully
+                    // transparent scrim whose only jobs are stopping touches from reaching
+                    // the page behind ("防止触摸穿透") and closing on tap. Without `overlay`
+                    // there is no scrim at all, so touches pass straight through.
+                    if (props.overlay) {
+                        Box(
+                            Modifier
+                                .matchParentSize()
+                                .zIndex(zIndexValue - 1f)
+                                .upClickable(enabled = true, role = null, onClick = { close() })
+                                .upTestTag("tooltip-overlay"),
+                        )
+                    }
+                    val anchor = anchorBounds
+                    // `tooltipTop: -10000` — upstream parks the bubble off-screen for its
+                    // first pass purely to measure it, then positions it. The same two-pass
+                    // applies here: until the bubble has a width the placement is unknown,
+                    // so it stays invisible rather than flashing at the wrong spot.
+                    val placed = anchor != null && bubbleWidthPx > 0f && bubbleHeightPx > 0f
+                    val left = if (anchor == null) 0f else if (direction == "left" || direction == "right") {
+                        upTooltipSideBubbleLeftPx(direction, anchor.left, anchor.width, bubbleWidthPx)
+                    } else {
+                        upTooltipBubbleLeftPx(anchor.left, anchor.width, bubbleWidthPx, windowWidthPx)
+                    }
+                    val top = if (anchor == null) {
+                        0f
+                    } else {
+                        upTooltipBubbleTopPx(direction, anchor.top, anchor.height, bubbleHeightPx)
+                    }
+                    // `{...style, ...this.forcePosition}`: a named edge overrides the computed
+                    // one, and an edge it omits keeps the computed value.
+                    val forcedLeft = upForcedEdgePx(forced.left, density)
+                        ?: upForcedEdgePx(forced.right, density)?.let { windowWidthPx - it - bubbleWidthPx }
+                    val forcedTop = upForcedEdgePx(forced.top, density)
+                        ?: upForcedEdgePx(forced.bottom, density)?.let { windowHeightPx - it - bubbleHeightPx }
+                    Box(
+                        Modifier
+                            .offset(
+                                x = with(density) { (forcedLeft ?: left).toDp() },
+                                y = with(density) { (forcedTop ?: top).toDp() },
+                            )
+                            .zIndex(zIndexValue)
+                            .alpha(if (placed) 1f else 0f),
+                    ) { bubble() }
+                }
+            }
+        }
     }
+}
+
+/** Registry entry: its identity is the "instance", and `requestClose` closes that one. */
+private class UPTooltipSingletonHandle {
+    var requestClose: (() -> Unit)? = null
+}
+
+@Composable
+public fun UPPopover(
+    props: UPPopoverProps = UPPopoverProps(),
+    modifier: Modifier = Modifier,
+    onUpdateShow: ((Boolean) -> Unit)? = null,
+    onOpen: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    onIndexClick: ((Int) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: (@Composable () -> Unit)? = null,
+) {
+    // `u-popover` is `<up-tooltip>` with the content slot filled and no copy button, so it
+    // forwards its own props onto the tooltip rather than laying anything out itself.
+    // `triggerMode` is hover/click/manual (default click) there; Android has no hover, so
+    // uview's hover maps onto long-press.
+    val trigger = upSafeEnum(props.triggerMode, setOf("hover", "click", "manual"), "click", diagnostics, "UPPopover", "triggerMode")
+    // `:direction="direction" :placement="placement"`: both are forwarded, and `direction`
+    // is the one the tooltip reads, so `placement` only matters once `direction` is blank.
+    val requestedSide = props.direction.ifBlank { props.placement }
+    val placement = upSafeEnum(requestedSide, setOf("top", "bottom", "left", "right"), "top", diagnostics, "UPPopover", "direction")
+    UPTooltip(
+        props = UPTooltipProps(
+            text = props.text,
+            color = props.color,
+            bgColor = props.bgColor,
+            popupBgColor = props.popupBgColor,
+            direction = placement,
+            triggerMode = if (trigger == "hover") "longpress" else trigger,
+            show = props.show,
+            zIndex = props.zIndex,
+            forcePosition = props.forcePosition,
+            // The popover has no copy button; its bubble is the content slot alone.
+            showCopy = false,
+            customStyle = props.customStyle,
+        ),
+        modifier = modifier.upTestTag("popover"),
+        onUpdateShow = onUpdateShow,
+        onOpen = onOpen,
+        onClose = onClose,
+        onIndexClick = onIndexClick,
+        diagnostics = diagnostics,
+        content = content,
+    )
 }
 
 @Composable
