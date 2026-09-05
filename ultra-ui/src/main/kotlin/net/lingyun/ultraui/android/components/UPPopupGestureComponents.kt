@@ -344,25 +344,68 @@ public fun UPPopover(
     )
 }
 
+/**
+ * `u-sticky`. Upstream picks between two strategies: `position: sticky` where the platform
+ * supports it, and otherwise an IntersectionObserver that flips the content to
+ * `position: fixed` once its top edge reaches `stickyTop`. Compose has neither, so this is
+ * the second strategy expressed natively: the band watches its own window position and
+ * translates its content back down by the overshoot, which keeps it visually pinned at
+ * `stickyTop` while its slot in the layout stays reserved — the same "防止塌陷" the JS path
+ * achieves by remembering the measured height.
+ *
+ * [onFixed] / [onUnfixed] are the `fixed` / `unfixed` events, and they carry `index` so a
+ * caller with several bands can tell which one reported ("自定义标识，用于区分是哪一个组件").
+ */
 @Composable
-public fun UPSticky(props: UPStickyProps = UPStickyProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
-    // uview offsets the sticky band by `offsetTop + customNavHeight`
-    // (`u-sticky.vue`: stickyTop = getPx(offsetTop) + getPx(customNavHeight)).
-    // `disabled` skips the whole sticky treatment, so neither the top offset nor the
-    // stacking applies (`style()` returns an empty object upstream).
+public fun UPSticky(
+    props: UPStickyProps = UPStickyProps(),
+    modifier: Modifier = Modifier,
+    onFixed: ((UPRawValue) -> Unit)? = null,
+    onUnfixed: ((UPRawValue) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: @Composable () -> Unit,
+) {
+    // `getStickyTop() { stickyTop = getPx(offsetTop) + getPx(customNavHeight) }`.
+    // `disabled` skips the whole treatment, so neither the offset nor the stacking applies
+    // (`style()` falls back to `position: static` upstream).
     val stickyTop = if (props.disabled) {
         0.dp
     } else {
         (upRawDp(props.offsetTop, 0.dp) + upRawDp(props.customNavHeight, 0.dp)).coerceAtLeast(0.dp)
     }
+    val density = LocalDensity.current
+    val stickyTopPx = with(density) { stickyTop.toPx() }
+    // The band's own top edge in window space, which is what upstream's observer reports.
+    var bandTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    val fixed = !props.disabled && !bandTopPx.isNaN() && upStickyIsFixed(bandTopPx, stickyTopPx)
+    val translationPx = if (fixed) upStickyTranslationPx(bandTopPx, stickyTopPx) else 0f
+
+    // `fixed` / `unfixed` fire on the transition, not on every scroll frame.
+    var wasFixed by remember { mutableStateOf(false) }
+    LaunchedEffect(fixed) {
+        if (fixed == wasFixed) return@LaunchedEffect
+        wasFixed = fixed
+        if (fixed) onFixed?.invoke(props.index) else onUnfixed?.invoke(props.index)
+    }
+
     Box(
-        modifier.background(UPColor.parse(props.bgColor, Color.Transparent))
+        modifier
+            // The band keeps its slot in the layout; only its content moves, so the page
+            // below never jumps when the content is pinned.
+            .onGloballyPositioned { bandTopPx = it.boundsInWindow().top }
+            .background(UPColor.parse(props.bgColor, Color.Transparent))
             // `uZindex` defaults to `zIndex.sticky` (970) and only a truthy `zIndex` overrides it.
             .then(if (props.disabled) Modifier else Modifier.zIndex(upStickyZIndex(props.zIndex)))
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSticky"))
-            .upTestTag("sticky")
-            .padding(top = stickyTop),
-    ) { content() }
+            .upTestTag("sticky"),
+    ) {
+        Box(
+            Modifier
+                .graphicsLayer { translationY = translationPx }
+                .then(if (fixed) Modifier.upTestTag("sticky-content-fixed") else Modifier)
+                .upTestTag("sticky-content"),
+        ) { content() }
+    }
 }
 
 /**

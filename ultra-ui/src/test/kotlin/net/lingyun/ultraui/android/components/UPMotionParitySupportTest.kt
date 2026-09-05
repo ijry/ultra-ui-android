@@ -8,6 +8,25 @@ import org.junit.Test
 
 class UPMotionParitySupportTest {
     @Test
+    fun theBandPinsOnceItsTopEdgeReachesTheStickyLine() {
+        // `setFixed(top) { this.fixed = top <= this.stickyTop }`.
+        assertTrue(upStickyIsFixed(contentTopPx = 40f, stickyTopPx = 60f))
+        assertTrue(upStickyIsFixed(contentTopPx = 60f, stickyTopPx = 60f))
+        assertFalse(upStickyIsFixed(contentTopPx = 61f, stickyTopPx = 60f))
+        // A band scrolled well past the line stays pinned.
+        assertTrue(upStickyIsFixed(contentTopPx = -400f, stickyTopPx = 0f))
+    }
+
+    @Test
+    fun theTranslationIsExactlyTheOvershootAndNeverNegative() {
+        // Still below the line: nothing to compensate, so the band does not move.
+        assertEquals(0f, upStickyTranslationPx(contentTopPx = 200f, stickyTopPx = 60f), 1e-4f)
+        // 40px past the line: push the content back down by 40 to hold it at `stickyTop`.
+        assertEquals(40f, upStickyTranslationPx(contentTopPx = 20f, stickyTopPx = 60f), 1e-4f)
+        assertEquals(400f, upStickyTranslationPx(contentTopPx = -400f, stickyTopPx = 0f), 1e-4f)
+    }
+
+    @Test
     fun stickyKeepsTheDefaultZIndexUnlessATruthyOverrideArrives() {
         // `uZindex() { return this.zIndex ? this.zIndex : zIndex.sticky }`.
         assertEquals(970f, upStickyZIndex(UPStickyProps().zIndex), 0f)

@@ -52,10 +52,14 @@ class UPCustomStyleBehaviorTest {
     }
 
     @Test
-    fun stickyOffsetsItsContentByOffsetTopPlusNavHeight() {
-        // uview: stickyTop = getPx(offsetTop) + getPx(customNavHeight)
+    fun stickyStillAppliesItsOwnCustomStyle() {
+        // `deepMerge(addStyle(customStyle), style)`: the band's own style survives the
+        // sticky treatment. Its height is its content's, because `position: sticky` does
+        // not offset anything until the page scrolls.
         composeRule.setContent {
-            UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 30)) { UPGap(UPGapProps(height = 20)) }
+            UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 30, customStyle = mapOf("height" to "90px"))) {
+                UPGap(UPGapProps(height = 20))
+            }
         }
         composeRule.onNodeWithTag("up-sticky").assertHeightIsAtLeast(90.dp)
     }

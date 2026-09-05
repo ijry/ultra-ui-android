@@ -57,6 +57,21 @@ internal fun upNoticePreviousIndex(index: Int, count: Int): Int =
 internal fun upNoticeTouchEnabled(disableTouch: Boolean, count: Int): Boolean =
     !disableTouch && count > 1
 
+/**
+ * `setFixed(top) { this.fixed = top <= this.stickyTop }` — the band pins itself once its
+ * own top edge reaches `stickyTop`. Both values are viewport pixels.
+ */
+internal fun upStickyIsFixed(contentTopPx: Float, stickyTopPx: Float): Boolean =
+    contentTopPx <= stickyTopPx
+
+/**
+ * How far the pinned content has to be pushed back down to stay at `stickyTop`. This is
+ * what `position: sticky` does for free: nothing while the band is still below the line,
+ * and exactly the overshoot once it has passed it.
+ */
+internal fun upStickyTranslationPx(contentTopPx: Float, stickyTopPx: Float): Float =
+    (stickyTopPx - contentTopPx).coerceAtLeast(0f)
+
 /** `animation.height(height).step({ duration })` on the collapse panel. */
 internal fun upCollapseDurationMillis(duration: UPRawValue): Int =
     duration.upIntOrDefault(300).coerceAtLeast(0)

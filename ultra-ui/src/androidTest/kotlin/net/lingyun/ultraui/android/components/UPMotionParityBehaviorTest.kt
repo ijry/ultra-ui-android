@@ -1,9 +1,15 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
+import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -205,21 +211,67 @@ class UPMotionParityBehaviorTest {
     }
 
     @Test
-    fun stickyDisabledDropsTheTopOffset() {
+    fun stickyClaimsOnlyItsContentHeightRatherThanPaddingItDown() {
+        // `position: sticky` with `top: stickyTop` does not move the element until the page
+        // scrolls; a band that padded its content down by `offsetTop` would push the whole
+        // page down at rest, which is not what upstream does.
         composeRule.setContent {
-            UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 20)) { BasicText("吸顶") }
+            UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 20)) { UPGap(UPGapProps(height = 24)) }
         }
-        val enabled = composeRule.onNodeWithTag("up-sticky").getUnclippedBoundsInRoot()
-            .let { it.bottom - it.top }
+        val band = composeRule.onNodeWithTag("up-sticky").getUnclippedBoundsInRoot()
+        assertEquals(24.dp.value, (band.bottom - band.top).value, 1f)
+    }
 
+    @Test
+    fun stickyPinsItsContentOnceScrolledPastTheOffsetAndReportsIt() {
+        composeRule.mainClock.autoAdvance = false
+        val scrollState = ScrollState(0)
+        val fixedEvents = mutableListOf<Any?>()
+        val unfixedEvents = mutableListOf<Any?>()
         composeRule.setContent {
-            UPSticky(UPStickyProps(offsetTop = 40, customNavHeight = 20, disabled = true)) { BasicText("吸顶") }
+            Column(Modifier.height(200.dp).verticalScroll(scrollState)) {
+                UPGap(UPGapProps(height = 300))
+                UPSticky(
+                    props = UPStickyProps(offsetTop = 0, index = "first"),
+                    onFixed = { fixedEvents += it },
+                    onUnfixed = { unfixedEvents += it },
+                ) { UPGap(UPGapProps(height = 40)) }
+                UPGap(UPGapProps(height = 600))
+            }
         }
-        val disabled = composeRule.onNodeWithTag("up-sticky").getUnclippedBoundsInRoot()
-            .let { it.bottom - it.top }
 
-        assertTrue("disabled should remove the 60dp of sticky offset", disabled < enabled)
-        assertEquals(60.dp.value, (enabled - disabled).value, 1f)
+        // Still below the line: not pinned, and no event yet.
+        composeRule.onNodeWithTag("up-sticky-content-fixed", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.runOnIdle { assertTrue("no event before pinning, got $fixedEvents", fixedEvents.isEmpty()) }
+
+        composeRule.runOnIdle { runBlocking { scrollState.scrollTo(400) } }
+        composeRule.waitForIdle()
+        // `setFixed(top)` flips once the band's own top reaches `stickyTop`, and `fixed`
+        // carries `index` so a caller with several bands can tell them apart.
+        composeRule.onNodeWithTag("up-sticky-content-fixed", useUnmergedTree = true).assertExists()
+        composeRule.runOnIdle { assertEquals(listOf<Any?>("first"), fixedEvents) }
+
+        composeRule.runOnIdle { runBlocking { scrollState.scrollTo(0) } }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("up-sticky-content-fixed", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(listOf<Any?>("first"), unfixedEvents) }
+    }
+
+    @Test
+    fun stickyDisabledNeverPins() {
+        val scrollState = ScrollState(0)
+        composeRule.setContent {
+            Column(Modifier.height(200.dp).verticalScroll(scrollState)) {
+                UPGap(UPGapProps(height = 300))
+                UPSticky(UPStickyProps(offsetTop = 0, disabled = true)) { UPGap(UPGapProps(height = 40)) }
+                UPGap(UPGapProps(height = 600))
+            }
+        }
+
+        composeRule.runOnIdle { runBlocking { scrollState.scrollTo(400) } }
+        composeRule.waitForIdle()
+        // `disabled` falls back to `position: static`, so scrolling past changes nothing.
+        composeRule.onNodeWithTag("up-sticky-content-fixed", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
