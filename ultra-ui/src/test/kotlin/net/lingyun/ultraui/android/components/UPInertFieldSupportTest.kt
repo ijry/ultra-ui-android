@@ -156,6 +156,27 @@ class UPInertFieldSupportTest {
     }
 
     @Test
+    fun theTabbarBadgeOffsetDependsOnHowWideTheBadgeIs() {
+        // `:offset="[0, dot ? '34rpx' : badge > 9 ? '14rpx' : '20rpx']"`.
+        assertEquals("34rpx", upTabbarBadgeOffsetRpx(dot = true, badge = null))
+        assertEquals("34rpx", upTabbarBadgeOffsetRpx(dot = true, badge = 99))
+        assertEquals("14rpx", upTabbarBadgeOffsetRpx(dot = false, badge = 10))
+        assertEquals("14rpx", upTabbarBadgeOffsetRpx(dot = false, badge = "42"))
+        assertEquals("20rpx", upTabbarBadgeOffsetRpx(dot = false, badge = 9))
+        assertEquals("20rpx", upTabbarBadgeOffsetRpx(dot = false, badge = null))
+    }
+
+    @Test
+    fun onlyTextModeActiveMutesAnInactiveLabel() {
+        // `.u-tabbar-item__text--muted` needs both conditions.
+        assertTrue(upTabbarTextMuted(textMode = "active", active = false))
+        assertFalse(upTabbarTextMuted(textMode = "active", active = true))
+        assertFalse(upTabbarTextMuted(textMode = "always", active = false))
+        assertEquals(0.68f, UPTabbarMutedTextAlpha)
+        assertEquals(0.94f, UPTabbarMutedTextScale)
+    }
+
+    @Test
     fun cascaderStacksAtTheSharedPopupLayerUnlessOverridden() {
         // `uZIndex() { return this.zIndex ? this.zIndex : zIndex.popup }`; 0 is falsy.
         assertEquals(10_075f, upCascaderZIndex(UPCascaderProps().zIndex))

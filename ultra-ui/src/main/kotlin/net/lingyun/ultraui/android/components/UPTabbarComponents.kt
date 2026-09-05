@@ -1,5 +1,7 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -350,31 +353,51 @@ public fun RowScope.UPTabbarItem(
                         diagnostics = effectiveDiagnostics,
                     )
                 }
+                // `.u-tabbar-item__text--muted` dims *and* shrinks an inactive label when
+                // `textMode === 'active'`, over a 0.22s ease.
+                val muted = upTabbarTextMuted(parent?.textMode ?: "always", active)
+                val textAlpha by animateFloatAsState(
+                    targetValue = if (muted) UPTabbarMutedTextAlpha else 1f,
+                    animationSpec = tween(220),
+                    label = "up-tabbar-item-text-alpha",
+                )
+                val textScale by animateFloatAsState(
+                    targetValue = if (muted) UPTabbarMutedTextScale else 1f,
+                    animationSpec = tween(220),
+                    label = "up-tabbar-item-text-scale",
+                )
                 BasicText(
                     props.text.toString(),
-                    style = TextStyle(
-                        color = if (parent?.textMode == "active" && !active) color.copy(alpha = 0.68f) else color,
-                        fontSize = 12.sp,
-                    ),
-                        modifier = Modifier
+                    style = TextStyle(color = color, fontSize = 12.sp),
+                    modifier = Modifier
                         .padding(top = 2.dp)
                         .then(if (isMiddleButton) Modifier.offset(y = (-4).dp) else Modifier)
+                        .graphicsLayer {
+                            alpha = textAlpha
+                            scaleX = textScale
+                            scaleY = textScale
+                        }
+                        .then(if (muted) Modifier.upTestTag("$rootTag-text-muted") else Modifier)
                         .upTestTag("$rootTag-text-$state"),
                 )
             }
         }
+        // `.u-tabbar-item__underline`: 34rpx x 6rpx, `translateX(-50%)` centred, 2rpx up.
         if (active && styleType == "underline") {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .padding(bottom = 1.dp)
+                    .width(17.dp)
                     .height(3.dp)
                     .background(color, RoundedCornerShape(50))
                     .upTestTag("$rootTag-underline"),
             )
         }
+        // `.u-tabbar-item__active-dot`: 10rpx circle, centred, 8rpx up.
         if (active && styleType == "dot") {
             Box(
                 modifier = Modifier
+                    .padding(bottom = 4.dp)
                     .size(5.dp)
                     .background(color, CircleShape)
                     .upTestTag("$rootTag-dot"),
@@ -420,6 +443,8 @@ private fun TabbarIcon(
                         show = badge.badge?.let { tabbarBadgeIsVisible(badge.dot, it) } ?: badge.dot,
                         showZero = badge.dot,
                         absolute = true,
+                        // `:offset="[0, dot ? '34rpx' : badge > 9 ? '14rpx' : '20rpx']"`.
+                        offset = listOf(0, upTabbarBadgeOffsetRpx(badge.dot, badge.badge)),
                         customStyle = badge.badgeStyle,
                     ),
                     content = {

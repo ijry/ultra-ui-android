@@ -305,6 +305,29 @@ internal fun tabbarIconSize(mode: String, midButtonIconSize: UPRawValue): UPRawV
 
 internal fun tabbarBadgeIsVisible(dot: Boolean, badge: UPRawValue): Boolean = dot || badge.rawInt(0) > 0
 
+/**
+ * `:offset="[0, dot ? '34rpx' : badge > 9 ? '14rpx' : '20rpx']"`: the badge hugs the top
+ * of the glyph and is pushed in from the right by an amount that depends on how wide it
+ * is. `rpx` resolves against the 750-wide design canvas, so on a 375dp-wide screen the
+ * three values are 17, 7 and 10 dp.
+ */
+internal fun upTabbarBadgeOffsetRpx(dot: Boolean, badge: UPRawValue): String = when {
+    dot -> "34rpx"
+    badge.rawInt(0) > 9 -> "14rpx"
+    else -> "20rpx"
+}
+
+/**
+ * `.u-tabbar-item__text--muted { opacity: 0.68; transform: scale(0.94) }`, applied when
+ * `textMode === 'active'` and the item is not the current one.
+ */
+internal fun upTabbarTextMuted(textMode: String, active: Boolean): Boolean =
+    textMode == "active" && !active
+
+/** The muted label's own opacity and scale, from the same rule. */
+internal const val UPTabbarMutedTextAlpha: Float = 0.68f
+internal const val UPTabbarMutedTextScale: Float = 0.94f
+
 internal fun sliderTrackFractions(
     values: List<Float>,
     min: Float,

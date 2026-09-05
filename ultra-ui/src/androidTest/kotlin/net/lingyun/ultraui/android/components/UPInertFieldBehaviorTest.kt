@@ -500,6 +500,46 @@ class UPInertFieldBehaviorTest {
     }
 
     @Test
+    fun textModeActiveShrinksAndDimsTheInactiveLabel() {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            UPTabbar(UPTabbarProps(value = "home", textMode = "active", safeAreaInsetBottom = false)) {
+                UPTabbarItem(UPTabbarItemProps(name = "home", icon = "home", text = "首页"))
+                UPTabbarItem(UPTabbarItemProps(name = "mine", icon = "account", text = "我的"))
+            }
+        }
+
+        // `.u-tabbar-item__text--muted` only lands on the item that is not current.
+        node("up-tabbar-item-mine-text-muted").assertExists()
+        node("up-tabbar-item-home-text-muted").assertDoesNotExist()
+
+        composeRule.setContent {
+            UPTabbar(UPTabbarProps(value = "home", textMode = "always", safeAreaInsetBottom = false)) {
+                UPTabbarItem(UPTabbarItemProps(name = "mine", icon = "account", text = "我的"))
+            }
+        }
+        node("up-tabbar-item-mine-text-muted").assertDoesNotExist()
+    }
+
+    @Test
+    fun theTabbarUnderlineIsACentredStubRatherThanFullWidth() {
+        composeRule.setContent {
+            UPTabbar(UPTabbarProps(value = "home", styleType = "underline", safeAreaInsetBottom = false)) {
+                UPTabbarItem(UPTabbarItemProps(name = "home", icon = "home", text = "首页"))
+                UPTabbarItem(UPTabbarItemProps(name = "mine", icon = "account", text = "我的"))
+            }
+        }
+
+        val item = node("up-tabbar-item-home").getUnclippedBoundsInRoot()
+        val underline = node("up-tabbar-item-home-underline").getUnclippedBoundsInRoot()
+        // `width: 34rpx` on a 375dp-wide canvas is 17dp, and `translateX(-50%)` centres it.
+        assertEquals(17.dp.value, (underline.right - underline.left).value, 1f)
+        val itemCentre = (item.left.value + item.right.value) / 2f
+        val underlineCentre = (underline.left.value + underline.right.value) / 2f
+        assertTrue("the underline should be centred: $underlineCentre vs $itemCentre", Math.abs(underlineCentre - itemCentre) < 2f)
+    }
+
+    @Test
     fun theSelectTriggerKeepsItsChevronAndOptionsRemainTappable() {
         var selected: UPRawValue = null
         composeRule.setContent {
