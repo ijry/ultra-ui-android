@@ -91,6 +91,30 @@ internal class UPScreenshotReference private constructor(
     }
 
     /**
+     * Every horizontal run of [color] on row [y], unmerged.
+     *
+     * `columnBandsOf` answers "does this column contain the colour anywhere in the band",
+     * which unions siblings that merely share rows. When two siblings sit side by side and
+     * each spans the full height of the band, only a single-row scan can tell them apart.
+     */
+    fun runsInRow(color: String, y: Int): List<IntRange> {
+        val wanted = color.normalizedHex()
+        val runs = ArrayList<IntRange>()
+        var start: Int? = null
+        for (x in 0 until width) {
+            val hit = "%06x".format(argb[y * width + x] and 0xFFFFFF) == wanted
+            if (hit && start == null) {
+                start = x
+            } else if (!hit && start != null) {
+                runs += start..(x - 1)
+                start = null
+            }
+        }
+        if (start != null) runs += start..(width - 1)
+        return runs
+    }
+
+    /**
      * Widest horizontal run of [color] on row [y], tolerating gaps up to [mergeGap] px.
      *
      * A filled bar is rarely one unbroken run: label glyphs punch holes through it, and

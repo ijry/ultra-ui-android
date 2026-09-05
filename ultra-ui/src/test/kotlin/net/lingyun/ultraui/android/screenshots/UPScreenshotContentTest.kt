@@ -539,6 +539,168 @@ class UPScreenshotContentTest {
     }
 
     @Test
+    fun cascaderHighlightsTheSelectedPathInEveryColumn() {
+        val reference = UPScreenshotReference.load("batch 10 cascader and tabbar")
+
+        // `modelValue = ["zhejiang", "hangzhou"]` selects one option per column, and both
+        // highlights share a row, so the band splits into two wide clusters.
+        val highlight = reference.rowBandsOf("eaf3ff").single()
+        // Scan a single row: the two highlights span the same rows, so a band-wide column
+        // scan would union them into one 42..902 run and lose the split.
+        val clusters = reference.runsInRow("eaf3ff", highlight.midpoint()).filter { it.last - it.first > 100 }
+        assertEquals("expected one highlight per column, got $clusters", 2, clusters.size)
+        // Two columns of equal share, so the clusters are roughly the same width.
+        val widths = clusters.map { it.last - it.first + 1 }
+        assertTrue("columns should be even, got $widths", Math.abs(widths[0] - widths[1]) < widths[0] / 3)
+
+        // `dot = true` on the second tabbar item paints a red badge below the cascader.
+        val dot = reference.rowBandsOf("fa3534").single()
+        assertTrue("the tabbar dot should sit below the cascader", dot.first > highlight.last)
+    }
+
+    @Test
+    fun alertAndNotifyKeepTheirOwnTypeColours() {
+        val reference = UPScreenshotReference.load("native alert notify backtop")
+
+        // `type = "warning"` gives the alert uview's warningLight background and warning
+        // foreground; the notify below it defaults to the primary fill.
+        val alert = reference.rowBandsOf("fdf6ec").single()
+        val notify = reference.rowBandsOf("2979ff").single()
+        assertTrue("warning icon/text colour missing", reference.contains("ff9900"))
+        assertTrue("the notify should sit below the alert: $alert then $notify", notify.first > alert.last)
+
+        // Both are full-width banners, not inline chips.
+        val available = reference.width - 2 * PREVIEW_PADDING_PX
+        val alertRun = requireNotNull(reference.widestRunInRow("fdf6ec", alert.midpoint()))
+        assertRatio("alert width", alertRun.last - alertRun.first + 1, available, 1.0, tolerance = 0.05)
+    }
+
+    @Test
+    fun theCollapsedNoticeBarStillPaintsItsBanner() {
+        val reference = UPScreenshotReference.load("native card collapse dropdown")
+
+        // The notice bar at the bottom keeps its warning palette even after the card and
+        // collapse rows above it, so a layout collapse cannot swallow it silently.
+        val notice = reference.rowBandsOf("fdf6ec").single()
+        assertTrue("notice text colour missing", reference.contains("f9ae3d"))
+        assertTrue("the notice should sit in the lower half", notice.first > reference.height / 2)
+
+        // Card and collapse rows draw uview's border colour, in several separate bands.
+        val borders = reference.rowBandsOf("e4e7ed").filter { it.last - it.first > 20 }
+        assertTrue("expected several bordered rows, got $borders", borders.size >= 2)
+        assertTrue("borders should precede the notice", borders.first().first < notice.first)
+    }
+
+    @Test
+    fun loadingIconModesEachKeepTheirColourAndOrientation() {
+        val reference = UPScreenshotReference.load("u-loading-icon modes")
+
+        // Three spinners in a row: spinner/#2979ff, semicircle/#19be6b, circle/#fa3534.
+        // Each colour has to survive on its own — one shared tint would mean `color`
+        // stopped reaching the glyph.
+        for (color in listOf("2979ff", "19be6b", "fa3534")) {
+            assertTrue("loading colour $color missing", reference.contains(color))
+        }
+
+        // The two `vertical = true` ones put their label below the glyph, so their glyph
+        // colour sits strictly above the topmost default-coloured label pixel.
+        val labelTop = reference.rowBandsOf("909399").first().first
+        for (color in listOf("19be6b", "fa3534")) {
+            val glyph = reference.rowBandsOf(color).single()
+            assertTrue("$color glyph should be above its label: $glyph vs $labelTop", glyph.last < labelTop)
+        }
+        // ...and the three sit side by side, left to right in declaration order.
+        val lefts = listOf("2979ff", "19be6b", "fa3534").map {
+            reference.columnBandsOf(it, 0 until reference.height).first().first
+        }
+        assertEquals("loading icons are out of order: $lefts", lefts.sorted(), lefts)
+    }
+
+    @Test
+    fun swiperPeekingMarginsShrinkTheActiveSlide() {
+        val plain = UPScreenshotReference.load("u-swiper text slides")
+        val peeking = UPScreenshotReference.load("u-swiper peeking margins")
+
+        // Without margins the slide fills the content width; `previousMargin` and
+        // `nextMargin` of 24 each pull it in, so the same 320dp preview yields a narrower
+        // slide — and `upSwiperItemScale` shrinks it vertically too.
+        val plainRows = plain.rowBandsOf("f3f4f6").single()
+        val peekRows = peeking.rowBandsOf("e8eaec").single()
+        val plainRun = requireNotNull(plain.widestRunInRow("f3f4f6", plainRows.midpoint()))
+        val peekRun = requireNotNull(peeking.widestRunInRow("e8eaec", peekRows.midpoint()))
+
+        // Both previews are 320dp wide with 16dp padding, so the plain slide is full width.
+        val available = plain.width - 2 * PREVIEW_PADDING_PX
+        assertRatio("plain slide", plainRun.last - plainRun.first + 1, available, 1.0, tolerance = 0.03)
+        // The peeking preview's own bgColor proves it is the margin variant, not a re-render.
+        assertTrue("expected the peeking bgColor #e8eaec", peeking.contains("e8eaec"))
+        assertEquals("the plain preview should not use the peeking bgColor", 0, plain.countOf("e8eaec"))
+    }
+
+    @Test
+    fun theSwiperTitleBarDarkensTheBottomOfTheSlide() {
+        val reference = UPScreenshotReference.load("u-swiper title bar")
+
+        // `showTitle = true` lays a translucent black bar over the slide's lower edge, so
+        // the slide's own #f3f4f6 gives way to a darker blend further down.
+        // The slide's own fill shows twice: above the bar, and again in the rounded corners
+        // below it, so take the tall band rather than expecting a single one.
+        val slide = reference.rowBandsOf("f3f4f6").maxBy { it.last - it.first }
+        val bar = reference.rowBandsOf("a9aaac").single()
+        assertTrue("the title bar should start below the slide's top: $bar vs $slide", bar.first > slide.first)
+        assertTrue("the title bar should follow the slide's fill", bar.first >= slide.last - 4)
+
+        // It spans the whole slide, not just the text.
+        val barRun = requireNotNull(reference.widestRunInRow("a9aaac", bar.midpoint()))
+        val slideRun = requireNotNull(reference.widestRunInRow("f3f4f6", slide.midpoint()))
+        assertRatio(
+            "title bar width",
+            barRun.last - barRun.first + 1,
+            slideRun.last - slideRun.first + 1,
+            1.0,
+            tolerance = 0.03,
+        )
+    }
+
+    @Test
+    fun thePickerInputTriggersRenderAsReadOnlyFields() {
+        val trigger = UPScreenshotReference.load("picker has input triggers")
+        val datetime = UPScreenshotReference.load("datetime picker has input trigger")
+
+        // `hasInput = true` swaps the inline panel for a bordered field, so uview's border
+        // colour is present and the wheel's #eaf3ff highlight is not.
+        for (reference in listOf(trigger, datetime)) {
+            assertTrue("${reference.name}: no bordered field", reference.contains("dadbde") || reference.contains("e4e7ed"))
+            assertEquals("${reference.name}: the wheel should stay closed", 0, reference.countOf("eaf3ff"))
+            assertTrue(
+                "${reference.name}: expected rendered text, got ${reference.antialiasedFraction()}",
+                reference.antialiasedFraction() > 0.002,
+            )
+        }
+    }
+
+    @Test
+    fun theInlinePickerHighlightsItsSelectedRow() {
+        val reference = UPScreenshotReference.load("batch 9b status and picker")
+
+        // No `maskStyle` here, so the selected row keeps its untinted #eaf3ff highlight —
+        // the exact opposite of the masked preview above.
+        assertTrue("the selected row highlight is missing", reference.countOf("eaf3ff") > 1_000)
+        // A handful of #dce4f0 pixels turn up as glyph antialiasing, so compare magnitudes
+        // rather than demanding an exact zero: an actual mask would tint the whole column.
+        assertTrue(
+            "the highlight should be untinted, got ${reference.countOf("dce4f0")} tinted pixels",
+            reference.countOf("dce4f0") * 100 < reference.countOf("eaf3ff"),
+        )
+
+        // The skeleton placeholders above it use their own fill, and come first.
+        val skeleton = reference.rowBandsOf("e6e8eb")
+        val highlight = reference.rowBandsOf("eaf3ff").single()
+        assertTrue("expected skeleton rows above the picker, got $skeleton", skeleton.isNotEmpty())
+        assertTrue("the picker should follow the skeleton", highlight.first > skeleton.last().last)
+    }
+
+    @Test
     fun everyReferenceIsOpaqueAndNonEmpty() {
         // A blank or transparent reference would still pass validateDebugScreenshotTest,
         // so the floor is checked here instead.
