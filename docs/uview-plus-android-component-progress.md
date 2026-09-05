@@ -33,7 +33,7 @@
 
 | # | 分类 | uview-plus 组件 | Android API | 复刻进度 | 接口兼容性 | 复刻方式与备注 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 原生交互 | `u-action-sheet` | `UPActionSheet` / `UPActionSheetProps` | 基础可用 | 中 | Compose 原生面板；`safeAreaInsetBottom` 决定面板是否避让底部导航栏，有真机断言。降级：`openType` 是微信开放能力按钮（getUserInfo/contact/launchApp 等），Android 无对应物；`index` 是 Android 兼容别名，上游按位置解析选项。面板目前仍为内联渲染，尚未搬进窗口级 `Popup`（该层已证明可用，见 `u-tooltip`）。 |
+| 1 | 原生交互 | `u-action-sheet` | `UPActionSheet` / `UPActionSheetProps` | 基本完成 | 高（Props） | `safeAreaInsetBottom`、`round`、`wrapMaxHeight`、`closeOnClickAction`、`nameKey`/`subnameKey` 与逐项 `color`/`fontSize` 之外，本轮补齐结构与可达性规则：`title` 非空才生成 header（含右上角 17px 关闭图标，走 `cancel()` 因而不受 `closeOnClickOverlay` 影响）、标题按 `.u-line-1` 加粗单行、`description` 的上边距在有标题时折叠为 0 并在其下画一条 `u-line`、分隔线只出现在**选项之间**（末项没有）、逐项 `loading` 用 18px circle 图标顶替标签且不可选（`!item.disabled && !item.loading`，此前只当作 disabled 一并变暗）、首项在无 header 且 `round > 0` 时继承面板圆角、取消行前用 `u-gap height=6` 分隔、`closeOnClickOverlay=false` 时遮罩吞掉点击而取消按钮照样关闭、自定义内容按 `v-if/v-else` **整体替换**选项列表且点击时按 `closeOnClickAction` 关闭（此前是追加在列表之后）。降级：`openType` 是微信开放能力按钮，Android 无对应物；`index` 是兼容别名，上游按位置解析。刻意差异：面板**不**搬进窗口级 `Popup`——它本就铺满宿主给的空间，没有需要跨越的裁剪边界，而截图渲染器不绘制 popup 窗口，搬过去会让本组件的参考图变成全白、毁掉像素证据。有 6 项单测与 7 项真机断言。 |
 | 2 | 辅助模块 | `u-action-sheet-data` | — | 未开始 | 暂无 | 操作菜单数据辅助目录，不单独作为 Android UI 组件。 |
 | 3 | 表单与协议 | `u-agreement` | — | 未开始 | 暂无 | 协议勾选/链接组合组件，待按上游字段建立。 |
 | 4 | 媒体与内容 | `u-album` | — | 未开始 | 暂无 | 相册选择与预览，涉及系统权限和媒体选择器。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 85 |
-| 基础可用 | 5 |
+| 基本完成 | 86 |
+| 基础可用 | 4 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 306 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 313 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 5 行**：这些行的未读字段已为 0，剩下的差距只有一类真正外生：`u-back-top` 需要滚动**别人**的容器，滚动状态归宿主。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 4 行**：这些行的未读字段已为 0，剩下的差距只有一类真正外生：`u-back-top` 需要滚动**别人**的容器，滚动状态归宿主。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,12 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **306 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **313 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-action-sheet` 新增 7 项回归（`UPActionSheetBehaviorTest`），覆盖 header 关闭按钮走
+`cancel`、无标题则整个 header 不存在、分隔线数量随 `description` 变化、`loading` 项显示
+spinner 且不可选、`closeOnClickOverlay=false` 时遮罩不关而取消按钮关、自定义内容整体替换
+选项列表并按 `closeOnClickAction` 关闭、取消行前的 6dp 间隔。再往前一批为
 `u-picker` 的吸附滚轮新增 5 项回归（`UPPickerWheelBehaviorTest`），覆盖选中带恰为一个
 `itemHeight` 且居于滚轮正中、首项起始即落在选中带内（证明两端留白生效）、滑动改变选中并
 上报 `change`、`disabled` 项不可选、`immediateChange=false` 时滑动静默但确认照样上报。再往前一批为
@@ -378,7 +382,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 5 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 4 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -576,7 +580,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 5 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 4 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

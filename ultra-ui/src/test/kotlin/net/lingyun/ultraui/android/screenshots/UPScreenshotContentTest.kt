@@ -301,6 +301,21 @@ class UPScreenshotContentTest {
         // The panel below it is white and unmistakably tall.
         val panelTop = scrim.last + 1
         assertEquals("the panel should begin right below the scrim", "ffffff", reference.colorAt(reference.width / 2, panelTop + 2))
+
+        // The panel's own structure, in `u-line`'s own #d6d7d9: one line under the
+        // description, then one *between* the two items and none after the last.
+        val hairlines = reference.rowBandsOf("d6d7d9").filter {
+            reference.widestRunInRow("d6d7d9", it.first)?.let { run -> run.last - run.first > 400 } == true
+        }
+        assertEquals("expected a description divider plus one between the items, got $hairlines", 2, hairlines.size)
+        assertTrue("both hairlines belong to the panel", hairlines.all { it.first > panelTop })
+
+        // `<u-gap height="6" :bgColor="cancelGapColor">` separates the cancel row, and it is
+        // the only #eaeaec in the preview.
+        val gap = reference.rowBandsOf("eaeaec").single()
+        assertTrue("the cancel gap should come after both hairlines", gap.first > hairlines.last().last)
+        val density = reference.densityFor(widthDp = 360)
+        assertRatio("cancel gap height", gap.last - gap.first + 1, (6 * density).toInt(), 1.0, tolerance = 0.2)
     }
 
     @Test

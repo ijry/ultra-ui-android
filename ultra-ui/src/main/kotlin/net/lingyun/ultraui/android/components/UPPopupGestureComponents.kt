@@ -65,7 +65,7 @@ import androidx.compose.foundation.combinedClickable
  * is what lets `zIndex` mean something: the transparent scrim and the bubble live in the
  * same layer, exactly as upstream's `u-overlay` (10070) and bubble (10071) do.
  */
-private object UPWindowOriginPositionProvider : PopupPositionProvider {
+internal object UPWindowOriginPositionProvider : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
