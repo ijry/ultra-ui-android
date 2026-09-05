@@ -39,6 +39,24 @@ class UPScreenshotContentTest {
 
     private fun IntRange.midpoint(): Int = (first + last) / 2
 
+    /** Sorts and unions overlapping or near-touching ranges, so glyphs count once. */
+    private fun List<IntRange>.mergeAdjacent(gap: Int): List<IntRange> {
+        if (isEmpty()) return emptyList()
+        val sorted = sortedBy { it.first }
+        val merged = ArrayList<IntRange>()
+        var current = sorted.first()
+        for (range in sorted.drop(1)) {
+            current = if (range.first - current.last <= gap) {
+                current.first..Math.max(current.last, range.last)
+            } else {
+                merged += current
+                range
+            }
+        }
+        merged += current
+        return merged
+    }
+
     /** `Modifier.padding(16.dp)` in the previews, at the 2.625x density they render at. */
     private val PREVIEW_PADDING_PX = 42
 
@@ -339,6 +357,125 @@ class UPScreenshotContentTest {
         assertTrue(
             "glyph should sit in the middle third of the slide, got $glyph in $slide",
             slide.middleThird().contains(glyph.centre()),
+        )
+    }
+
+    @Test
+    fun lineProgressFillsExactlyItsPercentage() {
+        val reference = UPScreenshotReference.load("u-line and circle progress")
+
+        // Four bars at 0 / 50 / 100 / 65-from-right. The unfilled groove keeps #ebeef5,
+        // so a 100% bar has no groove left and a 0% bar has no fill.
+        val grooves = reference.rowBandsOf("ebeef5")
+        val fills = reference.rowBandsOf("2979ff")
+        assertEquals("expected a groove on the 0/50/65 bars, got $grooves", 3, grooves.size)
+        assertEquals("expected a fill on the 50/100/65 bars, got $fills", 3, fills.size)
+
+        val available = reference.width - 2 * PREVIEW_PADDING_PX
+        // Bar 1 (0%): groove spans the full width, no fill on that row.
+        val zeroGroove = requireNotNull(reference.widestRunInRow("ebeef5", grooves[0].midpoint()))
+        assertRatio("0% groove", zeroGroove.last - zeroGroove.first + 1, available, 1.0, tolerance = 0.02)
+        // Bar 2 (50%): fill and groove split the width down the middle.
+        val halfFill = requireNotNull(reference.widestRunInRow("2979ff", fills[0].midpoint()))
+        assertRatio("50% fill", halfFill.last - halfFill.first + 1, available, 0.5, tolerance = 0.03)
+        // Bar 3 (100%): the fill takes everything, so no groove row lines up with it.
+        val fullFill = requireNotNull(reference.widestRunInRow("2979ff", fills[1].midpoint()))
+        assertRatio("100% fill", fullFill.last - fullFill.first + 1, available, 1.0, tolerance = 0.02)
+        // Bar 4 (65%, fromRight): the fill hugs the right edge instead of the left.
+        val rightFill = requireNotNull(reference.widestRunInRow("2979ff", fills[2].midpoint()))
+        assertRatio("65% fill", rightFill.last - rightFill.first + 1, available, 0.65, tolerance = 0.03)
+        assertTrue(
+            "fromRight should anchor the fill to the right edge, got $rightFill",
+            rightFill.last >= reference.width - PREVIEW_PADDING_PX - 4,
+        )
+        assertTrue("fromRight should leave a gap on the left", rightFill.first > PREVIEW_PADDING_PX * 4)
+    }
+
+    @Test
+    fun circleProgressLeavesAnUnfilledArcBelowOneHundred() {
+        val reference = UPScreenshotReference.load("u-line and circle progress")
+
+        // Two rings: 30% keeps a #c8c8c8 remainder, 100% is entirely #19be6b.
+        val ring = reference.rowBandsOf("19be6b").last()
+        val remainder = reference.rowBandsOf("c8c8c8").last()
+        assertTrue("the two rings should share a row band", remainder.first in (ring.first - 8)..(ring.last))
+
+        val filledColumns = reference.columnBandsOf("19be6b", ring).filter { it.last - it.first > 20 }
+        val remainderColumns = reference.columnBandsOf("c8c8c8", ring).filter { it.last - it.first > 20 }
+        assertEquals("expected both rings to show progress, got $filledColumns", 2, filledColumns.size)
+        assertEquals("only the 30% ring keeps a remainder, got $remainderColumns", 1, remainderColumns.size)
+        // The remainder belongs to the left-hand ring, and the right one is fully filled.
+        assertTrue(
+            "the remainder should sit on the first ring: $remainderColumns vs $filledColumns",
+            remainderColumns.single().first < filledColumns.last().first,
+        )
+    }
+
+    @Test
+    fun switchAndRateSeparateSelectedFromUnselected() {
+        val reference = UPScreenshotReference.load("u-selection switch and rate")
+
+        // Row one: `modelValue = false` leaves a white track, `true` paints activeColor.
+        // Only one switch is on, so the primary colour forms a single cluster up there.
+        val switchRows = 0 until reference.height / 3
+        val onTrack = reference.columnBandsOf("2979ff", switchRows).filter { it.last - it.first > 20 }
+        assertEquals("expected exactly one switch to be on, got $onTrack", 1, onTrack.size)
+        assertTrue("the on switch should be the right-hand one", onTrack.single().first > reference.width / 2)
+
+        // Row two: three rate controls of five stars each — 0, 2.5 with allowHalf, then 5.
+        val rateRows = reference.rowBandsOf("ff9f0a").single()
+        val lit = reference.columnBandsOf("ff9f0a", rateRows)
+        val dim = reference.columnBandsOf("c8c9cc", rateRows)
+        // Merge across both palettes so the glyphs are counted, not the colour runs: a
+        // half star is one glyph carrying both colours and must not count twice.
+        val stars = (lit + dim).mergeAdjacent(gap = 10)
+        assertEquals("expected fifteen star glyphs, got ${stars.size}: $stars", 15, stars.size)
+
+        fun litWithin(star: IntRange) = lit.any { it.first >= star.first && it.last <= star.last }
+        fun dimWithin(star: IntRange) = dim.any { it.first >= star.first && it.last <= star.last }
+
+        // modelValue = 0: nothing lit.
+        assertTrue("the first control should be empty", stars.take(5).none(::litWithin))
+        // modelValue = 5: nothing left dim.
+        assertTrue("the last control should be full", stars.takeLast(5).none(::dimWithin))
+        // modelValue = 2.5 with allowHalf: two solid, one split, two empty.
+        val middle = stars.subList(5, 10)
+        assertTrue("stars 1-2 of the half control should be lit", middle.take(2).all(::litWithin))
+        assertTrue("star 3 should carry both colours", litWithin(middle[2]) && dimWithin(middle[2]))
+        assertTrue("stars 4-5 of the half control should be empty", middle.drop(3).none(::litWithin))
+        // ...and the lit part of the split glyph really is about half of it.
+        val split = middle[2]
+        val litPart = requireNotNull(lit.firstOrNull { it.first >= split.first && it.last <= split.last })
+        assertRatio("half star fill", litPart.last - litPart.first + 1, split.last - split.first + 1, 0.5, tolerance = 0.08)
+    }
+
+    @Test
+    fun checkboxAndRadioPaintOnlyTheCheckedMarks() {
+        val reference = UPScreenshotReference.load("u-checkbox and radio placements")
+
+        // activeColor fills a checked mark; inactiveColor only outlines an unchecked one,
+        // so the checked marks are solid blocks and far fewer than the outlines.
+        assertTrue("no checked mark found", reference.countOf("2979ff") > 500)
+        assertTrue("no unchecked outline found", reference.countOf("c8c9cc") > 200)
+        assertTrue(
+            "labels should dominate the ink, got ${reference.countOf("303133")}",
+            reference.countOf("303133") > reference.countOf("2979ff"),
+        )
+    }
+
+    @Test
+    fun iconLabelsKeepTheirPerIconColour() {
+        val reference = UPScreenshotReference.load("u-icon labels")
+
+        // Three coloured icons plus the default label colour: an icon font that failed to
+        // load would leave the label text but drop every glyph colour.
+        for (color in listOf("19be6b", "ff9900", "2979ff")) {
+            assertTrue("icon colour $color missing", reference.contains(color))
+        }
+        assertTrue("label colour missing", reference.contains("606266"))
+        assertTrue(
+            "expected antialiased glyph edges, got ${reference.antialiasedFraction()}",
+            reference.antialiasedFraction() > 0.004,
         )
     }
 
