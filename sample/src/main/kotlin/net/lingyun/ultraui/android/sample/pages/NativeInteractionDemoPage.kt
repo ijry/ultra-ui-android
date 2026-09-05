@@ -41,7 +41,9 @@ import net.lingyun.ultraui.android.components.UPDropdownProps
 import net.lingyun.ultraui.android.components.UPNoticeBar
 import net.lingyun.ultraui.android.components.UPNoticeBarProps
 import net.lingyun.ultraui.android.components.UPNotify
+import net.lingyun.ultraui.android.components.UPNotifyHost
 import net.lingyun.ultraui.android.components.UPNotifyProps
+import net.lingyun.ultraui.android.components.rememberUPNotifyController
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.sample.DemoSection
@@ -54,6 +56,7 @@ public fun NativeInteractionDemoPage(onBack: () -> Unit, modifier: Modifier = Mo
     var alertVisible by remember { mutableStateOf(true) }
     var actionSheetVisible by remember { mutableStateOf(false) }
     var notifyVisible by remember { mutableStateOf(true) }
+    val notifyController = rememberUPNotifyController()
     var collapseValue: UPRawValue by remember { mutableStateOf(listOf<UPRawValue>("one")) }
     var dropdownValue: UPRawValue by remember { mutableStateOf("all") }
 
@@ -130,6 +133,18 @@ public fun NativeInteractionDemoPage(onBack: () -> Unit, modifier: Modifier = Mo
                                 eventText = "通知：打开"
                             },
                         )
+                    }
+                }
+
+                DemoSection(title = "通知（ref 调用）") {
+                    // `u-notify` upstream is driven through a ref; the four theme
+                    // shortcuts each take just a message.
+                    UPNotifyHost(notifyController, onClose = { eventText = "通知：关闭" })
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DemoActionButton(text = "成功", onClick = { notifyController.success("已保存") })
+                        DemoActionButton(text = "警告", onClick = { notifyController.warning("请检查网络") })
+                        DemoActionButton(text = "失败", onClick = { notifyController.error("保存失败") })
+                        DemoActionButton(text = "关闭", onClick = { notifyController.close() })
                     }
                 }
 

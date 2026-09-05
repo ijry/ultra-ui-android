@@ -1,8 +1,11 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,7 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -72,34 +77,95 @@ public fun UPNotify(
         upTypeColor(type, UPTheme.Primary)
     }
     val textColor = UPColor.parse(props.color, Color.White)
-    val topPadding = upRawDp(props.top, 0.dp) + if (props.safeAreaInsetTop) 24.dp else 0.dp
+    val topOffset = upRawDp(props.top, 0.dp)
+    val fontSize = props.fontSize.upTextUnitOr(15.sp)
+    // `<u-transition mode="slide-down">`: the banner drops in from above the top edge.
+    // Like `u-alert`, `entered` starts settled so the screenshot references (frame 0) keep
+    // showing the banner; only a later message animates.
+    var entered by remember(props.message) { mutableStateOf(true) }
+    LaunchedEffect(props.message) { entered = true }
+    val progress by animateFloatAsState(
+        targetValue = if (entered && visible) 1f else 0f,
+        animationSpec = tween(upTransitionDuration(null)),
+        label = "up-notify-slide",
+    )
+    val (_, offsetYFraction) = upTransitionOffsetFraction("slide-down")
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = topPadding)
-            .background(background, RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp))
+            .padding(top = topOffset)
+            .graphicsLayer { translationY = offsetYFraction * (1f - progress) * size.height }
+            .background(background)
             .applyUPResolvedStyle(style)
             .upTestTag("notify")
-            .upClickable(enabled = onClick != null, onClick = { onClick?.invoke() })
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .upClickable(enabled = onClick != null, onClick = { onClick?.invoke() }),
     ) {
-        BasicText(
-            props.message,
-            modifier = Modifier.weight(1f),
-            style = TextStyle(color = textColor, fontSize = props.fontSize.upTextUnitOr(15.sp)),
-        )
-        if (onClose != null) {
-            UPIcon(
-                props = UPIconProps(name = "close", size = 16, color = props.color),
-                modifier = Modifier.upTestTag("notify-close"),
-                onClick = { dismiss() },
-                diagnostics = diagnostics,
+        // `<u-status-bar v-if="tmpConfig.safeAreaInsetTop">` sits inside the coloured
+        // banner, so the tint reaches behind the status bar rather than starting below it.
+        if (props.safeAreaInsetTop) {
+            UPStatusBar(diagnostics = diagnostics)
+        }
+        Row(
+            // `.u-notify__warpper` centres its row; `.u-notify` pads 8px 10px.
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // `v-if="['success', 'warning', 'error'].includes(type)"`: `primary` has no glyph.
+            upNotifyIconName(type)?.let { iconName ->
+                UPIcon(
+                    props = UPIconProps(name = iconName, size = upNotifyIconSize(props.fontSize), color = props.color),
+                    modifier = Modifier.padding(end = 4.dp).upTestTag("notify-icon"),
+                    diagnostics = diagnostics,
+                )
+            }
+            BasicText(
+                props.message,
+                modifier = Modifier.upTestTag("notify-text"),
+                style = TextStyle(color = textColor, fontSize = fontSize, textAlign = TextAlign.Center),
             )
+            if (onClose != null) {
+                UPIcon(
+                    props = UPIconProps(name = "close", size = 16, color = props.color),
+                    modifier = Modifier.padding(start = 8.dp).upTestTag("notify-close"),
+                    onClick = { dismiss() },
+                    diagnostics = diagnostics,
+                )
+            }
         }
     }
+}
+
+/**
+ * Host for the imperative `u-notify` API: whatever [controller] currently holds is what
+ * renders, so `show()` / `success()` / `close()` drive the banner from anywhere.
+ */
+@Composable
+public fun UPNotifyHost(
+    controller: UPNotifyController,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    onComplete: (() -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+) {
+    val current by controller.current
+    val options = current ?: return
+    UPNotify(
+        props = options,
+        modifier = modifier,
+        onClick = onClick,
+        onClose = {
+            controller.close()
+            onClose?.invoke()
+        },
+        onComplete = {
+            controller.close()
+            onComplete?.invoke()
+        },
+        diagnostics = diagnostics,
+    )
 }
 
 /** Convenience overload for generated source that only supplies a message. */

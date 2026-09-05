@@ -108,7 +108,7 @@
 | 73 | 导航 | `u-navbar-mini` | `UPNavbarMini` / `UPNavbarMiniProps` | 基本完成 | 高（Props） | 迷你导航和 icon 之外，`fixed` 按 `.u-navbar-mini--fixed` 偏移 `left: 20px; top: 10px` 并提升到 `zIndex=11`、`autoBack` 在 `leftClick` 之后触发新增的 `onBack` 宿主回调（与上游先 emit 再 `navigateBack` 的顺序一致），均有真机断言。降级：`position: fixed` 的实际定位由宿主布局决定。 |
 | 74 | 通知与状态 | `u-no-network` | — | 未开始 | 暂无 | 无网络状态页待实现。 |
 | 75 | 通知与状态 | `u-notice-bar` | `UPNoticeBar` / `UPNoticeBarProps` | 基本完成 | 高（Props） | 通知文字、方向和点击之外：`direction="row"` 按 `t = s / v` 实现真实横向跑马灯（文字从右边缘进、越过左边缘出，`speed` 为每秒像素数，宽度按实测值算）；`direction="column"` 或 `step=true` 走逐条轮播，`duration` 作为切换间隔并循环；`disableTouch=false` 时可上下拖动翻页，均有真机断言。 |
-| 76 | 原生交互 | `u-notify` | `UPNotify` / `UPNotifyProps` | 基础可用 | 中 | 顶部通知基础展示可用；全局 host 生命周期待标准化。 |
+| 76 | 原生交互 | `u-notify` | `UPNotify` / `UPNotifyProps` | 基本完成 | 高（Props） | 顶部通知本轮补齐三处与上游的差距：新增 `UPNotifyController` + `UPNotifyHost` 复刻 ref 调用方式（`show(options)` 每次从默认值重新合并，因而不会继承上次调用的覆盖项——对应上游「避免多次调用造成混乱」的注释，另有 `primary`/`success`/`warning`/`error` 四个只收 message 的快捷方法与 `close()`）；`icon()` 的图标表按主题生效（`primary` 无图标），字号按 `1.3 × fontSize` 放大；`safeAreaInsetTop` 的状态栏占位放在**着色横幅内部**（上游 `<u-status-bar>` 就在 `.u-notify` 里），因而底色延伸到状态栏后面；文案按 `.u-notify__warpper` 居中，内边距对齐 `8px 10px`，并按 `<u-transition mode="slide-down">` 从上方滑入。有单测与真机断言。 |
 | 77 | 内容与解析 | `u-novel-reader` | — | 未开始 | 暂无 | 小说阅读器业务组件，不纳入当前基础组件批次。 |
 | 78 | 数值与时间 | `u-number-box` | `UPNumberBox` / `UPNumberBoxProps` | 基本完成 | 高（Props） | 步进、范围、精度、禁用和受控值已有测试；`longPress` 按上游时序实现长按连续加减（按住 600ms 进入长按、之后每 250ms 步进一次，松手时 `@tap` 仍照常再走一次），有真机断言。降级：`cursorSpacing` 是 uni-app 的键盘避让提示，Android 由 `windowSoftInputMode` 处理，记为按设计不生效。 另补齐 `name` 与 `iconStyle`：`change` 事件改为上游的 `{ value, name, type }` 形状（`type` 只在点击加减时有值，手动输入为空，对应上游「手动输入不支持」），新增 `onFocus`/`onBlur` 也带上 `name`，失焦时空输入按上游强制回到 `min`；`iconStyle` 同时作用于加号与减号图标。均有真机断言。 |
 | 79 | 键盘与输入 | `u-number-keyboard` | — | 未开始 | 暂无 | 数字键盘待复刻。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 78 |
-| 基础可用 | 12 |
+| 基本完成 | 79 |
+| 基础可用 | 11 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -205,9 +205,9 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 281 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 284 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 12 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-back-top`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **仍标「基础可用」的 11 行**：这些行的未读字段已为 0，剩下的差距集中在窗口级弹层（`u-popover`、`u-tooltip`）、宿主滚动回传（`u-sticky`、`u-back-top`）与滚轮视觉（`u-picker-column`）三类，需要先补基础设施再逐个收口。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,10 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **281 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **284 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-notify` 新增 3 项回归，覆盖四主题图标表（`primary` 无图标）、`safeAreaInsetTop` 的状态栏
+占位落在横幅内部、`UPNotifyController` 驱动 `UPNotifyHost` 并自行关闭。再往前一批为
 `u-card` 新增 3 项回归，覆盖三个分区事件各自回传 `index`、`showHead`/`showFoot` 只看开关、
 空脚部不占内边距。再往前一批为
 `u-index-list` 的索引条交互新增 5 项、移除 1 项过时用例（`UPIndexScrollBehaviorTest` 6→10 项），
@@ -363,7 +365,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 12 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。仍有 11 行标注「基础可用」，其未读字段清单见下一节；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -561,7 +563,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 12 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 11 行。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

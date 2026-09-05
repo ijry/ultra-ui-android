@@ -413,6 +413,55 @@ class UPInertFieldBehaviorTest {
     }
 
     @Test
+    fun notifyShowsATypeGlyphForEveryThemeButPrimary() {
+        composeRule.setContent {
+            UPNotify(UPNotifyProps(message = "已保存", type = "success", duration = -1))
+        }
+        node("up-notify-icon").assertExists()
+
+        composeRule.setContent {
+            UPNotify(UPNotifyProps(message = "提示", type = "primary", duration = -1))
+        }
+        // `icon()` returns undefined for `primary`, so the template renders no glyph.
+        node("up-notify-icon").assertDoesNotExist()
+        node("up-notify-text").assertTextEquals("提示")
+    }
+
+    @Test
+    fun notifySafeAreaInsetTopTintsBehindTheStatusBar() {
+        composeRule.setContent {
+            UPNotify(UPNotifyProps(message = "提示", duration = -1, safeAreaInsetTop = true))
+        }
+        // `<u-status-bar>` sits inside the coloured banner, not above it.
+        node("up-status-bar").assertExists()
+
+        composeRule.setContent {
+            UPNotify(UPNotifyProps(message = "提示", duration = -1))
+        }
+        node("up-status-bar").assertDoesNotExist()
+    }
+
+    @Test
+    fun theNotifyControllerDrivesTheHostAndClosesItself() {
+        lateinit var controller: UPNotifyController
+        composeRule.setContent {
+            controller = rememberUPNotifyController()
+            UPNotifyHost(controller)
+        }
+
+        // Nothing is shown until the ref API is called.
+        node("up-notify").assertDoesNotExist()
+
+        composeRule.runOnIdle { controller.error("失败") }
+        node("up-notify").assertExists()
+        node("up-notify-text").assertTextEquals("失败")
+        node("up-notify-icon").assertExists()
+
+        composeRule.runOnIdle { controller.close() }
+        node("up-notify").assertDoesNotExist()
+    }
+
+    @Test
     fun theSelectTriggerKeepsItsChevronAndOptionsRemainTappable() {
         var selected: UPRawValue = null
         composeRule.setContent {
