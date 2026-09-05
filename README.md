@@ -37,12 +37,13 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 ./gradlew :ultra-ui:testDebugUnitTest :sample:assembleDebug --console=plain
 ```
 
-三个核查脚本在字段层面对照上游，有问题时以退出码 1 失败：
+核查脚本在字段与像素层面对照上游，有问题时以退出码 1 失败：
 
 ```bash
-python3 tools/find_unread_props.py       # 声明了但组件从不读取的字段（当前 0 个）
-python3 tools/compare_uview_defaults.py  # 默认值漂移（当前 0 处未解释漂移）
-python3 tools/audit_status_claims.py     # 进度文档的标注是否有证据支撑（当前 0 行偏乐观）
+python3 tools/find_unread_props.py               # 声明了但组件从不读取的字段（当前 0 个）
+python3 tools/compare_uview_defaults.py          # 默认值漂移（当前 0 处未解释漂移）
+python3 tools/audit_status_claims.py             # 进度文档的标注是否有证据支撑（当前 0 行偏乐观）
+python3 tools/inspect_screenshot.py --list       # 截图参考图的配色直方图 / 字形字符画
 ```
 
 ## 示例导航
