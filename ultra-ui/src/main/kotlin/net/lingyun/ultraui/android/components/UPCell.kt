@@ -70,7 +70,17 @@ public fun UPCell(
         if (left != null) {
             Row(content = left)
         } else if (props.icon.isNotEmpty()) {
-            UPIcon(UPIconProps(name = props.icon, color = iconColor.toHexString(), size = 20))
+            // `<up-icon :custom-style="iconStyle">`; upstream also scales the glyph with
+            // `size === 'large' ? 22 : 18`.
+            UPIcon(
+                UPIconProps(
+                    name = props.icon,
+                    color = iconColor.toHexString(),
+                    size = if (props.size == "large") 22 else 18,
+                    customStyle = props.iconStyle,
+                ),
+                diagnostics = diagnostics,
+            )
         }
         if (props.required) {
             BasicText("*", style = TextStyle(color = UPTheme.Error, fontSize = 15.sp))
@@ -91,11 +101,31 @@ public fun UPCell(
             if (value.isNotEmpty()) {
                 BasicText(value, style = TextStyle(color = UPTheme.Content, fontSize = 14.sp))
             }
+            // `<up-icon :custom-style="rightIconStyle" :color="disabled ? cellDisabledColor : 'info'"
+            // :size="size === 'large' ? 18 : 16">` for both the arrow and a custom right icon.
+            val rightIconColor = if (props.disabled) UPTheme.Disabled else UPTheme.Info
+            val rightIconSize = if (props.size == "large") 18 else 16
             if (props.isLink || arrow.isNotEmpty()) {
                 val iconName = if (arrow.isEmpty()) "arrow-right" else "arrow-$arrow"
-                UPIcon(UPIconProps(name = iconName, color = UPTheme.Tips.toHexString(), size = 18))
+                UPIcon(
+                    UPIconProps(
+                        name = iconName,
+                        color = rightIconColor.toHexString(),
+                        size = rightIconSize,
+                        customStyle = props.rightIconStyle,
+                    ),
+                    diagnostics = diagnostics,
+                )
             } else if (props.rightIcon.isNotEmpty()) {
-                UPIcon(UPIconProps(name = props.rightIcon, color = UPTheme.Tips.toHexString(), size = 18))
+                UPIcon(
+                    UPIconProps(
+                        name = props.rightIcon,
+                        color = rightIconColor.toHexString(),
+                        size = rightIconSize,
+                        customStyle = props.rightIconStyle,
+                    ),
+                    diagnostics = diagnostics,
+                )
             }
         }
     }

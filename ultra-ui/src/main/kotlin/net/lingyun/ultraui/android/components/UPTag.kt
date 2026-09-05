@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import net.lingyun.ultraui.android.core.UPColor
 import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
+import net.lingyun.ultraui.android.core.asFiniteFloatOrNull
+import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
@@ -36,7 +38,26 @@ public fun UPTag(
     val shapeName = upSafeEnum(props.shape, setOf("circle", "square"), "square", diagnostics, "UPTag", "shape")
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, "UPTag")
     val main = upTypeColor(type)
-    val bg = if (props.bgColor.isNotEmpty()) UPColor.parse(props.bgColor, main) else main
+    // `autoBgColor > 0 && color` derives a same-hue light background from the text colour
+    // and wins over both `bgColor` and the type colour, exactly like upstream's `style`.
+    val autoBackground = upTagAutoBackgroundColor(props.color, props.autoBgColor)
+    LaunchedEffect(props.color, props.autoBgColor, autoBackground, diagnostics) {
+        if (autoBackground == null && props.color.isNotBlank() &&
+            (props.autoBgColor.asFiniteFloatOrNull() ?: 0f) > 0f
+        ) {
+            diagnostics.report(
+                "UPTag",
+                "autoBgColor",
+                props.color,
+                "Unsupported color format for the derived background; keeping bgColor.",
+            )
+        }
+    }
+    val bg = when {
+        autoBackground != null -> UPColor.parse(autoBackground, main)
+        props.bgColor.isNotEmpty() -> UPColor.parse(props.bgColor, main)
+        else -> main
+    }
     val foreground = if (props.color.isNotEmpty()) UPColor.parse(props.color, if (props.plain) main else Color.White) else if (props.plain) main else Color.White
     val borderColor = if (props.borderColor.isNotEmpty()) UPColor.parse(props.borderColor, main) else main
     // uview treats an empty `borderRadius`/`height` as "unset" and otherwise overrides

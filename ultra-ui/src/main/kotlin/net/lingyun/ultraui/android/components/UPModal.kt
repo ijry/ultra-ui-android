@@ -1,11 +1,14 @@
 package net.lingyun.ultraui.android.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicText
@@ -18,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
@@ -64,6 +68,25 @@ public fun UPModal(
         else -> TextAlign.Center
     }
     val width = upRawDp(props.width, 325.dp).coerceAtLeast(0.dp)
+    // Upstream hands `duration` to `<u-popup>`, whose transition is `zoom` when `zoom` is
+    // set and a plain fade otherwise. The Android popup has no transition of its own, so
+    // the modal drives it here; the target has to start collapsed or `animateFloatAsState`
+    // would initialise straight to the end state and `duration` would never interpolate.
+    var entered by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+    val transitionSpec = tween<Float>(durationMillis = upModalTransitionDuration(props.duration))
+    val panelAlpha by animateFloatAsState(
+        targetValue = if (entered) 1f else 0f,
+        animationSpec = transitionSpec,
+        label = "up-modal-fade",
+    )
+    val panelScale by animateFloatAsState(
+        targetValue = if (entered || !props.zoom) 1f else 0.8f,
+        animationSpec = transitionSpec,
+        label = "up-modal-zoom",
+    )
+    // `marginTop: -${addUnit(negativeTop)}` lifts the dialog clear of the soft keyboard.
+    val negativeTop = upRawDp(props.negativeTop, 0.dp)
     val contentStyle = rememberUPResolvedStyle(props.contentStyle, diagnostics, "$ModalComponentName.contentStyle")
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, ModalComponentName)
     val confirmColor = UPColor.parse(props.confirmColor, UPTheme.Primary)
@@ -88,6 +111,12 @@ public fun UPModal(
             Column(
                 modifier = Modifier
                     .widthIn(min = width, max = width)
+                    .offset(y = -negativeTop)
+                    .graphicsLayer {
+                        alpha = panelAlpha
+                        scaleX = panelScale
+                        scaleY = panelScale
+                    }
                     .background(Color.White)
                     .applyUPResolvedStyle(contentStyle)
                     .upTestTag("modal"),

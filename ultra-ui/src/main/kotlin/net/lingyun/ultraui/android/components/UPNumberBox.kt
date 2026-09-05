@@ -2,6 +2,9 @@ package net.lingyun.ultraui.android.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.text.KeyboardOptions
@@ -37,6 +41,7 @@ import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upBooleanOrDefault
 import net.lingyun.ultraui.android.core.upIntOrDefault
 import net.lingyun.ultraui.android.core.upTestTag
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.round
@@ -138,6 +143,7 @@ public fun UPNumberBox(
                 icon = "minus",
                 disabled = false,
                 onClick = { step(NumberBoxAction.Minus) },
+                onRepeat = if (props.longPress) ({ step(NumberBoxAction.Minus) }) else null,
                 diagnostics = diagnostics,
             )
         }
@@ -192,6 +198,7 @@ public fun UPNumberBox(
                 icon = "plus",
                 disabled = false,
                 onClick = { step(NumberBoxAction.Plus) },
+                onRepeat = if (props.longPress) ({ step(NumberBoxAction.Plus) }) else null,
                 diagnostics = diagnostics,
             )
         }
@@ -315,14 +322,46 @@ private fun NumberBoxButton(
     icon: String,
     disabled: Boolean,
     onClick: () -> Unit,
+    onRepeat: (() -> Unit)?,
     diagnostics: UPCompatibilityDiagnostics,
 ) {
+    // `longPress` wires `@touchstart="onTouchStart"` alongside `@tap`: holding for 600ms
+    // enters the long-press state and then steps every 250ms until release. Upstream's
+    // `@tap` still fires on release, so a long hold ends with one extra step there too.
+    val holdToRepeat = if (onRepeat == null || disabled) {
+        Modifier
+    } else {
+        Modifier.pointerInput(onRepeat) {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                var repeats = 0
+                while (true) {
+                    val delayMillis = if (repeats == 0) {
+                        UPNumberBoxLongPressDelayMillis
+                    } else {
+                        UPNumberBoxLongPressIntervalMillis
+                    }
+                    // A non-null result means the pointer went up or the gesture was
+                    // cancelled; only a timeout counts as "still held".
+                    val lifted = withTimeoutOrNull(delayMillis) {
+                        waitForUpOrCancellation()
+                        true
+                    }
+                    if (lifted != null) break
+                    onRepeat()
+                    repeats++
+                }
+            }
+        }
+    }
     Box(
-        modifier = modifier.upClickable(
-            enabled = !disabled,
-            role = Role.Button,
-            onClick = onClick,
-        ),
+        modifier = modifier
+            .then(holdToRepeat)
+            .upClickable(
+                enabled = !disabled,
+                role = Role.Button,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         UPIcon(

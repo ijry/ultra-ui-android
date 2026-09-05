@@ -60,8 +60,16 @@ public fun UPBadge(
         val shape = if (shapeName == "circle" || shapeName == "dot") androidx.compose.foundation.shape.RoundedCornerShape(50) else androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
         // uview applies `customStyle` to the badge itself (u-tabbar-item passes
         // `badgeStyle` through here to nudge its position), not to the wrapper.
+        // `badgeStyle` turns `offset` into `top`/`right` insets, but only for an
+        // absolutely positioned badge; `offset[1] || offset[0]` mirrors upstream's
+        // fall-through so a single entry drives both edges.
+        val offsets = upBadgeOffsetPair(props.absolute, props.offset)
+        val offsetPadding = offsets?.let { (top, end) ->
+            Modifier.padding(top = upRawDp(top, 0.dp), end = upRawDp(end, 0.dp))
+        } ?: Modifier
         val badge = Modifier
             .align(if (props.absolute) Alignment.TopEnd else Alignment.CenterEnd)
+            .then(offsetPadding)
             .padding(2.dp)
             .background(if (props.inverted) Color.Transparent else base, shape)
             .then(if (props.inverted) Modifier.border(1.dp, base, shape) else Modifier)

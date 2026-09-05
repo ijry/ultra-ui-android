@@ -54,6 +54,7 @@ KNOWN_INERT: dict[str, str] = {
     "Input.adjustPosition": "uni-app pushes the page up; Android uses windowSoftInputMode",
     "Input.autoBlur": "uni-app App 3.0.0+ only (仅App3.0.0+有效)",
     "Input.cursorSpacing": "uni-app keyboard spacing hint; no Compose equivalent",
+    "NumberBox.cursorSpacing": "uni-app keyboard spacing hint; no Compose equivalent",
     "Input.disableDefaultPadding": "wechat + type=textarea only (仅微信小程序)",
     "Input.fixed": "mini-program position:fixed hint (微信/百度/字节/QQ)",
     "Input.holdKeyboard": "wechat mini-program only (微信小程序有效)",
@@ -102,6 +103,14 @@ KNOWN_INERT: dict[str, str] = {
     # u-form declares borderBottom but only a dead propsChange computed exposes it;
     # u-form-item never reads the parent value, so the flag stays inert.
     "Form.borderBottom": "upstream u-form-item never reads the parent flag",
+    # Declared upstream but never read there either: u-radio.vue has no `this.color`,
+    # u-radio-group.vue/u-checkbox-group.vue never touch `name`/`label`, and neither
+    # appears in the `parentData` keys the children copy from their group. Implementing
+    # them on Android would invent behaviour uview-plus does not have.
+    "Radio.color": "upstream u-radio.vue never reads the prop",
+    "RadioGroup.label": "upstream u-radio-group.vue never renders the prop",
+    "RadioGroup.name": "upstream u-radio-group.vue never reads the prop",
+    "CheckboxGroup.name": "upstream u-checkbox-group.vue never reads the prop",
 }
 
 

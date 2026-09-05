@@ -41,7 +41,7 @@
 | 6 | 媒体与内容 | `u-avatar` | `UPAvatar` / `UPAvatarProps` | 基本完成 | 高（Props） | 图片、文字、图标和形状已有 Compose 实现与测试。降级：`randomBgColor` 未随机取色，`colorIndex` 缺省固定取第 0 号色（上游 `''` 表示随机），以保证截图可复现。 |
 | 7 | 媒体与内容 | `u-avatar-group` | `UPAvatarGroup` / `UPAvatarGroupProps` | 基本完成 | 高（Props） | 头像组基础布局已实现；溢出和间距视觉仍需上游对照。 |
 | 8 | 原生交互 | `u-back-top` | `UPBackTop` / `UPBackTopProps` | 基础可用 | 中 | 返回顶部基础行为；父级滚动容器绑定仍需标准化。 |
-| 9 | 基础展示 | `u-badge` | `UPBadge` / `UPBadgeProps` | 基本完成 | 高（Props） | 类型、颜色、徽标位置和最大值已有实现。 |
+| 9 | 基础展示 | `u-badge` | `UPBadge` / `UPBadgeProps` | 基本完成 | 高（Props） | 类型、颜色、徽标位置和最大值已有实现；`offset` 在 `absolute=true` 时按 `[top, right]` 内推徽标（只给一个值时两边同用），有真机断言。 |
 | 10 | 原生能力 | `u-barcode` | — | 未开始 | 暂无 | 条形码生成，待接入 Android 原生/成熟编码库。 |
 | 11 | 布局 | `u-box` | — | 未开始 | 暂无 | 通用容器目录，待确认上游公开 Props 后实现。 |
 | 12 | 基础展示 | `u-button` | `UPButton` / `UPButtonProps` | 基本完成 | 高（Props） | `type="primary"`、形状、加载态、图标和禁用态已有测试。 |
@@ -52,10 +52,10 @@
 | 17 | 基础展示 | `u-card` | `UPCard` / `UPCardProps` | 基础可用 | 中 | 卡片基础样式和插槽容器已实现；细节视觉待对照。 |
 | 18 | 选择与日期 | `u-cascader` | `UPCascader` / `UPCascaderProps` | 基础可用 | 中 | `data` 多级路径、value/label/children key 与 change/confirm 基础事件已支持；弹层动画和复杂 header 尚未完整复刻。 |
 | 19 | 导航 | `u-cate-tab` | — | 未开始 | 暂无 | 分类导航，待建立横向/纵向布局契约。 |
-| 20 | 基础展示 | `u-cell` | `UPCell` / `UPCellProps` | 基本完成 | 高（Props） | 标题、描述、图标、箭头和点击行为已有测试。 |
+| 20 | 基础展示 | `u-cell` | `UPCell` / `UPCellProps` | 基本完成 | 高（Props） | 标题、描述、图标、箭头和点击行为已有测试；`iconStyle`/`rightIconStyle` 分别作用于左图标与右侧箭头，并按 `size="large"` 切换 22/18 与 18/16 两档字号，禁用态右图标改用禁用色，均有真机断言。 |
 | 21 | 基础展示 | `u-cell-group` | `UPCellGroup` / `UPCellGroupProps` | 基本完成 | 高（Props） | 分组容器和边界样式已有实现。 |
 | 22 | 选择 | `u-checkbox` | `UPCheckbox` / `UPCheckboxProps` | 基本完成 | 高（Props） | 受控值、形状、颜色、标签和组上下文已有测试。 |
-| 23 | 选择 | `u-checkbox-group` | `UPCheckboxGroup` / `UPCheckboxGroupProps` | 基本完成 | 高（Props） | 多选组受控值和布局已有测试。 |
+| 23 | 选择 | `u-checkbox-group` | `UPCheckboxGroup` / `UPCheckboxGroupProps` | 基本完成 | 高（Props） | 多选组受控值和布局已有测试。降级：`name` 上游 `u-checkbox-group.vue` 自身从不读取（`change` 事件回传的是子项的 `name`），Android 同样保留字段但不生效。 |
 | 24 | 选择 | `u-choose` | — | 未开始 | 暂无 | 选择组合控件，待核对上游当前 API。 |
 | 25 | 布局与进度 | `u-circle-progress` | `UPCircleProgress` / `UPCircleProgressProps` | 基本完成 | 高（Props） | 环形进度、颜色、宽度和文字已有实现。 |
 | 26 | 原生能力 | `u-city-locate` | — | 未开始 | 暂无 | 城市定位，涉及定位权限和系统服务。 |
@@ -103,16 +103,16 @@
 | 68 | 通知与状态 | `u-loadmore` | `UPLoadmore` / `UPLoadmoreProps` | 基本完成 | 高（Props） | 加载/没有更多/点击加载状态已有实现。 |
 | 69 | 内容与解析 | `u-markdown` | — | 未开始 | 暂无 | Markdown 渲染待选定 Android 原生解析方案。 |
 | 70 | 键盘与输入 | `u-message-input` | — | 未开始 | 暂无 | 消息输入框组合控件，待复用输入和附件能力。 |
-| 71 | 原生交互 | `u-modal` | `UPModal` / `UPModalProps` | 基本完成 | 高（Props） | 原生 Dialog/Compose 弹窗、确认取消和样式已有实现。 |
-| 72 | 导航 | `u-navbar` | `UPNavbar` / `UPNavbarProps` | 基础可用 | 中 | 安全区、标题和 icon 已有；fixed/statusBarBgColor 等平台字段仍有降级。 |
-| 73 | 导航 | `u-navbar-mini` | `UPNavbarMini` / `UPNavbarMiniProps` | 基础可用 | 中 | 迷你导航和 icon 已有；自动返回由宿主处理。 |
+| 71 | 原生交互 | `u-modal` | `UPModal` / `UPModalProps` | 基本完成 | 高（Props） | 原生 Dialog/Compose 弹窗、确认取消和样式已有实现；`negativeTop` 以负 margin 上移弹窗避让键盘、`duration` 驱动淡入（`zoom=true` 时叠加 0.8→1 缩放），均有真机断言。差异：上游把 `duration` 透传给 `u-popup` 的过渡，Android 的 popup 无自带过渡，改由 modal 面板自身承载。 |
+| 72 | 导航 | `u-navbar` | `UPNavbar` / `UPNavbarProps` | 基本完成 | 高（Props） | 安全区、标题和 icon 之外，`border` 画 0.5px 下边框、`fixed` 提升到 `zIndex=11`（对应 `.u-navbar--fixed`）、`autoBack` 决定左键是否触发新增的 `onBack` 宿主回调，均有真机断言。降级：`position: fixed` 的实际定位由宿主布局决定；`statusBarBgColor` 上游注明仅为兼容保留（状态栏统一用 `bgColor`），Android 显式上报诊断而非静默丢弃。 |
+| 73 | 导航 | `u-navbar-mini` | `UPNavbarMini` / `UPNavbarMiniProps` | 基本完成 | 高（Props） | 迷你导航和 icon 之外，`fixed` 按 `.u-navbar-mini--fixed` 偏移 `left: 20px; top: 10px` 并提升到 `zIndex=11`、`autoBack` 在 `leftClick` 之后触发新增的 `onBack` 宿主回调（与上游先 emit 再 `navigateBack` 的顺序一致），均有真机断言。降级：`position: fixed` 的实际定位由宿主布局决定。 |
 | 74 | 通知与状态 | `u-no-network` | — | 未开始 | 暂无 | 无网络状态页待实现。 |
 | 75 | 通知与状态 | `u-notice-bar` | `UPNoticeBar` / `UPNoticeBarProps` | 基础可用 | 中 | 通知文字、方向和点击已有；真实滚动动画待补。 |
 | 76 | 原生交互 | `u-notify` | `UPNotify` / `UPNotifyProps` | 基础可用 | 中 | 顶部通知基础展示可用；全局 host 生命周期待标准化。 |
 | 77 | 内容与解析 | `u-novel-reader` | — | 未开始 | 暂无 | 小说阅读器业务组件，不纳入当前基础组件批次。 |
-| 78 | 数值与时间 | `u-number-box` | `UPNumberBox` / `UPNumberBoxProps` | 基本完成 | 高（Props） | 步进、范围、精度、禁用和受控值已有测试。 |
+| 78 | 数值与时间 | `u-number-box` | `UPNumberBox` / `UPNumberBoxProps` | 基本完成 | 高（Props） | 步进、范围、精度、禁用和受控值已有测试；`longPress` 按上游时序实现长按连续加减（按住 600ms 进入长按、之后每 250ms 步进一次，松手时 `@tap` 仍照常再走一次），有真机断言。降级：`cursorSpacing` 是 uni-app 的键盘避让提示，Android 由 `windowSoftInputMode` 处理，记为按设计不生效。 |
 | 79 | 键盘与输入 | `u-number-keyboard` | — | 未开始 | 暂无 | 数字键盘待复刻。 |
-| 80 | 原生交互 | `u-overlay` | `UPOverlay` / `UPOverlayProps` | 基本完成 | 高（Props） | 原生 Compose 遮罩、透明度和点击关闭已有实现。 |
+| 80 | 原生交互 | `u-overlay` | `UPOverlay` / `UPOverlayProps` | 基本完成 | 高（Props） | 原生 Compose 遮罩、透明度和点击关闭已有实现；`duration` 驱动 `opacity` 从 0 淡入（`duration=0` 首帧即最终不透明度），有真机断言。 |
 | 81 | 选择与日期 | `u-pagination` | `UPPagination` / `UPPaginationProps` | 基本完成 | 高（Props） | `layout` 按 `total, prev, pager, next, sizes` 逐段解析并按序渲染，`pageSize`/`total` 驱动完整页码算法（`pagerCount` 限定窗口、省略号补位）、`buttonBgColor`/`buttonBorderColor` 作用于前后翻页按钮、`hideOnSinglePage` 单页时整体隐藏、`pageSizes` 提供每页条数轮转并回传 `onUpdatePageSize`/`onSizeChange`，均有真机断言。刻意差异：`hideOnSinglePage` 在上游只声明未被使用，Android 按字段语义真实实现；`sizes` 段上游是 `<select>` 下拉，Android 改为点击轮转候选值。 |
 | 82 | 内容与解析 | `u-parse` | — | 未开始 | 暂无 | HTML 富文本解析待确定原生实现边界。 |
 | 83 | 内容与解析 | `u-pdf-reader` | — | 未开始 | 暂无 | PDF 阅读器待接入 Android 原生 PDF 能力。 |
@@ -124,8 +124,8 @@
 | 89 | 媒体与内容 | `u-poster` | — | 未开始 | 暂无 | 海报生成/展示待实现。 |
 | 90 | 列表与索引 | `u-pull-refresh` | — | 未开始 | 暂无 | 下拉刷新待接入 Compose nested scroll。 |
 | 91 | 原生能力 | `u-qrcode` | — | 未开始 | 暂无 | 二维码生成/扫描待接入成熟 Android 库。 |
-| 92 | 选择 | `u-radio` | `UPRadio` / `UPRadioProps` | 基本完成 | 高（Props） | 单选形状、组上下文、颜色和标签已有测试。 |
-| 93 | 选择 | `u-radio-group` | `UPRadioGroup` / `UPRadioGroupProps` | 基本完成 | 高（Props） | 受控值、布局和组状态已有测试。 |
+| 92 | 选择 | `u-radio` | `UPRadio` / `UPRadioProps` | 基本完成 | 高（Props） | 单选形状、组上下文、颜色和标签已有测试。降级：`color` 上游 `u-radio.vue` 自身从不读取（勾选色走 `iconColor`/`activeColor`），Android 同样保留字段但不生效。 |
+| 93 | 选择 | `u-radio-group` | `UPRadioGroup` / `UPRadioGroupProps` | 基本完成 | 高（Props） | 受控值、布局和组状态已有测试。降级：`label`/`name` 上游 `u-radio-group.vue` 自身从不读取，也不在子项拉取的 `parentData` 键里，Android 同样保留字段但不生效。 |
 | 94 | 选择 | `u-rate` | `UPRate` / `UPRateProps` | 基本完成 | 高（Props） | 评分、半星、颜色、数量和点击已有实现。 |
 | 95 | 内容面板 | `u-read-more` | `UPReadMore` / `UPReadMoreProps` | 基础可用 | 中 | 高度截断和 controlled alias 已修正；真实测量和展开动画待补。 |
 | 96 | 列表与索引 | `u-refresh-virtual-list` | — | 未开始 | 暂无 | 刷新虚拟列表待结合 lazy/scroll 状态实现。 |
@@ -157,7 +157,7 @@
 | 122 | 导航 | `u-tabs` | `UPTabs` / `UPTabsProps` | 基本完成 | 高（Props） | tabs/current/change 之外，`shapeMode` 复刻 line/capsule/card/pill-arrow/tag 五种形态（card 斜切四边形、pill-arrow 箭头由 Canvas 绘制）、`activeStyle`/`inactiveStyle`/`itemStyle` 逐项应用、`lineBgSize` 区分 cover/contain/auto 下划线宽度、`duration` 驱动下划线位移动画、`iconStyle` 作用于选项图标，均有真机断言。降级：粘性吸顶需宿主滚动容器回传偏移。 |
 | 123 | 导航 | `u-tabs-item` | `UPTabsItem` / `UPTabsItemProps` | 基础可用 | 中 | 空/轻量 Props 契约、自定义内容和样式已有真机断言。 |
 | 124 | 导航 | `u-tabs-pro` | — | 未开始 | 暂无 | Pro 标签页待确认专属字段和事件。 |
-| 125 | 基础展示 | `u-tag` | `UPTag` / `UPTagProps` | 基本完成 | 高（Props） | 类型、形状、图标、关闭和颜色已有测试；`height`/`borderRadius`/`plainFill` 已生效并有真机断言（此前声明但从不读取）。`autoBgColor` 未实现。 |
+| 125 | 基础展示 | `u-tag` | `UPTag` / `UPTagProps` | 基本完成 | 高（Props） | 类型、形状、图标、关闭和颜色已有测试；`height`/`borderRadius`/`plainFill` 已生效并有真机断言（此前声明但从不读取）。`autoBgColor > 0 && color` 时按上游 `genLightColor` 的 RGB→HSL→亮度封顶 95%→HEX 流程推导同色系浅色背景（优先级高于 `bgColor` 与类型色），单测逐值对照上游输出；上游只解析 hex 与 `rgb()`/`rgba()` 并对其余格式抛错，Android 改为上报诊断并保留原背景。 |
 | 126 | 表格 | `u-td` | — | 未开始 | 暂无 | 表格单元格待随表格体系实现。 |
 | 127 | 基础展示 | `u-text` | `UPText` / `UPTextProps` | 基本完成 | 高（Props） | 文本截断、链接、前后缀图标和样式已有实现。 |
 | 128 | 键盘与输入 | `u-textarea` | `UPTextarea` / `UPTextareaProps` | 基本完成 | 高（Props） | 多行输入、字数、清除和受控值已有实现；`selectionStart`/`selectionEnd`/`cursor` 已通过 `TextFieldValue` 生效，`confirmType` 按 multiline 语义映射 IME 动作。降级字段同 `u-input`。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 54 |
-| 基础可用 | 36 |
+| 基本完成 | 56 |
+| 基础可用 | 34 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -226,12 +226,16 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **194 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **204 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+字段补齐批新增 10 项回归（`UPFieldParityBehaviorTest`），覆盖 `u-cell` 两个图标样式钩子、
+`u-modal` 的 `negativeTop` 上移、`u-navbar`/`u-navbar-mini` 的 `border`/`autoBack`/
+`statusBarBgColor` 诊断、`u-number-box` 的 `longPress` 关闭路径、`u-badge` 的绝对 `offset`，
+以及 `u-tag` 的 `autoBgColor` 推导与不可解析色诊断。这 10 项同样**只有编译级证据**
+（`compileDebugAndroidTestKotlin` 通过），按用户要求未在设备/模拟器上执行。再往前一批为
 `u-tabs`/`u-pagination`/`u-image` 新增 8 项回归（`UPTabsPaginationImageBehaviorTest`），覆盖四种
 `shapeMode` 的结构差异与下划线显隐、`activeStyle`/`itemStyle` 应用、分页 `layout` 分段渲染顺序、
 `hideOnSinglePage` 单页隐藏、`pageSizes` 点击轮转回传，以及 `loadingIcon` 在加载态的图标名。
-这 8 项**只有编译级证据**（`compileDebugAndroidTestKotlin` 通过），按用户要求未在设备/模拟器上执行。
 再往前一批为 `u-picker`/`u-datetime-picker` 的 `hasInput` 触发器与工具条插槽新增 12 项回归
 （`UPPickerInputBehaviorTest`），覆盖触发器只读与覆盖层开合、`inputProps` 覆盖生效、
 `toolbarRightSlot` 替换确认按钮、`maskStyle` 仅在显式传值时出现、`popupMode`/`maskClass`
@@ -291,12 +295,16 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：90 个已实现组件行中，**80 行证据齐备、10 行标注超出证据**。`u-tabs`、`u-pagination`、
-`u-image` 本轮补齐各自未读字段后未读数归零，并同时拥有行为测试与截图语料，因此一并从偏乐观
-清单中移出，其中 `u-tabs`、`u-pagination` 由「基础可用」升级为「基本完成」；再往前一批的
-`u-picker` 与 `u-datetime-picker`、更早的 `u-form`、`u-form-item`、`u-swiper` 也已按同样标准移出清单。
-剩余 10 行按未读字段数排序为 `u-cell`、`u-modal`、`u-navbar-mini`、`u-number-box`、`u-radio-group`
-（各 2 个）与 `u-badge`、`u-checkbox-group`、`u-overlay`、`u-radio`、`u-tag`（各 1 个）。
+当前状态：90 个已实现组件行中，**90 行证据齐备、0 行标注超出证据**，脚本首次全绿。最后 10 行
+（`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、`u-number-box`、`u-radio`、`u-radio-group`、
+`u-checkbox-group`、`u-overlay`、`u-badge`、`u-tag`）在本轮补齐了实现或登记为按设计不生效，
+其中 `u-navbar`、`u-navbar-mini` 由「基础可用」升级为「基本完成」；再往前一批的 `u-tabs`、
+`u-pagination`、`u-image`，以及更早的 `u-picker`、`u-datetime-picker`、`u-form`、`u-form-item`、
+`u-swiper` 也都按同样标准移出过清单。
+
+需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
+语料），不是「组件行为与上游完全一致」。仍有 34 行标注「基础可用」，其未读字段清单见下一节；
+另外真机测试目前只有编译级证据，视觉回归也受渲染环境限制（见下文）。
 
 > 为什么要做这件事：连续五轮工作中，每一轮都在标着「基础可用/基本完成」的组件里发现
 > **组件级不可用**缺陷——`u-picker` 列平铺导致选项无法点击、`u-swiper` 只渲染文字不显示
@@ -312,9 +320,11 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `height`/`borderRadius`/`plainFill` 已实现并有真机测试。再往前一批为 `u-swiper` 补齐 12 项行为断言
 （编译级）与 4 张截图参考图（文字页、`loading`、标题条、露边缩放），参考图总数 14 → 18。
 再往前一批为 `u-picker`/`u-datetime-picker` 的 `hasInput` 触发器、`toolbarRightSlot` 插槽与 `maskStyle`
-遮罩新增 12 项行为断言（编译级）与 3 张截图参考图，参考图总数 18 → 21。最近一批为 `u-tabs` 四种
+遮罩新增 12 项行为断言（编译级）与 3 张截图参考图，参考图总数 18 → 21。再往前一批为 `u-tabs` 四种
 `shapeMode` 与 `u-pagination` 完整 `layout` 新增 1 张截图参考图（`UPBatch9BTabsShapeScreenshot`），
-参考图总数 21 → 22。需说明的限制：
+参考图总数 21 → 22。最近一批为字段补齐批新增 10 项行为断言（编译级）与 2 张截图参考图
+（`FieldParityScreenshots`：cell/navbar/tag 与 badge 偏移/number-box），参考图总数 22 → 24。
+需说明的限制：
 本仓库的 screenshotTest 渲染环境不绘制文本与大部分填色（已对照既有 `Batch9BScreenshots`
 基线确认同样表现，非本次改动引入的回归），因此这类参考图只能作为不崩溃与布局占位证据，
 不能当作视觉回归证据。
@@ -323,8 +333,9 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 
 `tools/find_unread_props.py` 报告「声明了但组件从不读取」的 `UP*Props` 字段。这类字段是静默
 空操作：类型检查通过、Props 测试通过、截图也不变，因此既有核查手段都发现不了它。
-当前扫描结果中，`u-tabbar`、`u-tabbar-item`、`u-swiper`、`u-picker` 与 `u-datetime-picker`
-已不再出现在未读字段清单；未读字段
+当前扫描结果中，`u-tabbar`、`u-tabbar-item`、`u-swiper`、`u-picker`、`u-datetime-picker`、
+`u-tabs`、`u-pagination`、`u-image`、`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、
+`u-number-box`、`u-overlay`、`u-badge` 与 `u-tag` 已不再出现在未读字段清单；剩余未读字段
 仍需按组件逐项消化，不能仅以 Props 声明或编译通过替代行为证据。Batch 11 的两个表单组件没有新增未读字段：
 `u-form` 的 `borderBottom` 已登记为按设计不生效（上游只有一个不再被调用的 `propsChange` computed 引用它，
 `u-form-item` 从不读取父级该字段），`u-form-item` 的 `rightIcon` 上游声明后同样从未渲染——后者因为
@@ -336,8 +347,9 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：90 个 Props 类中有 **53 个字段无人读取**，另有 56 个已记录为按设计不生效
-（uni-app / 微信小程序 / nvue 专有开关，仅保留接口兼容）。已消化的批次：13 个组件曾声明
+当前状态：90 个 Props 类中有 **34 个字段无人读取**，另有 61 个已记录为按设计不生效
+（uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义，以及上游自己也从不读取的字段，
+仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的
 `offsetTop`/`customNavHeight`、`UPPicker`/`UPDatetimePicker` 的 `itemHeight`/`visibleItemCount`、
 `u-list` 的 10 个滚动与下拉刷新字段、`u-swiper` 的自动播放与循环，以及 `u-steps` 的
@@ -350,7 +362,14 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 未读数因此从 81 降到 67。最新一批把 `u-tabs` 的 7 个（`shapeMode`、`activeStyle`、`inactiveStyle`、
 `itemStyle`、`iconStyle`、`lineBgSize`、`duration`）、`u-pagination` 的 4 个（`pageSizes`、
 `buttonBgColor`、`buttonBorderColor`、`hideOnSinglePage`）与 `u-image` 的 3 个（`loadingIcon`、
-`fade`、`duration`）全部接上实现，未读数因此从 67 降到 53。
+`fade`、`duration`）全部接上实现，未读数因此从 67 降到 53。最新一批把 `u-cell` 的
+`iconStyle`/`rightIconStyle`、`u-modal` 的 `negativeTop`/`duration`、`u-navbar` 的
+`border`/`fixed`/`autoBack`、`u-navbar-mini` 的 `fixed`/`autoBack`、`u-number-box` 的
+`longPress`、`u-overlay` 的 `duration`、`u-badge` 的 `offset` 与 `u-tag` 的 `autoBgColor`
+全部接上实现；另有 5 个字段经核对上游源码后登记为按设计不生效（`u-radio.color`、
+`u-radio-group.label`/`name`、`u-checkbox-group.name` 在上游 `.vue` 里也从不被读取，
+`u-navbar.statusBarBgColor` 上游注明仅为兼容保留，`u-number-box.cursorSpacing` 属 uni-app
+键盘避让提示）。未读数因此从 53 降到 34。
 
 > 数字为何从 134 涨到 205：脚本原先把**整个文件**当作搜索范围，同文件内的兄弟组件
 > （`UPSwiper` 与 `UPCountTo` 同在 `UPStatusNumericComponents.kt`）会互相掩盖——
@@ -359,13 +378,17 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 > 「转发整个 props 对象」，从而退化为全库搜索。两处收紧后，此前被掩盖的 ~70 个字段
 > 才显形。**205 是更接近真相的数字，不是退步。**
 
-53 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
+34 这个数字应当被视为**功能缺口清单**，而不是待清理的噪音。清单里既可能是"缺特性"，
 也可能是"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。后续批次应优先
 消化本清单，而不是先增加新组件。按未读字段数排序，下一批优先目标是
-`u-navbar`（4 个）、`u-collapse-item`/`u-list`/`u-notice-bar`/`u-action-sheet`（各 3 个），
-其后是 `u-cell`、`u-modal`、`u-navbar-mini`、`u-number-box`、`u-radio-group`、`u-subsection` 等
+`u-subsection`（5 个）、`u-action-sheet`/`u-collapse-item`/`u-list`/`u-notice-bar`/`u-slider`
+（各 3 个），其后是 `u-cascader`、`u-read-more`、`u-select`、`u-skeleton`、`u-sticky` 等
 每类 2 个的组件。
+
+另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
+uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进
+`KNOWN_INERT`。凡 Android 有等价表达手段的字段一律实现，不用「平台差异」当挡箭牌。
 
 ## 默认值漂移核查
 
