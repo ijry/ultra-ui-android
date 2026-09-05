@@ -33,6 +33,7 @@ public fun UPBackTop(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     onBackToTop: (() -> Unit)? = null,
+    onScrollToTop: ((Int) -> Unit)? = null,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
 ) {
     val mode = upSafeEnum(props.mode, BackTopModes, "circle", diagnostics, BackTopComponentName, "mode")
@@ -44,9 +45,14 @@ public fun UPBackTop(
     val iconColor = UPColor.parse(props.iconStyle["color"].upStringValueOrEmpty(), UPTheme.Tips)
     val iconSize = props.iconStyle["fontSize"].upTextUnitOr(19.sp)
     val shape = if (mode == "circle") RoundedCornerShape(percent = 50) else RoundedCornerShape(4.dp)
+    // `uni.pageScrollTo({ scrollTop: 0, duration })` runs the scroll upstream. Routing the
+    // host's scroll container belongs to the caller here, so the resolved duration rides
+    // along with the callback instead of being silently dropped.
+    val scrollDuration = upBackTopScrollDurationMillis(props.duration)
     val callback: () -> Unit = {
         onClick?.invoke()
         onBackToTop?.invoke()
+        onScrollToTop?.invoke(scrollDuration)
     }
 
     Box(
@@ -56,7 +62,10 @@ public fun UPBackTop(
             .background(Color.White, shape)
             .applyUPResolvedStyle(style)
             .upTestTag("back-top")
-            .upClickable(enabled = onClick != null || onBackToTop != null, onClick = callback),
+            .upClickable(
+                enabled = onClick != null || onBackToTop != null || onScrollToTop != null,
+                onClick = callback,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Row(

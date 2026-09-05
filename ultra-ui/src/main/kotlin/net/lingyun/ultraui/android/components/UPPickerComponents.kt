@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -300,8 +301,33 @@ private fun UPPaginationButton(text: String, icon: String, enabled: Boolean, pro
 public fun UPSelect(props: UPSelectProps = UPSelectProps(), modifier: Modifier = Modifier, onUpdateCurrent: ((UPRawValue) -> Unit)? = null, onSelect: ((UPRawValue) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     var open by remember { mutableStateOf(false) }
     var current by remember(props) { mutableStateOf(props.current) }
+    // `currentLabel` finds the selected option's label; `showOptionsLabel` decides whether
+    // the trigger prints it or keeps the static `label` even after a selection.
+    val currentLabel = actionOrOptionText(
+        props.options.firstOrNull { it.upStringKeyMapOrEmpty()[props.keyName].upLooseEquals(current) },
+        props.labelName,
+        props.label,
+    )
+    // `normalizedOptionsWidth` sizes the options panel; empty leaves it to the parent.
+    val optionsWidth = upSelectOptionsWidthDp(props.optionsWidth)?.dp
     Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSelect")).upTestTag("select")) {
-        BasicText(actionOrOptionText(props.options.firstOrNull { it.upStringKeyMapOrEmpty()[props.keyName].upLooseEquals(current) }, props.labelName, props.label).ifEmpty { props.label }, modifier = Modifier.fillMaxWidth().upClickable(enabled = !props.disabled, onClick = { open = !open }).padding(12.dp).upTestTag("select-trigger"))
-        if (open) props.options.forEach { option -> BasicText(actionOrOptionText(option, props.labelName), modifier = Modifier.fillMaxWidth().upClickable(onClick = { val value = option.upStringKeyMapOrEmpty()[props.keyName]; current = value; open = false; onUpdateCurrent?.invoke(value); onSelect?.invoke(option) }).padding(12.dp).upTestTag("select-option")) }
+        BasicText(
+            upSelectTriggerText(props.showOptionsLabel, currentLabel, props.label),
+            modifier = Modifier.fillMaxWidth().upClickable(enabled = !props.disabled, onClick = { open = !open }).padding(12.dp).upTestTag("select-trigger"),
+        )
+        if (open) {
+            Column(
+                Modifier
+                    .then(if (optionsWidth != null) Modifier.width(optionsWidth) else Modifier.fillMaxWidth())
+                    .upTestTag("select-options"),
+            ) {
+                props.options.forEach { option ->
+                    BasicText(
+                        actionOrOptionText(option, props.labelName),
+                        modifier = Modifier.fillMaxWidth().upClickable(onClick = { val value = option.upStringKeyMapOrEmpty()[props.keyName]; current = value; open = false; onUpdateCurrent?.invoke(value); onSelect?.invoke(option) }).padding(12.dp).upTestTag("select-option"),
+                    )
+                }
+            }
+        }
     }
 }

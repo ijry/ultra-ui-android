@@ -169,3 +169,39 @@ fun UPMotionParitySliderScreenshot() {
         UPSlider(UPSliderProps(isRange = true, rangeValue = listOf(20, 70), showValue = true))
     }
 }
+
+@PreviewTest
+@Preview(
+    name = "tail field skeleton select readmore",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+    widthDp = 360,
+    heightDp = 320,
+)
+@Composable
+fun UPTailFieldScreenshot() {
+    Column(
+        Modifier.fillMaxSize().background(Color.White).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        UPSkeleton(
+            UPSkeletonProps(
+                rows = 3,
+                rowsWidth = listOf("100%", "80%", "40%"),
+                avatar = true,
+                avatarShape = "square",
+            ),
+        )
+        UPSelect(
+            UPSelectProps(
+                options = listOf(mapOf("id" to 1, "name" to "北京")),
+                current = 1,
+                showOptionsLabel = true,
+                optionsWidth = 160,
+            ),
+        )
+        UPReadMore(UPReadMoreProps(showHeight = 40, textIndent = "2em")) {
+            BasicText("这是一段用于验证首行缩进与收起阴影的较长内容。")
+        }
+    }
+}

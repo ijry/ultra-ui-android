@@ -3,7 +3,9 @@ package net.lingyun.ultraui.android.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
@@ -24,7 +26,13 @@ import net.lingyun.ultraui.android.core.UPCompatibilityDiagnostics
 import net.lingyun.ultraui.android.core.UPRawValue
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.core.upClickable
+import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
+
+private const val CascaderComponentName: String = "UPCascader"
+
+/** `headerDirection`: a row of tabs, or a vertical `u-steps` list for long labels. */
+internal val UPCascaderHeaderDirections: Set<String> = setOf("row", "column")
 
 @Composable
 public fun UPCascader(
@@ -43,9 +51,31 @@ public fun UPCascader(
     val columnCount = (path.size + 1)
         .coerceAtMost(props.optionsCols.rawInt(2).coerceAtLeast(1))
         .coerceAtLeast(1)
+    // `headerDirection === 'column'` swaps the horizontal tab strip for a vertical
+    // `u-steps` list, which suits long labels.
+    val headerDirection = upSafeEnum(
+        props.headerDirection,
+        UPCascaderHeaderDirections,
+        "row",
+        diagnostics,
+        CascaderComponentName,
+        "headerDirection",
+    )
+    // `:maskCloseAble` on the popup; a tap outside dismisses without confirming.
+    val dismissOnMask = props.maskCloseAble && props.closeOnClickOverlay
 
     Column(
         modifier.fillMaxWidth().background(Color.White)
+            .then(
+                if (!dismissOnMask) {
+                    Modifier
+                } else {
+                    Modifier.upClickable(enabled = true) {
+                        onCancel?.invoke()
+                        onUpdateShow?.invoke(false)
+                    }
+                },
+            )
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCascader"))
             .upTestTag("cascader"),
     ) {
@@ -63,10 +93,15 @@ public fun UPCascader(
                 onUpdateShow?.invoke(false)
             }.upTestTag("cascader-confirm"), style = TextStyle(color = UPTheme.Primary))
         }
-        Row(Modifier.fillMaxWidth()) {
+        // `headerDirection="column"` stacks the levels down the sheet instead of side by side.
+        UPCascaderLevels(vertical = headerDirection == "column") {
             repeat(columnCount) { level ->
                 val options = cascaderOptionsAt(props, path, level)
-                Column(Modifier.weight(1f).upTestTag("cascader-column-$level")) {
+                Column(
+                    Modifier
+                        .then(if (headerDirection == "column") Modifier.fillMaxWidth() else Modifier.weight(1f))
+                        .upTestTag("cascader-column-$level"),
+                ) {
                     options.forEachIndexed { optionIndex, option ->
                         val map = option.rawMap()
                         val selected = map[props.valueKey].rawEquals(path.getOrNull(level))
@@ -94,6 +129,33 @@ public fun UPCascader(
             }
         }
     }
+}
+
+/**
+ * Hosts the level columns on the axis `headerDirection` asks for. `Modifier.weight` only
+ * resolves inside the matching scope, so the branch has to wrap the whole list.
+ */
+@Composable
+private fun UPCascaderLevels(vertical: Boolean, content: @Composable UPCascaderLevelScope.() -> Unit) {
+    if (vertical) {
+        Column(Modifier.fillMaxWidth()) { UPCascaderColumnScope(this).content() }
+    } else {
+        Row(Modifier.fillMaxWidth()) { UPCascaderRowScope(this).content() }
+    }
+}
+
+/** Exposes just the `weight` both scopes share, so the level body stays written once. */
+internal interface UPCascaderLevelScope {
+    fun Modifier.weight(weight: Float): Modifier
+}
+
+private class UPCascaderRowScope(private val scope: RowScope) : UPCascaderLevelScope {
+    override fun Modifier.weight(weight: Float): Modifier = with(scope) { this@weight.weight(weight) }
+}
+
+private class UPCascaderColumnScope(private val scope: ColumnScope) : UPCascaderLevelScope {
+    // A vertically stacked level fills the width instead of sharing it.
+    override fun Modifier.weight(weight: Float): Modifier = this
 }
 
 private fun cascaderEventForPath(props: UPCascaderProps, path: List<UPRawValue>): UPCascaderEvent {

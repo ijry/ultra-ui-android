@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,6 +55,7 @@ import net.lingyun.ultraui.android.core.report
 import net.lingyun.ultraui.android.core.upClickable
 import net.lingyun.ultraui.android.core.upDoubleOrDefault
 import net.lingyun.ultraui.android.core.upIntOrDefault
+import net.lingyun.ultraui.android.core.upSafeEnum
 import net.lingyun.ultraui.android.core.upTestTag
 
 @Composable
@@ -258,12 +260,35 @@ public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorPr
 public fun UPSkeleton(props: UPSkeletonProps = UPSkeletonProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit = {}) {
     if (!props.loading) { Box(modifier.upTestTag("skeleton-content")) { content() }; return }
     val rows = props.rows.upIntOrDefault(0).coerceAtLeast(0)
+    // `.u-skeleton__wrapper__avatar--${avatarShape}` rounds the avatar placeholder.
+    val avatarShape = upSafeEnum(props.avatarShape, UPSkeletonAvatarShapes, "circle", diagnostics, "UPSkeleton", "avatarShape")
+    val avatarCorner = if (avatarShape == "square") RoundedCornerShape(4.dp) else RoundedCornerShape(percent = 50)
     Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSkeleton")).upTestTag("skeleton"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (props.avatar) Box(Modifier.size(net.lingyun.ultraui.android.core.upDimension(props.avatarSize, 32.dp)).background(Color(0xFFE6E8EB)))
+            if (props.avatar) Box(Modifier.size(net.lingyun.ultraui.android.core.upDimension(props.avatarSize, 32.dp)).background(Color(0xFFE6E8EB), avatarCorner).upTestTag("skeleton-avatar"))
             if (props.title) Box(Modifier.size(net.lingyun.ultraui.android.core.upDimension(props.titleWidth, 120.dp), net.lingyun.ultraui.android.core.upDimension(props.titleHeight, 18.dp)).background(Color(0xFFE6E8EB)))
         }
-        repeat(if (rows == 0) 3 else rows) { index -> Box(Modifier.fillMaxWidth(if (index == rows - 1 && rows > 1) .7f else 1f).height(net.lingyun.ultraui.android.core.upDimension(props.rowsHeight, 18.dp)).background(Color(0xFFE6E8EB)).alpha(if (props.animate) .8f else 1f)) }
+        val rowCount = if (rows == 0) 3 else rows
+        repeat(rowCount) { index ->
+            // `rowsArray`: a per-row width array wins, the last row falls back to 70%,
+            // and a percentage becomes a fraction of the available width.
+            val width = upSkeletonRowWidth(props.rowsWidth, index, rowCount)
+            val fraction = upSkeletonWidthFractionOrNull(width)
+            val absolute = if (fraction == null) net.lingyun.ultraui.android.core.upDimension(width, 0.dp).takeIf { it > 0.dp } else null
+            Box(
+                Modifier
+                    .then(
+                        when {
+                            absolute != null -> Modifier.width(absolute)
+                            else -> Modifier.fillMaxWidth(fraction ?: 1f)
+                        },
+                    )
+                    .height(net.lingyun.ultraui.android.core.upDimension(props.rowsHeight, 18.dp))
+                    .background(Color(0xFFE6E8EB))
+                    .alpha(if (props.animate) .8f else 1f)
+                    .upTestTag("skeleton-row-$index"),
+            )
+        }
     }
 }
 
@@ -271,9 +296,27 @@ public fun UPSkeleton(props: UPSkeletonProps = UPSkeletonProps(), modifier: Modi
 public fun UPReadMore(props: UPReadMoreProps = UPReadMoreProps(), modifier: Modifier = Modifier, onOpen: ((UPRawValue) -> Unit)? = null, onClose: ((UPRawValue) -> Unit)? = null, onUpdateModelValue: ((Boolean) -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None, content: @Composable () -> Unit) {
     var open by remember(props) { mutableStateOf(resolveReadMoreOpen(props)) }
     LaunchedEffect(props.modelValue, props.value, props.toggle) { open = resolveReadMoreOpen(props) }
+    val fontSize = net.lingyun.ultraui.android.core.upDimension(props.fontSize, 14.dp).value
+    // `textIndent: '2em'` indents only the first line; `em` resolves against the text size.
+    val indent = upTextIndentPx(props.textIndent, fontSize)
+    // `innerShadowStyle`: the fade only covers the collapsed state.
+    val shadowStyle = rememberUPResolvedStyle(props.shadowStyle, diagnostics, "UPReadMore.shadowStyle")
     Column(modifier.fillMaxWidth().applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPReadMore")).upTestTag("read-more")) {
-        Box(if (open) Modifier else Modifier.height(net.lingyun.ultraui.android.core.upDimension(props.showHeight, 240.dp))) { content() }
-        if (shouldShowReadMoreControl(open, props.toggle)) BasicText(if (open) props.openText else props.closeText, modifier = Modifier.upClickable(onClick = { open = !open; onUpdateModelValue?.invoke(open); if (open) onOpen?.invoke(props.name) else onClose?.invoke(props.name) }).padding(vertical = 8.dp), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Primary), fontSize = net.lingyun.ultraui.android.core.upDimension(props.fontSize, 14.dp).value.sp))
+        Box(
+            (if (open) Modifier else Modifier.height(net.lingyun.ultraui.android.core.upDimension(props.showHeight, 240.dp)))
+                .then(if (indent == null) Modifier else Modifier.padding(start = indent.dp))
+                .upTestTag("read-more-content"),
+        ) { content() }
+        if (shouldShowReadMoreControl(open, props.toggle)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .then(if (open) Modifier else Modifier.applyUPResolvedStyle(shadowStyle))
+                    .upTestTag("read-more-toggle"),
+            ) {
+                BasicText(if (open) props.openText else props.closeText, modifier = Modifier.upClickable(onClick = { open = !open; onUpdateModelValue?.invoke(open); if (open) onOpen?.invoke(props.name) else onClose?.invoke(props.name) }).padding(vertical = 8.dp), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Primary), fontSize = fontSize.sp))
+            }
+        }
     }
 }
 
@@ -298,9 +341,28 @@ private fun formatNumber(value: Double, decimals: Int, decimal: String, separato
 public fun UPCountTo(props: UPCountToProps = UPCountToProps(), modifier: Modifier = Modifier, onChange: ((Double) -> Unit)? = null, onFinished: (() -> Unit)? = null, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
     val start = props.startVal.upDoubleOrDefault(0.0)
     val end = props.endVal.upDoubleOrDefault(0.0)
-    var value by remember(props) { mutableStateOf(if (props.autoplay) start else start) }
+    var value by remember(props) { mutableStateOf(start) }
+    // `count(timestamp)` steps the printed value each frame; `useEasing` chooses between
+    // upstream's ease-out-expo curve and a linear ramp, and `end` is emitted once on
+    // arrival. A non-positive duration jumps straight there, as it does upstream.
     LaunchedEffect(props) {
-        if (props.autoplay) { if (props.duration.upIntOrDefault(0) <= 0) value = end else { value = end; onChange?.invoke(end); onFinished?.invoke() } }
+        if (!props.autoplay) return@LaunchedEffect
+        val duration = props.duration.upIntOrDefault(0).toDouble()
+        if (duration <= 0.0) {
+            value = end
+            onChange?.invoke(end)
+            onFinished?.invoke()
+            return@LaunchedEffect
+        }
+        val startedAt = withFrameMillis { it }
+        var progress = 0.0
+        while (progress < duration) {
+            progress = (withFrameMillis { it } - startedAt).toDouble()
+            value = upCountToValueAt(progress, duration, start, end, props.useEasing)
+            onChange?.invoke(value)
+        }
+        value = end
+        onFinished?.invoke()
     }
     BasicText(formatNumber(value, props.decimals.upIntOrDefault(0), props.decimal, props.separator), modifier = modifier.applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPCountTo")).upTestTag("count-to"), style = TextStyle(color = UPColor.parse(props.color, UPTheme.Content), fontSize = net.lingyun.ultraui.android.core.upDimension(props.fontSize, 22.dp).value.sp, fontWeight = if (props.bold) FontWeight.Bold else FontWeight.Normal))
 }
