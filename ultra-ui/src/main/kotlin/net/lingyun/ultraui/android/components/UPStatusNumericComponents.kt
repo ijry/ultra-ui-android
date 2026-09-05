@@ -211,12 +211,18 @@ public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorPr
     val activeColor = UPColor.parse(props.indicatorActiveColor, Color.White)
     val inactiveColor = UPColor.parse(props.indicatorInactiveColor, Color.LightGray)
     val indicatorShape = RoundedCornerShape(100.dp)
+    // Upstream has one `v-if` per mode and no fallback, so an unrecognised `indicatorMode`
+    // renders nothing at all rather than quietly falling back to `line`.
+    val mode = upSafeEnum(props.indicatorMode, setOf("line", "dot"), "", diagnostics, "UPSwiperIndicator", "indicatorMode")
     Row(modifier.fillMaxWidth().padding(6.dp).applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPSwiperIndicator")).upTestTag("swiper-indicator"), horizontalArrangement = Arrangement.Center) {
-        if (props.indicatorMode == "dot") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (mode == "dot") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 repeat(count) { index ->
                     Box(
                         Modifier
+                            // `margin: 0 4px` on every dot, so the outer edges are inset too.
+                            .padding(horizontal = 4.dp)
+                            // `&--active { width: 12px }` widens only the current dot.
                             .width(if (index == current) 12.dp else 5.dp)
                             .height(5.dp)
                             .background(if (index == current) activeColor else inactiveColor, indicatorShape)
@@ -225,8 +231,14 @@ public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorPr
                     )
                 }
             }
-        } else {
+        } else if (mode == "line") {
             val lineWidth = 22.dp
+            // `transition: transform 0.3s` on the bar, so it slides between slides.
+            val barOffset by androidx.compose.animation.core.animateDpAsState(
+                targetValue = lineWidth * current,
+                animationSpec = tween(300),
+                label = "up-swiper-indicator-bar",
+            )
             Box(
                 Modifier
                     .width(lineWidth * count)
@@ -236,7 +248,7 @@ public fun UPSwiperIndicator(props: UPSwiperIndicatorProps = UPSwiperIndicatorPr
             ) {
                 Box(
                     Modifier
-                        .offset(x = lineWidth * current)
+                        .offset(x = barOffset)
                         .width(lineWidth)
                         .fillMaxHeight()
                         .background(activeColor, indicatorShape)

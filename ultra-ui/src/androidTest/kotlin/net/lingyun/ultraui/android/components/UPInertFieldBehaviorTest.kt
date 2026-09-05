@@ -462,6 +462,44 @@ class UPInertFieldBehaviorTest {
     }
 
     @Test
+    fun theSwiperIndicatorBarSlidesRatherThanJumping() {
+        composeRule.mainClock.autoAdvance = false
+        var current by mutableStateOf(0)
+        composeRule.setContent {
+            UPSwiperIndicator(UPSwiperIndicatorProps(length = 3, current = current, indicatorMode = "line"))
+        }
+
+        val start = node("up-swiper-indicator-line-bar").getUnclippedBoundsInRoot().left
+        composeRule.runOnIdle { current = 2 }
+        composeRule.mainClock.advanceTimeBy(80L)
+        val midway = node("up-swiper-indicator-line-bar").getUnclippedBoundsInRoot().left
+        composeRule.mainClock.advanceTimeBy(400L)
+        val settled = node("up-swiper-indicator-line-bar").getUnclippedBoundsInRoot().left
+
+        // `transition: transform 0.3s` on the bar: it should be caught in between.
+        assertTrue("the bar should still be travelling: $start -> $midway -> $settled", midway > start && midway < settled)
+        assertEquals(44.dp.value, settled.value - start.value, 1f)
+    }
+
+    @Test
+    fun anUnknownIndicatorModeRendersNothingAndReportsIt() {
+        val events = mutableListOf<String>()
+        val diagnostics = UPCompatibilityDiagnostics { event -> events += event.property }
+        composeRule.setContent {
+            UPSwiperIndicator(
+                UPSwiperIndicatorProps(length = 3, indicatorMode = "spiral"),
+                diagnostics = diagnostics,
+            )
+        }
+
+        // Upstream has one `v-if` per mode and no fallback, so nothing renders.
+        node("up-swiper-indicator").assertExists()
+        node("up-swiper-indicator-line-track").assertDoesNotExist()
+        node("up-swiper-indicator-dot-0").assertDoesNotExist()
+        composeRule.runOnIdle { assertTrue("expected a mode diagnostic, got $events", "indicatorMode" in events) }
+    }
+
+    @Test
     fun theSelectTriggerKeepsItsChevronAndOptionsRemainTappable() {
         var selected: UPRawValue = null
         composeRule.setContent {
