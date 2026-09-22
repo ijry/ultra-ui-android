@@ -37,6 +37,8 @@ import net.lingyun.ultraui.android.components.UPCellGroupProps
 import net.lingyun.ultraui.android.components.UPCellProps
 import net.lingyun.ultraui.android.components.UPEmpty
 import net.lingyun.ultraui.android.components.UPEmptyProps
+import net.lingyun.ultraui.android.components.UPGuide
+import net.lingyun.ultraui.android.components.UPGuideProps
 import net.lingyun.ultraui.android.components.UPLazyLoad
 import net.lingyun.ultraui.android.components.UPLazyLoadProps
 import net.lingyun.ultraui.android.components.UPCoupon
@@ -73,6 +75,7 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
     var eventText by remember { mutableStateOf("等待弹层与内容交互") }
     var modalVisible by remember { mutableStateOf(false) }
     var networkConnected by remember { mutableStateOf(true) }
+    var guideShow by remember { mutableStateOf(false) }
     val agreement = rememberUPAgreementController()
     var popupVisible by remember { mutableStateOf(true) }
     var loadmoreStatus by remember { mutableStateOf("loadmore") }
@@ -201,6 +204,24 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         props = UPAvatarGroupProps(urls = listOf("", "", ""), maxCount = 2, showMore = true, extraValue = 3),
                         onShowMore = { eventText = "头像组：更多" },
                     )
+                }
+
+                DemoSection(title = "首屏引导") {
+                    UPButton(props = UPButtonProps(text = "开始引导", type = "primary", size = "small"), onClick = { guideShow = true })
+                    Box(modifier = Modifier.fillMaxWidth().height(if (guideShow) 320.dp else 0.dp)) {
+                        UPGuide(
+                            props = UPGuideProps(
+                                show = guideShow,
+                                list = listOf(
+                                    mapOf("title" to "欢迎", "desc" to "这是首屏引导第一页"),
+                                    mapOf("title" to "开始", "desc" to "点击立即体验完成引导"),
+                                ),
+                            ),
+                            onUpdateShow = { guideShow = it },
+                            onFinish = { eventText = "引导：完成" },
+                            onSkip = { eventText = "引导：跳过" },
+                        )
+                    }
                 }
 
                 DemoSection(title = "懒加载图片") {

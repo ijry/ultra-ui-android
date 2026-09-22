@@ -229,6 +229,21 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun guideDefaultsMatchUview() {
+        val guide = UPGuideProps()
+        assertFalse(guide.show)
+        assertEquals("up-guide-default", guide.storageKey)
+        assertTrue(guide.once)
+        assertTrue(guide.showSkip)
+        assertEquals("跳过", guide.skipText)
+        assertEquals("下一步", guide.nextText)
+        assertEquals("立即体验", guide.finishText)
+        assertTrue(guide.indicator)
+        assertEquals("#111111", guide.bgColor)
+        assertEquals(10075, guide.zIndex)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
