@@ -60,6 +60,20 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun messageInputDefaultsAndValueClippingMatchUview() {
+        val mi = UPMessageInputProps()
+        assertEquals("box", mi.mode)
+        assertFalse(mi.dotFill)
+        assertTrue(mi.breathe)
+        assertEquals("#2979ff", mi.activeColor)
+        assertEquals("#606266", mi.inactiveColor)
+        // The modelValue watcher stringifies then clips to maxlength.
+        assertEquals("123", upMessageInputValue("12345", 3))
+        assertEquals("12", upMessageInputValue("12", 4))
+        assertEquals("", upMessageInputValue("99", 0))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

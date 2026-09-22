@@ -27,6 +27,8 @@ import net.lingyun.ultraui.android.components.UPCheckboxGroupProps
 import net.lingyun.ultraui.android.components.UPCheckboxProps
 import net.lingyun.ultraui.android.components.UPCodeInput
 import net.lingyun.ultraui.android.components.UPCodeInputProps
+import net.lingyun.ultraui.android.components.UPMessageInput
+import net.lingyun.ultraui.android.components.UPMessageInputProps
 import net.lingyun.ultraui.android.components.UPInput
 import net.lingyun.ultraui.android.components.UPInputProps
 import net.lingyun.ultraui.android.components.UPNumberBox
@@ -112,6 +114,14 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                         eventText = "验证码输入：$it"
                     },
                     onFinish = { eventText = "验证码输入：完成 $it" },
+                )
+            }
+
+            DemoSection(title = "验证码框") {
+                UPMessageInput(
+                    props = UPMessageInputProps(maxlength = 4, mode = "box"),
+                    onChange = { eventText = "验证码框：$it" },
+                    onFinish = { eventText = "验证码框：完成 $it" },
                 )
             }
 
