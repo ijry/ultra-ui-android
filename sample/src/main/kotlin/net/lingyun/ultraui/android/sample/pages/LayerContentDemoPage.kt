@@ -45,6 +45,8 @@ import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
 import net.lingyun.ultraui.android.components.UPLoadmore
 import net.lingyun.ultraui.android.components.UPLoadmoreProps
+import net.lingyun.ultraui.android.components.UPAgreement
+import net.lingyun.ultraui.android.components.rememberUPAgreementController
 import net.lingyun.ultraui.android.components.UPModal
 import net.lingyun.ultraui.android.components.UPModalProps
 import net.lingyun.ultraui.android.components.UPOverlay
@@ -65,6 +67,7 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
     var eventText by remember { mutableStateOf("等待弹层与内容交互") }
     var modalVisible by remember { mutableStateOf(false) }
     var networkConnected by remember { mutableStateOf(true) }
+    val agreement = rememberUPAgreementController()
     var popupVisible by remember { mutableStateOf(true) }
     var loadmoreStatus by remember { mutableStateOf("loadmore") }
     val toastController = remember { UPToastController() }
@@ -120,6 +123,19 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         modalVisible = true
                         eventText = "模态框：显示"
                     })
+                }
+
+                DemoSection(title = "隐私协议") {
+                    UPButton(props = UPButtonProps(text = "弹出协议", type = "primary", size = "small"), onClick = {
+                        agreement.showModal()
+                        eventText = "隐私协议：弹出"
+                    })
+                    UPAgreement(
+                        controller = agreement,
+                        onConfirm = { eventText = "隐私协议：已同意" },
+                        onClose = { eventText = "隐私协议：已关闭" },
+                        onNavigate = { eventText = "隐私协议：跳转 $it" },
+                    )
                 }
 
                 DemoSection(title = "轻提示") {

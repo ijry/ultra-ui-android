@@ -89,6 +89,13 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun agreementDefaultUrlsMatchUview() {
+        val agreement = UPAgreementProps()
+        assertEquals("/pages/user_agreement/agreement/info?title=用户协议", agreement.urlProtocol)
+        assertEquals("/pages/user_agreement/agreement/info?title=隐私政策", agreement.urlPrivacy)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
