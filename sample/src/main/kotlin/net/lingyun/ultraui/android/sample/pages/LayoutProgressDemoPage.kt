@@ -26,6 +26,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPBox
+import net.lingyun.ultraui.android.components.UPBoxProps
 import net.lingyun.ultraui.android.components.UPGrid
 import net.lingyun.ultraui.android.components.UPGridItem
 import net.lingyun.ultraui.android.components.UPLineProgress
@@ -85,6 +87,13 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     }
                     UPGridItem(name = "disabled-demo") { DemoTile("展示项") }
                 }
+            }
+
+            DemoSection(title = "盒子") {
+                UPBox(
+                    props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
+                    onClick = { eventText = "盒子：点击" },
+                )
             }
 
             DemoSection(title = "线性进度") {

@@ -74,6 +74,21 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun boxDefaultsAndColorFallbackMatchUview() {
+        val box = UPBoxProps()
+        assertEquals(listOf("#EEFCFF", "#FCF8FF", "#FDF8F2"), box.bgColors)
+        assertEquals("160px", box.height)
+        assertEquals("6px", box.borderRadius)
+        assertEquals("15px", box.gap)
+        assertEquals("左", box.leftTitle)
+        assertEquals("右上", box.rightTopTitle)
+        assertEquals("右下", box.rightBottomTitle)
+        // Short arrays fall back to the default palette per index.
+        assertEquals("#FCF8FF", upBoxColor(listOf("#000000"), 1))
+        assertEquals("#111111", upBoxColor(listOf("#000000", "#111111", "#222222"), 1))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
