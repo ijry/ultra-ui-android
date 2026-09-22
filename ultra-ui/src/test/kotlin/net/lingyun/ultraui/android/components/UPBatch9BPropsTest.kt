@@ -192,6 +192,15 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun cateTabDefaultsMatchUview() {
+        val cate = UPCateTabProps()
+        assertEquals("follow", cate.mode)
+        assertEquals("name", cate.tabKeyName)
+        assertEquals("name", cate.itemKeyName)
+        assertEquals(0, cate.current)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

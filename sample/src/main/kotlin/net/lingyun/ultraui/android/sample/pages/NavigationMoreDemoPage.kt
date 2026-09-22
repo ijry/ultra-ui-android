@@ -1,6 +1,8 @@
 package net.lingyun.ultraui.android.sample.pages
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
@@ -69,6 +71,8 @@ import net.lingyun.ultraui.android.components.UPSwiperProps
 import net.lingyun.ultraui.android.components.UPTabs
 import net.lingyun.ultraui.android.components.UPTabsItem
 import net.lingyun.ultraui.android.components.UPTabsProps
+import net.lingyun.ultraui.android.components.UPCateTab
+import net.lingyun.ultraui.android.components.UPCateTabProps
 import net.lingyun.ultraui.android.components.UPToolbar
 import net.lingyun.ultraui.android.components.UPToolbarProps
 import net.lingyun.ultraui.android.components.UPTooltip
@@ -88,6 +92,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
     var select by remember { mutableStateOf<Any?>(null) }
     val countDown = rememberUPCountDownController()
     val code = rememberUPCodeController()
+    var cate by remember { mutableStateOf(0) }
     SampleScaffold(title = "导航与更多", onBack = onBack, modifier = modifier) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             DemoSection("导航栏") { UPNavbar(UPNavbarProps(title = "订单详情")) }
@@ -142,6 +147,21 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("选择器列") { UPPickerColumn { BasicText("北京") } }
             DemoSection("分页") { UPPagination(UPPaginationProps(total = 42)) }
             DemoSection("下拉选择") { UPSelect(UPSelectProps(options = listOf(mapOf("id" to 1, "name" to "北京"), mapOf("id" to 2, "name" to "上海")), current = select), onUpdateCurrent = { select = it }) }
+            DemoSection("分类标签") {
+                Box(Modifier.fillMaxWidth().height(220.dp)) {
+                    UPCateTab(
+                        props = UPCateTabProps(
+                            mode = "tab",
+                            current = cate,
+                            tabList = listOf(
+                                mapOf("name" to "水果", "children" to listOf(mapOf("name" to "苹果"), mapOf("name" to "香蕉"))),
+                                mapOf("name" to "蔬菜", "children" to listOf(mapOf("name" to "白菜"), mapOf("name" to "菠菜"))),
+                            ),
+                        ),
+                        onUpdateCurrent = { cate = it },
+                    )
+                }
+            }
         }
     }
 }

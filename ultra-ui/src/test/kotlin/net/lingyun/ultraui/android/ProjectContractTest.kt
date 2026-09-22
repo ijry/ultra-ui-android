@@ -81,6 +81,7 @@ class ProjectContractTest {
             "UPKeyboardProps",
             "UPChooseProps",
             "UPViewProps",
+            "UPCateTabProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",
