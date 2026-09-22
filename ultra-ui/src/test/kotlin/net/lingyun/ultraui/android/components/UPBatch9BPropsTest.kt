@@ -115,6 +115,22 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun numberKeyboardKeysAndChangeValueMatchUview() {
+        assertEquals("number", UPNumberKeyboardProps().mode)
+        // Number mode with the dot enabled: 11 keys ending in dot then 0.
+        assertEquals(listOf("1","2","3","4","5","6","7","8","9",".","0"), upNumberKeyboardKeys("number", false))
+        // dotDisabled drops the dot.
+        assertEquals(listOf("1","2","3","4","5","6","7","8","9","0"), upNumberKeyboardKeys("number", true))
+        // card swaps the dot for X.
+        assertEquals(listOf("1","2","3","4","5","6","7","8","9","X","0"), upNumberKeyboardKeys("card", false))
+        // Plain digits become numbers unless the dot is disabled; dot/X stay strings.
+        assertEquals(5, upNumberKeyboardChangeValue("number", false, "5"))
+        assertEquals("5", upNumberKeyboardChangeValue("number", true, "5"))
+        assertEquals(".", upNumberKeyboardChangeValue("number", false, "."))
+        assertEquals("X", upNumberKeyboardChangeValue("card", false, "X"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

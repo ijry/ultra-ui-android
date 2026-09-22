@@ -29,6 +29,8 @@ import net.lingyun.ultraui.android.components.UPCodeInput
 import net.lingyun.ultraui.android.components.UPCodeInputProps
 import net.lingyun.ultraui.android.components.UPMessageInput
 import net.lingyun.ultraui.android.components.UPMessageInputProps
+import net.lingyun.ultraui.android.components.UPNumberKeyboard
+import net.lingyun.ultraui.android.components.UPNumberKeyboardProps
 import net.lingyun.ultraui.android.components.UPInput
 import net.lingyun.ultraui.android.components.UPInputProps
 import net.lingyun.ultraui.android.components.UPNumberBox
@@ -122,6 +124,14 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPMessageInputProps(maxlength = 4, mode = "box"),
                     onChange = { eventText = "验证码框：$it" },
                     onFinish = { eventText = "验证码框：完成 $it" },
+                )
+            }
+
+            DemoSection(title = "数字键盘") {
+                UPNumberKeyboard(
+                    props = UPNumberKeyboardProps(mode = "number"),
+                    onChange = { eventText = "数字键盘：$it" },
+                    onBackspace = { eventText = "数字键盘：退格" },
                 )
             }
 
