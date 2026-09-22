@@ -253,6 +253,29 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun calendarStripSupportComputesMonthDaysAndSwitch() {
+        // 2026-02 has 28 days; day 15 is selected, day 20 is today.
+        val days = upCalendarStripMonthDays("2026-02", "2026-02-15", "2026-02-20", "", "")
+        assertEquals(28, days.size)
+        assertEquals(1, days.first().day)
+        assertTrue(days.first { it.day == 15 }.selected)
+        assertTrue(days.first { it.day == 20 }.today)
+        // Month label + shift.
+        assertEquals("2026年02月", upCalendarStripMonthLabel("2026-02", ""))
+        assertEquals("2026-03", upCalendarStripShiftMonth("2026-02", 1))
+        assertEquals("2025-12", upCalendarStripShiftMonth("2026-02", -2))
+        // Day clamps to the target month length (Jan 31 -> Feb 28).
+        assertEquals("2026-02-28", upCalendarStripDayInMonth("2026-02", 31))
+        // Week label maps Sunday(0) to the last slot.
+        val week = listOf("一","二","三","四","五","六","日")
+        assertEquals("日", upCalendarStripWeekLabel(week, 0))
+        assertEquals("一", upCalendarStripWeekLabel(week, 1))
+        // minDate bound disables earlier days.
+        assertTrue(upCalendarStripDisabled("2026-02-01", "2026-02-10", ""))
+        assertFalse(upCalendarStripDisabled("2026-02-15", "2026-02-10", ""))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
