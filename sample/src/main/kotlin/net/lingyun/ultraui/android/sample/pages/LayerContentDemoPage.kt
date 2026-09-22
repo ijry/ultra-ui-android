@@ -37,6 +37,8 @@ import net.lingyun.ultraui.android.components.UPCellGroupProps
 import net.lingyun.ultraui.android.components.UPCellProps
 import net.lingyun.ultraui.android.components.UPEmpty
 import net.lingyun.ultraui.android.components.UPEmptyProps
+import net.lingyun.ultraui.android.components.UPLazyLoad
+import net.lingyun.ultraui.android.components.UPLazyLoadProps
 import net.lingyun.ultraui.android.components.UPCoupon
 import net.lingyun.ultraui.android.components.UPCouponProps
 import net.lingyun.ultraui.android.components.UPNoNetwork
@@ -198,6 +200,13 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                     UPAvatarGroup(
                         props = UPAvatarGroupProps(urls = listOf("", "", ""), maxCount = 2, showMore = true, extraValue = 3),
                         onShowMore = { eventText = "头像组：更多" },
+                    )
+                }
+
+                DemoSection(title = "懒加载图片") {
+                    UPLazyLoad(
+                        props = UPLazyLoadProps(image = "", height = "120"),
+                        onClick = { eventText = "懒加载：点击" },
                     )
                 }
 

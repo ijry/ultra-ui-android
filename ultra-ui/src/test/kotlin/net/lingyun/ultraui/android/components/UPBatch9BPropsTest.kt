@@ -218,6 +218,17 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun lazyLoadDefaultsAndFadeMillisMatchUview() {
+        val lazy = UPLazyLoadProps()
+        assertEquals("widthFix", lazy.imgMode)
+        assertEquals("200", lazy.height)
+        assertTrue(lazy.isEffect)
+        // duration drives the fade; isEffect=false disables it (0ms).
+        assertEquals(500, upLazyLoadFadeMillis(true, 500))
+        assertEquals(0, upLazyLoadFadeMillis(false, 500))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
