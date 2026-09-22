@@ -96,6 +96,14 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun copyDefaultsMatchUview() {
+        val copy = UPCopyProps()
+        assertEquals("", copy.content)
+        assertEquals("toast", copy.alertStyle)
+        assertEquals("复制成功", copy.notice)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

@@ -45,6 +45,8 @@ import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
 import net.lingyun.ultraui.android.components.UPLoadmore
 import net.lingyun.ultraui.android.components.UPLoadmoreProps
+import net.lingyun.ultraui.android.components.UPCopy
+import net.lingyun.ultraui.android.components.UPCopyProps
 import net.lingyun.ultraui.android.components.UPAgreement
 import net.lingyun.ultraui.android.components.rememberUPAgreementController
 import net.lingyun.ultraui.android.components.UPModal
@@ -123,6 +125,13 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         modalVisible = true
                         eventText = "模态框：显示"
                     })
+                }
+
+                DemoSection(title = "复制") {
+                    UPCopy(
+                        props = UPCopyProps(content = "ultra-ui", notice = "已复制到剪贴板"),
+                        onResult = { _, notice, _ -> eventText = "复制：$notice" },
+                    ) { UPButton(props = UPButtonProps(text = "复制文本", type = "primary", size = "mini")) }
                 }
 
                 DemoSection(title = "隐私协议") {

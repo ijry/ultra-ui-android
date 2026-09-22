@@ -74,6 +74,7 @@ class ProjectContractTest {
             "UPMessageInputProps",
             "UPBoxProps",
             "UPAgreementProps",
+            "UPCopyProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",
