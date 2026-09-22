@@ -124,6 +124,7 @@ KNOWN_INERT: dict[str, str] = {
     "Guide.once": "local-storage show-once memory; persistence belongs to the host",
     "Guide.storageKey": "local-storage key for the show-once memory; persistence belongs to the host",
     "CityLocate.locationType": "geo coordinate system for uni.getLocation; the host owns the lookup",
+    "TabsPro.contentMode": "upstream declares static/other but the template never branches on it",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

@@ -71,6 +71,8 @@ import net.lingyun.ultraui.android.components.UPSwiperProps
 import net.lingyun.ultraui.android.components.UPTabs
 import net.lingyun.ultraui.android.components.UPTabsItem
 import net.lingyun.ultraui.android.components.UPTabsProps
+import net.lingyun.ultraui.android.components.UPTabsPro
+import net.lingyun.ultraui.android.components.UPTabsProProps
 import net.lingyun.ultraui.android.components.UPCalendarStrip
 import net.lingyun.ultraui.android.components.UPCalendarStripProps
 import net.lingyun.ultraui.android.components.UPCityLocate
@@ -150,6 +152,13 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("选择器输入触发器") { UPPicker(UPPickerProps(hasInput = true, placeholder = "请选择城市", title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"), mapOf("text" to "上海", "value" to "sh"))))) }
             DemoSection("选择器列") { UPPickerColumn { BasicText("北京") } }
             DemoSection("分页") { UPPagination(UPPaginationProps(total = 42)) }
+            DemoSection("增强标签页") {
+                UPTabsPro(
+                    props = UPTabsProProps(
+                        list = listOf(mapOf("name" to "全部"), mapOf("name" to "待付款"), mapOf("name" to "已完成")),
+                    ),
+                ) { _, item -> BasicText("当前：${item?.get("name")}") }
+            }
             DemoSection("日历条") {
                 UPCalendarStrip(
                     props = UPCalendarStripProps(modelValue = "2026-02-10"),

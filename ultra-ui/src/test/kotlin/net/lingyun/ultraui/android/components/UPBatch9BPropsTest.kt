@@ -276,6 +276,16 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun tabsProDefaultsMatchUview() {
+        val pro = UPTabsProProps()
+        assertEquals("name", pro.keyName)
+        assertEquals("static", pro.contentMode)
+        assertTrue(pro.scrollable)
+        assertTrue(pro.showContent)
+        assertEquals(mapOf("height" to "44px"), pro.itemStyle)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
