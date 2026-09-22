@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
@@ -109,6 +110,34 @@ class UPStructuralComponentBehaviorTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("safe-bottom-layout").assertHeightIsEqualTo(navigationBarHeight)
+    }
+
+    @Test
+    fun statusBarReportsTheInsetHeightAndHostsSlottedContent() {
+        var statusBarInset = Dp.Unspecified
+        var reported = Dp.Unspecified
+        composeRule.setContent {
+            val density = LocalDensity.current
+            statusBarInset = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
+            UPStatusBar(onUpdateHeight = { reported = it }) {
+                UPText(UPTextProps(text = "状态栏插槽"))
+            }
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("状态栏插槽").assertExists()
+        composeRule.runOnIdle { assertEquals(statusBarInset, reported) }
+    }
+
+    @Test
+    fun statusBarWithExplicitHeightReportsThatHeight() {
+        var reported = Dp.Unspecified
+        composeRule.setContent {
+            UPStatusBar(UPStatusBarProps(height = 12), onUpdateHeight = { reported = it })
+        }
+
+        composeRule.waitForIdle()
+        composeRule.runOnIdle { assertEquals(12.dp, reported) }
     }
 
     @Test

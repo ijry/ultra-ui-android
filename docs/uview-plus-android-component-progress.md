@@ -131,7 +131,7 @@
 | 96 | 列表与索引 | `u-refresh-virtual-list` | — | 未开始 | 暂无 | 刷新虚拟列表待结合 lazy/scroll 状态实现。 |
 | 97 | 布局 | `u-row` | `UPRow` / `UPRowProps` | 基本完成 | 高（Props） | gutter、justify、align 和 slot 布局已有测试。 |
 | 98 | 通知与状态 | `u-row-notice` | `UPRowNotice` / `UPRowNoticeProps` | 基本完成 | 中 | 基于通知栏封装，随 `u-notice-bar` 一并补齐真实横向跑马灯：`speed` 为每秒像素数，一个循环覆盖「容器宽 + 文字宽」，有真机断言。 |
-| 99 | 导航 | `u-safe-bottom` | `UPSafeBottom` / `UPSafeBottomProps` | 基础可用 | 高（Props） | Android navigation bar inset 已封装并有真机断言。 |
+| 99 | 导航 | `u-safe-bottom` | `UPSafeBottom` / `UPSafeBottomProps` | 基本完成 | 高（Props） | 上游契约本就只有 `customStyle` 与底部安全区占位（`u-safe-area-inset-bottom` = `padding-bottom: env(safe-area-inset-bottom)`，nvue 下改用 `getWindowInfo().safeAreaInsets.bottom` 显式填高）。Android 用 `navigationBarsPadding()` 作语义等价填充，`safeAreaInsetBottom=false` 时不占位，`customStyle` 逐字段覆盖，已逐项与上游对齐、无字段缺口。有真机断言验证占位高度等于导航栏 inset。 |
 | 100 | 列表与索引 | `u-scroll-list` | `UPScrollList` / `UPScrollListProps` | 基本完成 | 中 | 内容已可横向滚动，并按上游默认（`indicator: true`）渲染指示器：`indicatorWidth` 定轨道宽、`indicatorBarWidth` 定滑块宽、`indicatorColor`/`indicatorActiveColor` 分别着色轨道与滑块、`indicatorStyle` 可再覆盖样式，滑块位置跟随滚动进度；均有真机断言。此前既不滚动也不渲染指示器。 |
 | 101 | 键盘与输入 | `u-search` | `UPSearch` / `UPSearchProps` | 基本完成 | 高（Props） | 输入、清除、搜索按钮和受控值已有实现。 |
 | 102 | 基础展示 | `u-section` | — | 未开始 | 暂无 | 区块标题组件待建立。 |
@@ -140,7 +140,7 @@
 | 105 | 原生能力 | `u-signature` | — | 未开始 | 暂无 | 手写签名画布待实现。 |
 | 106 | 通知与状态 | `u-skeleton` | `UPSkeleton` / `UPSkeletonProps` | 基本完成 | 高（Props） | 骨架行、头像、标题和动画开关之外，`rowsWidth` 复刻 `rowsArray` 的取值链——数组按行取值、越界或未给时首几行 100%、末行固定 70%，百分比换算为可用宽度的比例、px 走绝对宽度；`avatarShape` 在 circle/square 之间切换头像圆角并对未知值回落诊断，均有真机断言。 |
 | 107 | 选择 | `u-slider` | `UPSlider` / `UPSliderProps` | 基本完成 | 高（Props） | 单值、range、step 量化和 changing/change 手势之外：`height` 按上游 `sizeLocal` 语义覆盖 `size` 作为轨道厚度、`length` 限定轨道自身轴向长度（`auto` 交回父级测量）、`innerStyle` 作用于轨道行且行高按 `blockSize`（range 且 `showValue` 时 +24）计算、`blockStyle` 作用于滑块并可改其尺寸圆角，均有真机断言。降级：`useNative` 要求 uni-app 平台 `<slider>`，本库只依赖 Compose foundation，回落到自绘轨道并上报诊断（上游对 range 同样不用原生控件）。原生无障碍语义仍待完善。 |
-| 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基础可用 | 高（Props） | 状态栏高度和顶部 inset 已封装。 |
+| 108 | 导航 | `u-status-bar` | `UPStatusBar` / `UPStatusBarProps` | 基本完成 | 高（Props） | `bgColor` 背景与 `height` 高度之外，本轮补齐两处上游语义：其一 `emits: ['update:height']`——上游 `style()` 里读 `getWindowInfo().statusBarHeight` 并回传，Android 侧新增 `onUpdateHeight: ((Dp) -> Unit)?`，`height=0`（默认）时回传 `WindowInsets.statusBars` 实测 inset，显式高度则回传该值；其二默认 `<slot />`——新增 `content` 插槽，此前是空 `Box` 无从放子节点。`height=0` 落到 `statusBarsPadding()` 顶部安全区、非零走固定高度，`customStyle` 逐字段覆盖。两项各有真机断言（回传插入高度并渲染插槽内容、显式高度回传该高度）。 |
 | 109 | 导航 | `u-steps` | `UPSteps` / `UPStepsProps` | 基本完成 | 中 | `current` 驱动 finish/process/wait/error 四态、`direction` 控制横纵布局、`activeColor`/`inactiveColor`/`dot`/`activeIcon`/`inactiveIcon` 均已生效并有真机测试。 |
 | 110 | 导航 | `u-steps-item` | `UPStepsItem` / `UPStepsItemProps` | 基本完成 | 中 | 按索引与父级 `current` 推导状态：已完成显示 ✓、当前步为实心序号、未达步为灰色序号、`error` 显示 ✕；`iconSize`（对齐上游 17）与 `itemStyle` 已生效。 |
 | 111 | 原生交互 | `u-sticky` | `UPSticky` / `UPStickyProps` | 基本完成 | 高（Props） | 真实滚动吸顶已实现，且**不需要宿主回传偏移**——此前的判断是错的：吸顶带自己就能读到自身在窗口中的位置（`onGloballyPositioned` + `boundsInWindow`），这正是上游 IntersectionObserver 观察的同一个量。据此复刻上游的 JS 分支：`setFixed(top) { fixed = top <= stickyTop }` 判定吸顶，超出量用 `translationY` 补回去，因而内容视觉上钉在 `stickyTop`、而布局槽位仍被占住（对应上游用记录高度实现的「防塌陷」）；新增 `onFixed`/`onUnfixed` 两个事件，只在状态翻转时触发并回传 `index`（上游文档里 `index` 就是「自定义标识，用于区分是哪一个组件」，此前被登记为不生效）。`offsetTop` + `customNavHeight` 折算 `stickyTop`、`zIndex` 缺省取 `zIndex.sticky`（970）、`disabled` 回落到 `position: static` 因而永不吸顶，均有真机断言。**修正了一处此前的偏离**：旧实现把 `stickyTop` 当作无条件的顶部内边距，静止时就把整页往下推，而 `position: sticky` 在页面滚动前不移动任何东西。 |
@@ -155,7 +155,7 @@
 | 120 | 表格 | `u-table` | — | 未开始 | 暂无 | 表格容器待建立列宽和滚动契约。 |
 | 121 | 表格 | `u-table2` | — | 未开始 | 暂无 | 第二版表格，待确认与 `u-table` 的 API 差异。 |
 | 122 | 导航 | `u-tabs` | `UPTabs` / `UPTabsProps` | 基本完成 | 高（Props） | tabs/current/change 之外，`shapeMode` 复刻 line/capsule/card/pill-arrow/tag 五种形态（card 斜切四边形、pill-arrow 箭头由 Canvas 绘制）、`activeStyle`/`inactiveStyle`/`itemStyle` 逐项应用、`lineBgSize` 区分 cover/contain/auto 下划线宽度、`duration` 驱动下划线位移动画、`iconStyle` 作用于选项图标，均有真机断言。未完成：粘性吸顶待补——`u-sticky` 已证明吸顶带自己就能观测位置，把同一套做法套到 tabs 上即可。 |
-| 123 | 导航 | `u-tabs-item` | `UPTabsItem` / `UPTabsItemProps` | 基础可用 | 中 | 空/轻量 Props 契约、自定义内容和样式已有真机断言。 |
+| 123 | 导航 | `u-tabs-item` | `UPTabsItem` / `UPTabsItemProps` | 基本完成 | 高（Props） | 上游是 `<swiper-item><slot /></swiper-item>` 纯壳，props 契约为空，且全仓库只有自身文件引用它。Android 侧 `content` 插槽透传子节点、`customStyle` 逐字段覆盖，已与上游空契约逐项对齐、无字段缺口。有真机断言验证插槽内容与 `customStyle` 定高生效。 |
 | 124 | 导航 | `u-tabs-pro` | — | 未开始 | 暂无 | Pro 标签页待确认专属字段和事件。 |
 | 125 | 基础展示 | `u-tag` | `UPTag` / `UPTagProps` | 基本完成 | 高（Props） | 类型、形状、图标、关闭和颜色已有测试；`height`/`borderRadius`/`plainFill` 已生效并有真机断言（此前声明但从不读取）。`autoBgColor > 0 && color` 时按上游 `genLightColor` 的 RGB→HSL→亮度封顶 95%→HEX 流程推导同色系浅色背景（优先级高于 `bgColor` 与类型色），单测逐值对照上游输出；上游只解析 hex 与 `rgb()`/`rgba()` 并对其余格式抛错，Android 改为上报诊断并保留原背景。 |
 | 126 | 表格 | `u-td` | — | 未开始 | 暂无 | 表格单元格待随表格体系实现。 |
@@ -183,8 +183,8 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 87 |
-| 基础可用 | 3 |
+| 基本完成 | 90 |
+| 基础可用 | 0 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
 | 完整兼容 | 0 |
@@ -207,7 +207,7 @@
 
 1. **真机执行现有断言**：库内 319 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
-3. **仍标「基础可用」的 3 行**：这些行的未读字段已为 0，**已经没有一类差距是真正外生的**：`u-back-top` 曾被记为「滚动容器归宿主」，但只要宿主把自己的 `ScrollState` 传进来，组件就能自读偏移、自行滚动——这是一个参数的事。剩下 3 行都是上游 props 契约本就近乎为空的容器（`u-safe-bottom`、`u-status-bar`、`u-tabs-item`），它们没有可复刻的字段，升级与否只是标注口径问题。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）、`u-back-top`（缺一个 `scrollState` 参数）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
+3. **原「基础可用」的 3 行已收口（本轮）**：`u-safe-bottom`、`u-status-bar`、`u-tabs-item` 三者上游 props 契约本就近乎为空，此前记为「没有可复刻字段」。本轮把它们逐一对齐到上游全部语义后升到「基本完成」：`u-status-bar` 补 `emits: ['update:height']`（新增 `onUpdateHeight` 回传实测状态栏 inset 或显式高度）与默认 `<slot />`（新增 `content` 插槽）；`u-safe-bottom` 以 `navigationBarsPadding()` 作 `env(safe-area-inset-bottom)` 的语义等价、`customStyle` 逐字段覆盖；`u-tabs-item` 是 `<swiper-item><slot /></swiper-item>` 纯壳、`content` 插槽透传即等价。各补真机断言。至此清单再无「基础可用」行。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）、`u-back-top`（缺一个 `scrollState` 参数）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
 5. **列表与数据展示**：`u-pull-refresh`、`u-virtual-list`、`u-refresh-virtual-list`、`u-waterfall`、`u-table`、`u-td`、`u-th`、`u-tr`。
 6. **原生能力**：`u-qrcode`、`u-barcode`、`u-signature`、`u-copy`、`u-city-locate`、`u-short-video`、`u-pdf-reader`。
@@ -232,8 +232,10 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **319 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **321 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-status-bar` 新增 2 项回归（`UPStructuralComponentBehaviorTest`），覆盖 `onUpdateHeight`
+回传实测 inset 并渲染 `content` 插槽、显式高度回传该高度。再往前一批为
 `u-back-top` 新增 6 项回归（`UPBackTopBehaviorTest`），覆盖固定 40×40 尺寸、`scrollState`
 同时驱动显隐与点击后的滚动、不传时时长随回调、离场动画播完才移出树、阈值是严格大于、
 `bottom`/`right` 只偏移不撑大。再往前一批为
@@ -385,7 +387,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 `u-swiper` 也都按同样标准移出过清单。
 
 需要强调这个「0」的边界：脚本核验的是**标注是否有证据支撑**（未读字段为 0、且有真机或截图
-语料），不是「组件行为与上游完全一致」。仍有 3 行标注「基础可用」，其未读字段清单见下一节；
+语料），不是「组件行为与上游完全一致」。原有 3 行「基础可用」已在本轮补齐语义并升到「基本完成」，清单再无该档；
 另外真机测试目前只有编译级证据；视觉一侧现已有 7 项像素级断言（见《截图内容核查》），
 但覆盖面还只到本轮改动的几个组件。
 
@@ -583,7 +585,7 @@ python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生
 也有"组件根本不可用"——`u-picker` 的列平铺、`u-swiper` 只渲染文字不显示图片（已修复）、
 `u-steps` 曾完全忽略 `current` 导致每一步都显示为已完成（已修复），都属于后者。
 清单现已清空，但**不等于行为与上游一致**：脚本只判断字段是否被读取，读得对不对要靠
-默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及仍标「基础可用」的 3 行。
+默认值比对、真机断言与视觉核对；后续工作应转向这三项，以及尚未开始的上游组件。
 
 另需说明「按设计不生效」这一档的判定标准：只有当**上游自己也不读取该字段**，或该字段是
 uni-app / 微信小程序 / nvue 的平台专有开关、DOM 事件语义在 Compose 中无对应物时，才会登记进

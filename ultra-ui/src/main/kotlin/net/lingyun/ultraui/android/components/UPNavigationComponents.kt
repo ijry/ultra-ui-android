@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -23,7 +24,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -190,15 +193,33 @@ public fun UPNavbarMini(
 }
 
 @Composable
-public fun UPStatusBar(props: UPStatusBarProps = UPStatusBarProps(), modifier: Modifier = Modifier, diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None) {
+public fun UPStatusBar(
+    props: UPStatusBarProps = UPStatusBarProps(),
+    modifier: Modifier = Modifier,
+    onUpdateHeight: ((Dp) -> Unit)? = null,
+    diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
+    content: @Composable () -> Unit = {},
+) {
+    // Upstream `height` defaults to 0, which is the signal to fall back to the platform
+    // status-bar inset (its `style()` reads `getWindowInfo().statusBarHeight`). Any explicit
+    // value overrides that measured height.
+    val usesInset = props.height.toString() == "0"
+    val density = LocalDensity.current
+    val measuredInset = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
+    // Mirror `emits: ['update:height']`: report the height the bar actually occupies so a
+    // parent can size a custom navigation bar around it.
+    val reportedHeight = if (usesInset) measuredInset else upDimension(props.height, 0.dp)
+    LaunchedEffect(reportedHeight, onUpdateHeight) { onUpdateHeight?.invoke(reportedHeight) }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (props.height.toString() == "0") Modifier.statusBarsPadding() else Modifier.height(upDimension(props.height, 0.dp)))
+            .then(if (usesInset) Modifier.statusBarsPadding() else Modifier.height(upDimension(props.height, 0.dp)))
             .background(UPColor.parse(props.bgColor, Color.Transparent))
             .applyUPResolvedStyle(rememberUPResolvedStyle(props.customStyle, diagnostics, "UPStatusBar"))
             .upTestTag("status-bar"),
-    )
+    ) {
+        content()
+    }
 }
 
 @Composable
