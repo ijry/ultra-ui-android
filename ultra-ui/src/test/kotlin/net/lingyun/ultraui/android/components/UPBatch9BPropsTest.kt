@@ -104,6 +104,17 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun floatButtonDefaultsMatchUview() {
+        val fab = UPFloatButtonProps()
+        assertEquals("#2979ff", fab.backgroundColor)
+        assertEquals("#fff", fab.color)
+        assertEquals("50px", fab.width)
+        assertEquals("30px", fab.right)
+        assertFalse(fab.isMenu)
+        assertTrue(fab.list.isEmpty())
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

@@ -26,6 +26,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPFloatButton
+import net.lingyun.ultraui.android.components.UPFloatButtonProps
 import net.lingyun.ultraui.android.components.UPBox
 import net.lingyun.ultraui.android.components.UPBoxProps
 import net.lingyun.ultraui.android.components.UPGrid
@@ -94,6 +96,20 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
                 )
+            }
+
+            DemoSection(title = "悬浮按钮") {
+                Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+                    UPFloatButton(
+                        props = UPFloatButtonProps(
+                            isMenu = true,
+                            bottom = "12px",
+                            list = listOf(mapOf("name" to "star"), mapOf("name" to "heart")),
+                        ),
+                        onClick = { eventText = "悬浮按钮：点击" },
+                        onItemClick = { item, index -> eventText = "悬浮按钮项：${item["name"]} @$index" },
+                    )
+                }
             }
 
             DemoSection(title = "线性进度") {
