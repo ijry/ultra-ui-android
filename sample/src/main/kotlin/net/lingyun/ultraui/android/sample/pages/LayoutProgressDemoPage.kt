@@ -26,6 +26,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPView
+import net.lingyun.ultraui.android.components.UPViewProps
 import net.lingyun.ultraui.android.components.UPFloatButton
 import net.lingyun.ultraui.android.components.UPFloatButtonProps
 import net.lingyun.ultraui.android.components.UPBox
@@ -96,6 +98,15 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
                 )
+            }
+
+            DemoSection(title = "视图容器") {
+                UPView(
+                    props = UPViewProps(backgroundColor = "#f4f4f5", height = "60px", padding = "12px"),
+                    onClick = { eventText = "视图容器：点击" },
+                ) {
+                    androidx.compose.foundation.text.BasicText("通用样式容器")
+                }
             }
 
             DemoSection(title = "悬浮按钮") {

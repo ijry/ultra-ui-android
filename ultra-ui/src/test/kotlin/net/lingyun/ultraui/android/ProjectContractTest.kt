@@ -80,6 +80,7 @@ class ProjectContractTest {
             "UPCarKeyboardProps",
             "UPKeyboardProps",
             "UPChooseProps",
+            "UPViewProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

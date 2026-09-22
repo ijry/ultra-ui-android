@@ -176,6 +176,22 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun viewStyleMapDropsEmptyFieldsAndLayersCustomStyle() {
+        val map = upViewStyleMap(
+            UPViewProps(
+                backgroundColor = "#ffffff",
+                width = "100px",
+                customStyle = mapOf("padding" to "8px", "backgroundColor" to "#000000"),
+            ),
+        )
+        // Empty fields are dropped; customStyle wins on conflicts.
+        assertEquals("100px", map["width"])
+        assertEquals("#000000", map["backgroundColor"])
+        assertEquals("8px", map["padding"])
+        assertFalse(map.containsKey("color"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
