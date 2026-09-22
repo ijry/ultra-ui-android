@@ -21,6 +21,9 @@ import net.lingyun.ultraui.android.components.UPColumnNotice
 import net.lingyun.ultraui.android.components.UPColumnNoticeProps
 import net.lingyun.ultraui.android.components.UPCountDown
 import net.lingyun.ultraui.android.components.UPCountDownProps
+import net.lingyun.ultraui.android.components.UPCode
+import net.lingyun.ultraui.android.components.UPCodeProps
+import net.lingyun.ultraui.android.components.rememberUPCodeController
 import net.lingyun.ultraui.android.components.UPCountTo
 import net.lingyun.ultraui.android.components.UPCountToProps
 import net.lingyun.ultraui.android.components.rememberUPCountDownController
@@ -84,6 +87,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
     var subsection by remember { mutableStateOf(0) }
     var select by remember { mutableStateOf<Any?>(null) }
     val countDown = rememberUPCountDownController()
+    val code = rememberUPCodeController()
     SampleScaffold(title = "导航与更多", onBack = onBack, modifier = modifier) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             DemoSection("导航栏") { UPNavbar(UPNavbarProps(title = "订单详情")) }
@@ -125,6 +129,12 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("倒计时插槽") {
                 UPCountDown(UPCountDownProps(time = 90061000, format = "DD天HH时mm分ss秒")) { time ->
                     BasicText("剩余 ${time.days} 天 ${time.hours} 时 ${time.minutes} 分 ${time.seconds} 秒")
+                }
+            }
+            DemoSection("验证码倒计时") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    UPCode(UPCodeProps(seconds = 60), controller = code) { text -> BasicText(text) }
+                    UPButton(props = UPButtonProps(text = "获取", type = "primary", size = "mini"), onClick = { code.start() })
                 }
             }
             DemoSection("选择器") { UPPicker(UPPickerProps(show = true, title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"))))) }

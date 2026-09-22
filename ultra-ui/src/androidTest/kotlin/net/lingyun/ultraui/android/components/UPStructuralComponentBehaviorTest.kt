@@ -223,4 +223,25 @@ class UPStructuralComponentBehaviorTest {
 
         composeRule.onNodeWithTag("up-toolbar").assertDoesNotExist()
     }
+
+    @Test
+    fun noNetworkShowsTipsAndRetryWhenDisconnected() {
+        var retried = false
+        composeRule.setContent {
+            UPNoNetwork(connected = false, onRetry = { retried = true })
+        }
+
+        composeRule.onNodeWithText("哎呀，网络信号丢失").assertExists()
+        composeRule.onNodeWithTag("up-no-network-retry").performClick()
+        composeRule.runOnIdle { assertEquals(true, retried) }
+    }
+
+    @Test
+    fun noNetworkRendersNothingWhenConnected() {
+        composeRule.setContent {
+            UPNoNetwork(connected = true)
+        }
+
+        composeRule.onNodeWithTag("up-no-network").assertDoesNotExist()
+    }
 }

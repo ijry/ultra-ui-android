@@ -69,6 +69,8 @@ class ProjectContractTest {
             "UPTabsProps",
             "UPTabsItemProps",
             "UPToolbarProps",
+            "UPNoNetworkProps",
+            "UPCodeProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

@@ -38,6 +38,28 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun noNetworkDefaultsMatchUviewTips() {
+        val noNetwork = UPNoNetworkProps()
+        assertEquals("哎呀，网络信号丢失", noNetwork.tips)
+        // Upstream ships a base64 PNG; the port defaults to an empty source.
+        assertEquals("", noNetwork.image)
+        assertEquals("", noNetwork.zIndex)
+    }
+
+    @Test
+    fun codeDefaultsAndPromptTextMatchUview() {
+        val code = UPCodeProps()
+        assertEquals("获取验证码", code.startText)
+        assertEquals("X秒重新获取", code.changeText)
+        assertEquals("重新获取", code.endText)
+        assertFalse(code.keepRunning)
+        // Idle before start, the X placeholder becomes the second while running, endText after.
+        assertEquals("获取验证码", upCodeText(code, running = false, started = false, secNum = 60))
+        assertEquals("42秒重新获取", upCodeText(code, running = true, started = true, secNum = 42))
+        assertEquals("重新获取", upCodeText(code, running = false, started = true, secNum = 0))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

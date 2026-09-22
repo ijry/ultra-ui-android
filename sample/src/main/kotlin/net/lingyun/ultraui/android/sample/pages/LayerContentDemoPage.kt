@@ -37,6 +37,8 @@ import net.lingyun.ultraui.android.components.UPCellGroupProps
 import net.lingyun.ultraui.android.components.UPCellProps
 import net.lingyun.ultraui.android.components.UPEmpty
 import net.lingyun.ultraui.android.components.UPEmptyProps
+import net.lingyun.ultraui.android.components.UPNoNetwork
+import net.lingyun.ultraui.android.components.UPNoNetworkProps
 import net.lingyun.ultraui.android.components.UPImage
 import net.lingyun.ultraui.android.components.UPImageProps
 import net.lingyun.ultraui.android.components.UPLoadingPage
@@ -62,6 +64,7 @@ import net.lingyun.ultraui.android.sample.SampleScaffold
 public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var eventText by remember { mutableStateOf("等待弹层与内容交互") }
     var modalVisible by remember { mutableStateOf(false) }
+    var networkConnected by remember { mutableStateOf(true) }
     var popupVisible by remember { mutableStateOf(true) }
     var loadmoreStatus by remember { mutableStateOf("loadmore") }
     val toastController = remember { UPToastController() }
@@ -173,6 +176,26 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
 
                 DemoSection(title = "空状态") {
                     UPEmpty(props = UPEmptyProps(mode = "data", text = "暂无数据"))
+                }
+
+                DemoSection(title = "无网络") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White),
+                    ) {
+                        UPButton(
+                            UPButtonProps(text = if (networkConnected) "模拟断网" else "已断网", size = "small"),
+                            onClick = { networkConnected = false },
+                        )
+                        UPNoNetwork(
+                            props = UPNoNetworkProps(tips = "哎呀，网络信号丢失"),
+                            connected = networkConnected,
+                            onRetry = { networkConnected = true; eventText = "无网络：点击重试" },
+                        )
+                    }
                 }
 
                 DemoSection(title = "加载页") {
