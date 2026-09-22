@@ -8,9 +8,9 @@
 - 上游固定提交：`b32377ce0500579830e537a20eef1a7c6c9cf806`
 - 扫描日期：2026-08-30
 - 上游目录总数：141 个
-- 当前 Android 公开 `UP*Props`：90 个
-- 当前 Android 已有公开 Compose 组件入口：90 个（另有 `UPToastHost` 等宿主辅助 API）
-- 当前目标组件完成度：90 / 138 个可直接使用的上游 UI 组件目录，约 65.2%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
+- 当前 Android 公开 `UP*Props`：91 个
+- 当前 Android 已有公开 Compose 组件入口：91 个（另有 `UPToastHost` 等宿主辅助 API）
+- 当前目标组件完成度：91 / 138 个可直接使用的上游 UI 组件目录，约 65.9%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
 
 ### 复刻进度定义
 
@@ -164,7 +164,7 @@
 | 129 | 表格 | `u-th` | — | 未开始 | 暂无 | 表头单元格待随表格体系实现。 |
 | 130 | 基础展示 | `u-title` | `UPTitle` / `UPTitleProps` | 基本完成 | 高（Props） | 标题、装饰线和对齐样式已有实现。 |
 | 131 | 原生交互 | `u-toast` | `UPToast` / `UPToastProps` | 基本完成 | 高（Props） | Toast 原生展示和 `UPToastHost` 宿主已有；队列细节待补。 |
-| 132 | 原生交互 | `u-toolbar` | — | 未开始 | 暂无 | 工具栏待确认与导航/输入场景的复用边界。 |
+| 132 | 原生交互 | `u-toolbar` | `UPToolbar` / `UPToolbarProps` | 基本完成 | 高（Props） | `show`（false 时整体不渲染，复刻外层 `v-if="show"`）、`cancelText`/`confirmText`、`cancelColor`（默认 `#909193`）、`confirmColor`（上游默认空串→标签落到主题 primary）、`title`（非空才渲染，按 `.u-line-1` 加粗 16px 居中并 `flex:1`）、`rightSlot`（true 时右侧让位 `right` 插槽、确认按钮及其点击一并撤下，复刻 `v-if="!rightSlot"`）均已实现；42px 行高、`cancel`/`confirm` 事件与上游一致。有 1 项默认值单测与 3 项真机断言（取消/确认触发与标题、右插槽替换确认、`show=false` 不渲染）。 |
 | 133 | 原生交互 | `u-tooltip` | `UPTooltip` / `UPTooltipProps` | 基本完成 | 高（Props） | 气泡改由 Compose 的窗口级 `Popup` 承载，因而不再被触发器裁剪、层级也真正高于页面——这一步同时解掉了此前记为「需窗口级弹层」的四个字段。`getTooltipStyle()` 的几何逐条复刻：`direction` 支持 top/bottom/left/right 四向（上游注释只写两向，实现里是四向）、气泡挤到屏幕边缘时按 `screenGap: 12` 钳在屏内而非居中、三角指示器随之重算位置以继续指向触发器、上下方向按 `translateY(±100%)` + `marginTop: -10px` 让开触发器、左右方向按触发器高度垂直居中；`forcePosition` 按 `{...style, ...forcePosition}` 逐边覆盖；`overlay` 渲染全透明遮罩阻断穿透并点击关闭（`overlay=false` 时完全不生成，触摸照常穿透）；`singleton` 用进程级注册表复刻模块作用域的 `activeSingletonTooltip`，开新气泡即关旧气泡，组件销毁时释放槽位；`showToast` 经新增的 `onToast` 回调回传「复制成功／失败」文案；复制动作按上游占据 `click` 的 0 号槽位、扩展按钮依次后移。首帧未测得尺寸前气泡保持透明（对应上游 `tooltipTop: -10000` 的离屏测量两遍法）。几何有 10 项单测逐条对照，行为有真机断言。 |
 | 134 | 表格 | `u-tr` | — | 未开始 | 暂无 | 表格行待随表格体系实现。 |
 | 135 | 原生交互 | `u-transition` | — | 未开始 | 暂无 | 通用过渡动画待建立 Compose 状态 API。 |
@@ -183,7 +183,7 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 90 |
+| 基本完成 | 91 |
 | 基础可用 | 0 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
@@ -379,7 +379,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：90 个已实现组件行中，**90 行证据齐备、0 行标注超出证据**，脚本首次全绿。最后 10 行
+当前状态：91 个已实现组件行中，**91 行证据齐备、0 行标注超出证据**，脚本保持全绿。最后 10 行
 （`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、`u-number-box`、`u-radio`、`u-radio-group`、
 `u-checkbox-group`、`u-overlay`、`u-badge`、`u-tag`）在本轮补齐了实现或登记为按设计不生效，
 其中 `u-navbar`、`u-navbar-mini` 由「基础可用」升级为「基本完成」；再往前一批的 `u-tabs`、
@@ -521,7 +521,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：90 个 Props 类中有 **0 个字段无人读取**，另有 76 个已记录为按设计不生效
+当前状态：91 个 Props 类中有 **0 个字段无人读取**，另有 76 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义、内联渲染没有窗口级遮罩可作用的字段，
 以及上游自己也从不读取的字段，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的

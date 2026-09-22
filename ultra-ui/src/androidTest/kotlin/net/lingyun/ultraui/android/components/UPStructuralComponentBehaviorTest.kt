@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -181,5 +182,46 @@ class UPStructuralComponentBehaviorTest {
 
         composeRule.onNodeWithText("标签页内容").assertExists()
         composeRule.onNodeWithTag("up-tabs-item").assertHeightIsEqualTo(64.dp)
+    }
+
+    @Test
+    fun toolbarFiresCancelAndConfirmAndShowsTheTitle() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            UPToolbar(
+                UPToolbarProps(title = "选择日期"),
+                onCancel = { events += "cancel" },
+                onConfirm = { events += "confirm" },
+            )
+        }
+
+        composeRule.onNodeWithText("选择日期").assertExists()
+        composeRule.onNodeWithTag("up-toolbar-cancel").performClick()
+        composeRule.onNodeWithTag("up-toolbar-confirm").performClick()
+        composeRule.runOnIdle { assertEquals(listOf("cancel", "confirm"), events) }
+    }
+
+    @Test
+    fun toolbarRightSlotReplacesConfirmButton() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            UPToolbar(
+                UPToolbarProps(rightSlot = true),
+                onConfirm = { events += "confirm" },
+                right = { UPText(UPTextProps(text = "自定义右侧")) },
+            )
+        }
+
+        composeRule.onNodeWithText("自定义右侧").assertExists()
+        composeRule.onNodeWithTag("up-toolbar-confirm").assertDoesNotExist()
+    }
+
+    @Test
+    fun toolbarHiddenWhenShowIsFalse() {
+        composeRule.setContent {
+            UPToolbar(UPToolbarProps(show = false, title = "隐藏"))
+        }
+
+        composeRule.onNodeWithTag("up-toolbar").assertDoesNotExist()
     }
 }

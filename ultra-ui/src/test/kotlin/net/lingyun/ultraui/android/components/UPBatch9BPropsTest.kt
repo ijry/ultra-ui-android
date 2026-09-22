@@ -25,6 +25,19 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun toolbarDefaultsMatchUviewTexts() {
+        val toolbar = UPToolbarProps()
+        assertTrue(toolbar.show)
+        assertEquals("取消", toolbar.cancelText)
+        assertEquals("确定", toolbar.confirmText)
+        assertEquals("#909193", toolbar.cancelColor)
+        // Upstream leaves confirmColor empty; the label falls back to the theme primary.
+        assertEquals("", toolbar.confirmColor)
+        assertEquals("", toolbar.title)
+        assertFalse(toolbar.rightSlot)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

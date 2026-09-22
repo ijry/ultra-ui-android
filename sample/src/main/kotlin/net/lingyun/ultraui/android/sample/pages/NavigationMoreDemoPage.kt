@@ -66,6 +66,8 @@ import net.lingyun.ultraui.android.components.UPSwiperProps
 import net.lingyun.ultraui.android.components.UPTabs
 import net.lingyun.ultraui.android.components.UPTabsItem
 import net.lingyun.ultraui.android.components.UPTabsProps
+import net.lingyun.ultraui.android.components.UPToolbar
+import net.lingyun.ultraui.android.components.UPToolbarProps
 import net.lingyun.ultraui.android.components.UPTooltip
 import net.lingyun.ultraui.android.components.UPTooltipProps
 import net.lingyun.ultraui.android.components.UPScrollList
@@ -90,6 +92,7 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("底部安全区") { BasicText("内容"); UPSafeBottom() }
             DemoSection("标签页") { UPTabs(UPTabsProps(list = listOf("全部", "待支付", "已完成"), current = tab), onChange = { tab = it }) }
             DemoSection("标签项") { UPTabsItem { BasicText("自定义标签项") } }
+            DemoSection("工具条") { UPToolbar(UPToolbarProps(title = "请选择")) }
             DemoSection("分段器") { UPSubsection(UPSubsectionProps(list = listOf("日", "周", "月"), current = subsection), onChange = { subsection = it }) }
             DemoSection("步骤条") { UPSteps { UPStepsItem(UPStepsItemProps(title = "提交订单", desc = "已完成")); UPStepsItem(UPStepsItemProps(title = "配送中", desc = "处理中")) } }
             DemoSection("步骤项") { UPStepsItem(UPStepsItemProps(title = "独立步骤", desc = "可嵌套使用")) }
