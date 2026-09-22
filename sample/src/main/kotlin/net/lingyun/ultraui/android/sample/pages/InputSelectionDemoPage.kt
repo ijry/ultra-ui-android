@@ -31,8 +31,12 @@ import net.lingyun.ultraui.android.components.UPMessageInput
 import net.lingyun.ultraui.android.components.UPMessageInputProps
 import net.lingyun.ultraui.android.components.UPNumberKeyboard
 import net.lingyun.ultraui.android.components.UPNumberKeyboardProps
+import net.lingyun.ultraui.android.components.UPButton
+import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCarKeyboard
 import net.lingyun.ultraui.android.components.UPCarKeyboardProps
+import net.lingyun.ultraui.android.components.UPKeyboard
+import net.lingyun.ultraui.android.components.UPKeyboardProps
 import net.lingyun.ultraui.android.components.UPInput
 import net.lingyun.ultraui.android.components.UPInputProps
 import net.lingyun.ultraui.android.components.UPNumberBox
@@ -62,6 +66,7 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
     var searchValue by remember { mutableStateOf("组件") }
     var codeValue by remember { mutableStateOf("12") }
     var switchValue by remember { mutableStateOf(true) }
+    var keyboardShow by remember { mutableStateOf(false) }
     var rateValue by remember { mutableFloatStateOf(3f) }
     var numberValue by remember { mutableStateOf<UPRawValue>(2) }
     var singleChecked by remember { mutableStateOf(true) }
@@ -142,6 +147,18 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPCarKeyboardProps(autoChange = true),
                     onChange = { eventText = "车牌键盘：$it" },
                     onBackspace = { eventText = "车牌键盘：退格" },
+                )
+            }
+
+            DemoSection(title = "键盘弹层") {
+                UPButton(props = UPButtonProps(text = "弹出键盘", type = "primary", size = "small"), onClick = { keyboardShow = true })
+                UPKeyboard(
+                    props = UPKeyboardProps(show = keyboardShow, mode = "number"),
+                    onChange = { eventText = "键盘弹层：$it" },
+                    onConfirm = { keyboardShow = false; eventText = "键盘弹层：完成" },
+                    onCancel = { keyboardShow = false; eventText = "键盘弹层：取消" },
+                    onClose = { keyboardShow = false },
+                    onUpdateShow = { keyboardShow = it },
                 )
             }
 

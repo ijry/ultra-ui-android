@@ -147,6 +147,22 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun keyboardDefaultsAndTipTextMatchUview() {
+        val kb = UPKeyboardProps()
+        assertEquals("number", kb.mode)
+        assertTrue(kb.tooltip)
+        assertTrue(kb.showCancel)
+        assertTrue(kb.showConfirm)
+        assertEquals("取消", kb.cancelText)
+        assertEquals("确认", kb.confirmText)
+        assertEquals(10075, kb.zIndex)
+        // Per-mode default tips.
+        assertEquals("数字键盘", upKeyboardDefaultTip("number"))
+        assertEquals("身份证键盘", upKeyboardDefaultTip("card"))
+        assertEquals("车牌号键盘", upKeyboardDefaultTip("car"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
