@@ -71,6 +71,8 @@ import net.lingyun.ultraui.android.components.UPSwiperProps
 import net.lingyun.ultraui.android.components.UPTabs
 import net.lingyun.ultraui.android.components.UPTabsItem
 import net.lingyun.ultraui.android.components.UPTabsProps
+import net.lingyun.ultraui.android.components.UPCityLocate
+import net.lingyun.ultraui.android.components.UPCityLocateProps
 import net.lingyun.ultraui.android.components.UPCateTab
 import net.lingyun.ultraui.android.components.UPCateTabProps
 import net.lingyun.ultraui.android.components.UPToolbar
@@ -146,6 +148,22 @@ public fun NavigationMoreDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
             DemoSection("选择器输入触发器") { UPPicker(UPPickerProps(hasInput = true, placeholder = "请选择城市", title = "城市", columns = listOf(listOf(mapOf("text" to "北京", "value" to "bj"), mapOf("text" to "上海", "value" to "sh"))))) }
             DemoSection("选择器列") { UPPickerColumn { BasicText("北京") } }
             DemoSection("分页") { UPPagination(UPPaginationProps(total = 42)) }
+            DemoSection("城市定位") {
+                Box(Modifier.fillMaxWidth().height(260.dp)) {
+                    UPCityLocate(
+                        props = UPCityLocateProps(
+                            indexList = listOf("🔥", "A"),
+                            currentCity = "上海",
+                            cityList = listOf(
+                                listOf(mapOf("name" to "北京"), mapOf("name" to "广州")),
+                                listOf(mapOf("name" to "安庆")),
+                            ),
+                        ),
+                        onSelectCity = { },
+                        onLocate = { },
+                    )
+                }
+            }
             DemoSection("下拉选择") { UPSelect(UPSelectProps(options = listOf(mapOf("id" to 1, "name" to "北京"), mapOf("id" to 2, "name" to "上海")), current = select), onUpdateCurrent = { select = it }) }
             DemoSection("分类标签") {
                 Box(Modifier.fillMaxWidth().height(220.dp)) {

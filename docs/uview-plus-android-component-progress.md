@@ -8,9 +8,9 @@
 - 上游固定提交：`b32377ce0500579830e537a20eef1a7c6c9cf806`
 - 扫描日期：2026-08-30
 - 上游目录总数：141 个
-- 当前 Android 公开 `UP*Props`：107 个
-- 当前 Android 已有公开 Compose 组件入口：107 个（另有 `UPToastHost` 等宿主辅助 API）
-- 当前目标组件完成度：107 / 138 个可直接使用的上游 UI 组件目录，约 77.5%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
+- 当前 Android 公开 `UP*Props`：108 个
+- 当前 Android 已有公开 Compose 组件入口：108 个（另有 `UPToastHost` 等宿主辅助 API）
+- 当前目标组件完成度：108 / 138 个可直接使用的上游 UI 组件目录，约 78.3%。其中 3 个是辅助模块目录，暂不计入 UI 组件分母。
 
 ### 复刻进度定义
 
@@ -58,7 +58,7 @@
 | 23 | 选择 | `u-checkbox-group` | `UPCheckboxGroup` / `UPCheckboxGroupProps` | 基本完成 | 高（Props） | 多选组受控值和布局已有测试。降级：`name` 上游 `u-checkbox-group.vue` 自身从不读取（`change` 事件回传的是子项的 `name`），Android 同样保留字段但不生效。 |
 | 24 | 选择 | `up-choose` | `UPChoose` / `UPChooseProps` | 基本完成 | 高（Props） | 标签单选：`options` 渲染成 `up-tag`，`modelValue`（索引，默认 `false` 即未选）指向的项为实心 primary large tag、其余为 plain info tag，`labelName` 取标签文案（对象取键、纯串直接用）；`wrap=true` 用 `FlowRow` 多行排布、`false` 用横向滚动单行；`customClick=true` 时点击发 `custom-click(index)` 交调用方处理，否则发 `update:modelValue(index)`。`modelValue` 的 `false`→-1、数字/数字串→索引映射逐条对照上游 watcher。有 1 项默认值/索引映射单测与 2 项真机断言（逐项渲染 + 点击选中回报索引、customClick 改发 custom-click 不选中）。`itemWidth`（`auto` 时不设宽）与 `itemPadding` 作为标签 `customStyle` 生效。降级：`type`（radio/其它）与 `valueName` 上游模板发出的都是索引、从不据此改变行为，`valueName` 登记为按设计不生效。 |
 | 25 | 布局与进度 | `u-circle-progress` | `UPCircleProgress` / `UPCircleProgressProps` | 基本完成 | 高（Props） | 环形进度、颜色、宽度和文字已有实现。 |
-| 26 | 原生能力 | `u-city-locate` | — | 未开始 | 暂无 | 城市定位，涉及定位权限和系统服务。 |
+| 26 | 原生能力 | `u-city-locate` | `UPCityLocate` / `UPCityLocateProps` | 基本完成 | 中 | 城市选择器，构建于 `u-index-list`：顶部「定位城市」头显示当前城市（`currentCity` 种子文案，缺省「定位中....」），下方 `cityList` 按 `indexList` 索引条分组——组 0 渲染成热门城市网格、其余为带 `u-line` 分隔的列表；点城市更新头部并发 `select-city`（经 `onSelectCity` 回传城市 map），点定位头调 `onLocate`。`nameKey` 取城市显示名。有 1 项默认值单测与 2 项真机断言（显示当前城市 + 选城回报、点定位头触发 onLocate）。降级：上游 `uni.getLocation` 的实际定位与 `location-success` 事件依赖系统定位权限，Android 把定位查找交宿主（`onLocate` 回调），`locationType` 保留为请求坐标系字段。 |
 | 27 | 键盘与输入 | `u-code` | `UPCode` / `UPCodeProps` | 基本完成 | 高（Props） | 验证码倒计时（headless，上游 `display:none` + 作用域插槽透传文案）：新增 `UPCodeController` 提供 ref 上的 `start()`/`reset()` 与只读 `canGetCode`（运行中为 false）；`start()` 复刻 `secNum=seconds`、`$emit('start')` 与首拍 `change(secNum)`，随后 `setInterval(1000)` 的 `if(--secNum)` 语义每秒回调 `change` 直到归零；文案按 `startText`（未开始）→ `changeText`（运行中，首个 `X` 换成当前秒）→ `endText`（结束）三段切换，有插槽时透传文案否则 `BasicText` 兜底渲染。补全上游本快照留空的两处：`setTimeText()`/`getText()` 是空实现（`codeText` 从不赋值）、声明的 `end` 事件从不 `$emit`——按属性/事件契约重建，归零时触发 `onEnd`。降级：`keepRunning`/`uniqueKey` 是 H5 刷新续跑的本地存储持久化，Compose 重组树无对应物，两者均上报诊断而非静默忽略。有 1 项默认值/文案单测与 2 项真机断言（start→逐秒 change→endText、reset 复位并停摆）。 |
 | 28 | 键盘与输入 | `u-code-input` | `UPCodeInput` / `UPCodeInputProps` | 基本完成 | 高（Props） | 输入长度、掩码、颜色和回调已有实现；原生焦点细节待补。 |
 | 29 | 布局 | `u-col` | `UPCol` / `UPColProps` | 基本完成 | 高（Props） | 栅格列宽、偏移和响应式基础字段已有实现。 |
@@ -183,7 +183,7 @@
 | 可直接使用的 UI 组件目录 | 138 |
 | 辅助模块目录 | 3 |
 | Android 已建立 Props/API | 90 |
-| 基本完成 | 107 |
+| 基本完成 | 108 |
 | 基础可用 | 0 |
 | Props 已建 | 0 |
 | 未开始（含辅助模块） | 51 |
@@ -200,13 +200,13 @@
 | Batch 10 选择与底部导航 | calendar、datetime-picker、cascader、slider、tabbar、tabbar-item | 6 | 混合；`cascader`、`slider`、`picker` 系列已到「基本完成」，滚轮视觉与窗口级固定仍需加强。 |
 | Batch 11 表单校验 | form、form-item | 2 | 基本完成；上游 async-validator 规则、六个 ref 方法与标签/错误布局均有真机断言。 |
 | Batch 12 字段补齐 | 跨批次：tabs、pagination、image、cell、modal、navbar、navbar-mini、number-box、overlay、badge、tag、subsection、notice-bar、collapse-item、sticky、action-sheet、slider、list、list-item、count-to、back-top、skeleton、select、read-more、cascader | 25 | 不新增组件，专门消化「声明了但从不读取」的字段。未读字段从 90 一路降到 0；期间发现的组件级缺陷（`u-subsection` 只有一排文字、`u-notice-bar` 从不滚动、`u-collapse-item` 无动画）已一并修复。 |
-| Batch 13 空契约收口与新组件 | status-bar、safe-bottom、tabs-item、toolbar、no-network、code、message-input、box、agreement、copy、float-button、number-keyboard、car-keyboard、keyboard、choose、view、cate-tab、coupon、lazy-load、guide | 20 | `status-bar` 补 `update:height` 回调与 `<slot />`、`safe-bottom`/`tabs-item` 与上游空契约逐项对齐，三者由「基础可用」升到「基本完成」，清单再无该档；新增 `u-toolbar`（取消/确认/标题/右插槽/`show` 语义齐备）、`u-no-network`（白底 overlay + 提示 + 重试，连通性提升为 `connected` 参数）、`u-code`（headless 验证码倒计时，`UPCodeController` 提供 `start()`/`reset()`）、`u-message-input`（验证码输入格，三态装饰 + `change`/`finish`）、`up-box`（首页特色三分栏盒子）、`up-agreement`（隐私协议门，`UPAgreementController` 提供 `showModal()`）、`up-copy`（点击复制到剪贴板）、`up-float-button`（悬浮按钮 + 展开菜单）、`u-number-keyboard`（三列数字/身份证键盘）、`u-car-keyboard`（车牌中英键盘）、`u-keyboard`（键盘弹层容器）、`up-choose`（标签单选）、`up-view`（通用样式容器）、`up-cate-tab`（分类浏览左菜单 + 右内容）、`up-coupon`（优惠券卡片）、`u-lazy-load`（图片懒加载）与 `up-guide`（全屏首屏引导）。 |
+| Batch 13 空契约收口与新组件 | status-bar、safe-bottom、tabs-item、toolbar、no-network、code、message-input、box、agreement、copy、float-button、number-keyboard、car-keyboard、keyboard、choose、view、cate-tab、coupon、lazy-load、guide、city-locate | 21 | `status-bar` 补 `update:height` 回调与 `<slot />`、`safe-bottom`/`tabs-item` 与上游空契约逐项对齐，三者由「基础可用」升到「基本完成」，清单再无该档；新增 `u-toolbar`（取消/确认/标题/右插槽/`show` 语义齐备）、`u-no-network`（白底 overlay + 提示 + 重试，连通性提升为 `connected` 参数）、`u-code`（headless 验证码倒计时，`UPCodeController` 提供 `start()`/`reset()`）、`u-message-input`（验证码输入格，三态装饰 + `change`/`finish`）、`up-box`（首页特色三分栏盒子）、`up-agreement`（隐私协议门，`UPAgreementController` 提供 `showModal()`）、`up-copy`（点击复制到剪贴板）、`up-float-button`（悬浮按钮 + 展开菜单）、`u-number-keyboard`（三列数字/身份证键盘）、`u-car-keyboard`（车牌中英键盘）、`u-keyboard`（键盘弹层容器）、`up-choose`（标签单选）、`up-view`（通用样式容器）、`up-cate-tab`（分类浏览左菜单 + 右内容）、`up-coupon`（优惠券卡片）、`u-lazy-load`（图片懒加载）、`up-guide`（全屏首屏引导）与 `u-city-locate`（城市定位选择器）。 |
 
 ## 下一批推荐顺序
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 356 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 358 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
 3. **原「基础可用」的 3 行已收口（本轮）**：`u-safe-bottom`、`u-status-bar`、`u-tabs-item` 三者上游 props 契约本就近乎为空，此前记为「没有可复刻字段」。本轮把它们逐一对齐到上游全部语义后升到「基本完成」：`u-status-bar` 补 `emits: ['update:height']`（新增 `onUpdateHeight` 回传实测状态栏 inset 或显式高度）与默认 `<slot />`（新增 `content` 插槽）；`u-safe-bottom` 以 `navigationBarsPadding()` 作 `env(safe-area-inset-bottom)` 的语义等价、`customStyle` 逐字段覆盖；`u-tabs-item` 是 `<swiper-item><slot /></swiper-item>` 纯壳、`content` 插槽透传即等价。各补真机断言。至此清单再无「基础可用」行。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）、`u-back-top`（缺一个 `scrollState` 参数）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **表单体系**：`u-agreement`、`u-upload`、`u-album`。需要先确定 Android 回调 payload 和权限/文件 URI 边界（`u-form`、`u-form-item` 已在 Batch 11 完成）。
@@ -233,8 +233,9 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **356 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **358 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
+`u-city-locate` 新增 2 项回归（`UPCityLocateBehaviorTest`），覆盖显示当前城市 + 选城回报、点定位头触发 onLocate。再往前一批为
 `up-guide` 新增 3 项回归（`UPGuideBehaviorTest`），覆盖翻页至末页并 finish、skip 提前关闭、`show=false`/空 list 不渲染。再往前一批为
 `u-lazy-load` 新增 1 项回归（`UPLazyLoadBehaviorTest`），覆盖渲染图片宿主并回传 index。再往前一批为
 `up-coupon` 新增 2 项回归（`UPCouponBehaviorTest`），覆盖三分栏渲染 + 高度 + 点击、禁用拦截点击。再往前一批为
@@ -398,7 +399,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：107 个已实现组件行中，**107 行证据齐备、0 行标注超出证据**，脚本保持全绿。最后 10 行
+当前状态：108 个已实现组件行中，**108 行证据齐备、0 行标注超出证据**，脚本保持全绿。最后 10 行
 （`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、`u-number-box`、`u-radio`、`u-radio-group`、
 `u-checkbox-group`、`u-overlay`、`u-badge`、`u-tag`）在本轮补齐了实现或登记为按设计不生效，
 其中 `u-navbar`、`u-navbar-mini` 由「基础可用」升级为「基本完成」；再往前一批的 `u-tabs`、
@@ -540,7 +541,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：107 个 Props 类中有 **0 个字段无人读取**，另有 81 个已记录为按设计不生效
+当前状态：108 个 Props 类中有 **0 个字段无人读取**，另有 82 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义、内联渲染没有窗口级遮罩可作用的字段，
 以及上游自己也从不读取的字段，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的

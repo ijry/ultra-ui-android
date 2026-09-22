@@ -244,6 +244,15 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun cityLocateDefaultsMatchUview() {
+        val city = UPCityLocateProps()
+        assertEquals(listOf<Any?>("🔥"), city.indexList)
+        assertEquals("wgs84", city.locationType)
+        assertEquals("name", city.nameKey)
+        assertEquals("", city.currentCity)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
