@@ -37,6 +37,8 @@ import net.lingyun.ultraui.android.components.UPCarKeyboard
 import net.lingyun.ultraui.android.components.UPCarKeyboardProps
 import net.lingyun.ultraui.android.components.UPKeyboard
 import net.lingyun.ultraui.android.components.UPKeyboardProps
+import net.lingyun.ultraui.android.components.UPChoose
+import net.lingyun.ultraui.android.components.UPChooseProps
 import net.lingyun.ultraui.android.components.UPInput
 import net.lingyun.ultraui.android.components.UPInputProps
 import net.lingyun.ultraui.android.components.UPNumberBox
@@ -67,6 +69,7 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
     var codeValue by remember { mutableStateOf("12") }
     var switchValue by remember { mutableStateOf(true) }
     var keyboardShow by remember { mutableStateOf(false) }
+    var chooseIndex by remember { mutableStateOf(0) }
     var rateValue by remember { mutableFloatStateOf(3f) }
     var numberValue by remember { mutableStateOf<UPRawValue>(2) }
     var singleChecked by remember { mutableStateOf(true) }
@@ -147,6 +150,20 @@ public fun InputSelectionDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPCarKeyboardProps(autoChange = true),
                     onChange = { eventText = "车牌键盘：$it" },
                     onBackspace = { eventText = "车牌键盘：退格" },
+                )
+            }
+
+            DemoSection(title = "标签选择") {
+                UPChoose(
+                    props = UPChooseProps(
+                        options = listOf(
+                            mapOf("title" to "北京", "value" to "bj"),
+                            mapOf("title" to "上海", "value" to "sh"),
+                            mapOf("title" to "广州", "value" to "gz"),
+                        ),
+                        modelValue = chooseIndex,
+                    ),
+                    onUpdateModelValue = { chooseIndex = it; eventText = "标签选择：$it" },
                 )
             }
 

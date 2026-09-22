@@ -163,6 +163,19 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun chooseDefaultsAndCurrentIndexMatchUview() {
+        val choose = UPChooseProps()
+        assertEquals("radio", choose.type)
+        assertEquals("title", choose.labelName)
+        assertTrue(choose.wrap)
+        assertFalse(choose.customClick)
+        // modelValue defaults to false (nothing selected -> -1); numbers/strings map to indices.
+        assertEquals(-1, upChooseCurrentIndex(false))
+        assertEquals(2, upChooseCurrentIndex(2))
+        assertEquals(1, upChooseCurrentIndex("1"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
