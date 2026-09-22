@@ -37,6 +37,8 @@ import net.lingyun.ultraui.android.components.UPCellGroupProps
 import net.lingyun.ultraui.android.components.UPCellProps
 import net.lingyun.ultraui.android.components.UPEmpty
 import net.lingyun.ultraui.android.components.UPEmptyProps
+import net.lingyun.ultraui.android.components.UPCoupon
+import net.lingyun.ultraui.android.components.UPCouponProps
 import net.lingyun.ultraui.android.components.UPNoNetwork
 import net.lingyun.ultraui.android.components.UPNoNetworkProps
 import net.lingyun.ultraui.android.components.UPImage
@@ -196,6 +198,13 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                     UPAvatarGroup(
                         props = UPAvatarGroupProps(urls = listOf("", "", ""), maxCount = 2, showMore = true, extraValue = 3),
                         onShowMore = { eventText = "头像组：更多" },
+                    )
+                }
+
+                DemoSection(title = "优惠券") {
+                    UPCoupon(
+                        props = UPCouponProps(amount = "50", limit = "满199可用", title = "新人专享券", desc = "全场通用", time = "有效期至 2026-12-31"),
+                        onClick = { eventText = "优惠券：使用" },
                     )
                 }
 

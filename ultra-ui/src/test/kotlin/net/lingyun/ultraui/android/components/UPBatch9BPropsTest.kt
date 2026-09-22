@@ -3,6 +3,7 @@ package net.lingyun.ultraui.android.components
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.unit.dp
 import org.junit.Test
 
 class UPBatch9BPropsTest {
@@ -198,6 +199,22 @@ class UPBatch9BPropsTest {
         assertEquals("name", cate.tabKeyName)
         assertEquals("name", cate.itemKeyName)
         assertEquals(0, cate.current)
+    }
+
+    @Test
+    fun couponDefaultsAndHeightMapMatchUview() {
+        val coupon = UPCouponProps()
+        assertEquals("￥", coupon.unit)
+        assertEquals("left", coupon.unitPosition)
+        assertEquals("优惠券", coupon.title)
+        assertEquals("使用", coupon.actionText)
+        assertEquals("coupon", coupon.shape)
+        assertEquals("medium", coupon.size)
+        assertFalse(coupon.disabled)
+        // rpx/2 height map.
+        assertEquals(80.dp, upCouponHeight("small"))
+        assertEquals(90.dp, upCouponHeight("medium"))
+        assertEquals(110.dp, upCouponHeight("large"))
     }
 
     @Test

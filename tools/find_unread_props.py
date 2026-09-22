@@ -119,6 +119,7 @@ KNOWN_INERT: dict[str, str] = {
     "DropdownItem.closeOnClickOverlay": "upstream u-dropdown-item.vue never reads it; the parent's closeOnClickMask closes the menu",
     "FormItem.rightIcon": "upstream u-form-item.vue declares it but never renders it",
     "Choose.valueName": "upstream up-choose emits the index, never reads valueName",
+    "Coupon.circle": "upstream ternary is `circle ? 'circle' : 'circle'`; the shape is always circle",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is
