@@ -131,6 +131,22 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun carKeyboardKeySetsAndRowSlicingMatchUview() {
+        assertFalse(UPCarKeyboardProps().autoChange)
+        assertEquals(36, upCarKeyboardAreaKeys.size)
+        assertEquals("京", upCarKeyboardAreaKeys.first())
+        assertEquals("学", upCarKeyboardAreaKeys.last())
+        assertEquals(36, upCarKeyboardEngKeys.size)
+        assertEquals("1", upCarKeyboardEngKeys.first())
+        assertEquals("M", upCarKeyboardEngKeys.last())
+        // Sliced into rows of 10/10/10/6.
+        val rows = upCarKeyboardRows(upCarKeyboardEngKeys)
+        assertEquals(listOf(10, 10, 10, 6), rows.map { it.size })
+        // [20,30) captures ASDFGHJKL then Z, so the 4th row starts at X.
+        assertEquals("X", rows[3].first())
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
