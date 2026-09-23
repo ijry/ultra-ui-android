@@ -129,6 +129,7 @@ KNOWN_INERT: dict[str, str] = {
     "Dragsort.vibrate": "haptic feedback on drag; belongs to the host",
     "Waterfall.addTime": "staggered per-item append interval; the port lays out all at once",
     "Waterfall.idKey": "identifies items for upstream remove(id); callers edit modelValue instead",
+    "VirtualList.buffer": "manual overscan hint; LazyColumn manages its own recycling window",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

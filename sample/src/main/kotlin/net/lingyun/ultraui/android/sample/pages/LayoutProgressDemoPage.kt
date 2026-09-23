@@ -27,6 +27,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPVirtualList
+import net.lingyun.ultraui.android.components.UPVirtualListProps
 import net.lingyun.ultraui.android.components.UPWaterfall
 import net.lingyun.ultraui.android.components.UPWaterfallProps
 import net.lingyun.ultraui.android.components.UPDragsort
@@ -103,6 +105,22 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
                 )
+            }
+
+            DemoSection(title = "虚拟列表") {
+                UPVirtualList(
+                    props = UPVirtualListProps(
+                        listData = (1..200).map { mapOf("id" to it, "label" to "虚拟行 $it") },
+                        itemHeight = 44,
+                        height = "180",
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(180.dp),
+                ) { item, _ ->
+                    androidx.compose.foundation.text.BasicText(
+                        item["label"].toString(),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    )
+                }
             }
 
             DemoSection(title = "瀑布流") {

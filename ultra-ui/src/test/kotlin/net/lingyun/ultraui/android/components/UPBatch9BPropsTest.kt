@@ -314,6 +314,17 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun virtualListDefaultsAndKeyMatchUview() {
+        val vl = UPVirtualListProps()
+        assertEquals(50, vl.itemHeight)
+        assertEquals(4, vl.buffer)
+        assertEquals("id", vl.keyField)
+        // getItemKey: item[keyField] or the index fallback.
+        assertEquals(7, upVirtualListKey(mapOf("id" to 7), "id", 3))
+        assertEquals(3, upVirtualListKey(mapOf("name" to "x"), "id", 3))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
