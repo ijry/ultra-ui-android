@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPWaterfall
+import net.lingyun.ultraui.android.components.UPWaterfallProps
 import net.lingyun.ultraui.android.components.UPDragsort
 import net.lingyun.ultraui.android.components.UPDragsortProps
 import net.lingyun.ultraui.android.components.UPView
@@ -100,6 +103,26 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
                 )
+            }
+
+            DemoSection(title = "瀑布流") {
+                UPWaterfall(
+                    props = UPWaterfallProps(
+                        modelValue = (1..6).map { mapOf("id" to it, "label" to "瀑布 $it", "h" to (60 + it * 12)) },
+                        columns = 2,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { item, _ ->
+                    val h = (item["h"] as? Int) ?: 80
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(h.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFEFF3FF)),
+                        contentAlignment = androidx.compose.ui.Alignment.Center,
+                    ) { androidx.compose.foundation.text.BasicText(item["label"].toString()) }
+                }
             }
 
             DemoSection(title = "拖拽排序") {

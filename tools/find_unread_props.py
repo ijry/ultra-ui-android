@@ -127,6 +127,8 @@ KNOWN_INERT: dict[str, str] = {
     "TabsPro.contentMode": "upstream declares static/other but the template never branches on it",
     "Dragsort.columns": "only meaningful for the all/grid direction; the vertical port never reads it",
     "Dragsort.vibrate": "haptic feedback on drag; belongs to the host",
+    "Waterfall.addTime": "staggered per-item append interval; the port lays out all at once",
+    "Waterfall.idKey": "identifies items for upstream remove(id); callers edit modelValue instead",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

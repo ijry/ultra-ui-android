@@ -301,6 +301,19 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun waterfallDefaultsAndColumnCountMatchUview() {
+        val wf = UPWaterfallProps()
+        assertEquals("id", wf.idKey)
+        assertEquals(230, wf.minColumnWidth)
+        // Numeric columns used directly.
+        assertEquals(3, upWaterfallColumnCount(3, 2, 230, 1080))
+        assertEquals(2, upWaterfallColumnCount("2", 2, 230, 1080))
+        // auto: floor(width / (minColumnWidth + 7)), clamped to columnsMin.
+        assertEquals(4, upWaterfallColumnCount("auto", 2, 230, 1000))
+        assertEquals(2, upWaterfallColumnCount("auto", 2, 230, 300))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
