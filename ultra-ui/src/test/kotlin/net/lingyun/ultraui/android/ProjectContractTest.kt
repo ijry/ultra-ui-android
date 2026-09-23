@@ -88,6 +88,7 @@ class ProjectContractTest {
             "UPCityLocateProps",
             "UPCalendarStripProps",
             "UPTabsProProps",
+            "UPDragsortProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

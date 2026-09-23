@@ -26,6 +26,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPDragsort
+import net.lingyun.ultraui.android.components.UPDragsortProps
 import net.lingyun.ultraui.android.components.UPView
 import net.lingyun.ultraui.android.components.UPViewProps
 import net.lingyun.ultraui.android.components.UPFloatButton
@@ -97,6 +99,19 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                 UPBox(
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
+                )
+            }
+
+            DemoSection(title = "拖拽排序") {
+                UPDragsort(
+                    props = UPDragsortProps(
+                        initialList = listOf(
+                            mapOf("id" to 1, "label" to "拖动我 · 一"),
+                            mapOf("id" to 2, "label" to "拖动我 · 二"),
+                            mapOf("id" to 3, "label" to "拖动我 · 三"),
+                        ),
+                    ),
+                    onDragEnd = { eventText = "拖拽排序：${it.size} 项" },
                 )
             }
 

@@ -286,6 +286,21 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun dragsortDefaultsAndMoveHelperMatchUview() {
+        val drag = UPDragsortProps()
+        assertTrue(drag.draggable)
+        assertEquals("vertical", drag.direction)
+        assertEquals(3, drag.columns)
+        // splice move: element 0 to index 2.
+        assertEquals(listOf("b", "c", "a"), upDragsortMove(listOf("a", "b", "c"), 0, 2))
+        assertEquals(listOf("a", "b", "c"), upDragsortMove(listOf("a", "b", "c"), 1, 1))
+        // Per-item and global draggable gates.
+        assertTrue(upDragsortItemDraggable(true, mapOf("id" to 1)))
+        assertFalse(upDragsortItemDraggable(true, mapOf("id" to 1, "draggable" to false)))
+        assertFalse(upDragsortItemDraggable(false, mapOf("id" to 1)))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
