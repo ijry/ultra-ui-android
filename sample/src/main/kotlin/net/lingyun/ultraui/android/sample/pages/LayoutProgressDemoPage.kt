@@ -27,6 +27,10 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPTable
+import net.lingyun.ultraui.android.components.UPTr
+import net.lingyun.ultraui.android.components.UPTd
+import net.lingyun.ultraui.android.components.UPTh
 import net.lingyun.ultraui.android.components.UPTree
 import net.lingyun.ultraui.android.components.UPTreeProps
 import net.lingyun.ultraui.android.components.UPVirtualList
@@ -107,6 +111,14 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
                 )
+            }
+
+            DemoSection(title = "表格") {
+                UPTable {
+                    UPTr { UPTh("学校"); UPTh("城市") }
+                    UPTr { UPTd("浙江大学"); UPTd("杭州") }
+                    UPTr { UPTd("清华大学"); UPTd("北京") }
+                }
             }
 
             DemoSection(title = "树形控件") {

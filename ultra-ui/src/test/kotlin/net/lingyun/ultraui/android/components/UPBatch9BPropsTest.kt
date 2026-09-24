@@ -362,6 +362,20 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun tableDefaultsAndAlignMatchUview() {
+        val table = UPTableProps()
+        assertEquals("#e4e7ed", table.borderColor)
+        assertEquals("center", table.align)
+        assertEquals("5px 3px", table.padding)
+        assertEquals("14px", table.fontSize)
+        assertEquals("auto", UPTdProps().width)
+        // align string -> Compose TextAlign.
+        assertEquals(androidx.compose.ui.text.style.TextAlign.Start, upTableAlign("left"))
+        assertEquals(androidx.compose.ui.text.style.TextAlign.End, upTableAlign("right"))
+        assertEquals(androidx.compose.ui.text.style.TextAlign.Center, upTableAlign("center"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
