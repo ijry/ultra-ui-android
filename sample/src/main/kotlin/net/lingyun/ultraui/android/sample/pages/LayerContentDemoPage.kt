@@ -49,6 +49,8 @@ import net.lingyun.ultraui.android.components.UPImage
 import net.lingyun.ultraui.android.components.UPImageProps
 import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
+import net.lingyun.ultraui.android.components.UPSignature
+import net.lingyun.ultraui.android.components.UPSignatureProps
 import net.lingyun.ultraui.android.components.UPGoodsSku
 import net.lingyun.ultraui.android.components.UPGoodsSkuProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
@@ -281,6 +283,15 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
+                }
+
+                DemoSection(title = "手写签名") {
+                    UPSignature(
+                        props = UPSignatureProps(height = 160),
+                        onClear = { eventText = "签名：已清空" },
+                        onConfirm = { eventText = "签名：已确认" },
+                        onError = { eventText = "签名：请先签名" },
+                    )
                 }
 
                 DemoSection(title = "商品规格") {

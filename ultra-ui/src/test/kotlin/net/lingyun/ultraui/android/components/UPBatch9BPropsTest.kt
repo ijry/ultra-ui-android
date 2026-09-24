@@ -397,6 +397,18 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun signatureDefaultsAndEmptinessMatchUview() {
+        val sig = UPSignatureProps()
+        assertEquals("#ffffff", sig.bgColor)
+        assertEquals("#000000", sig.color)
+        assertTrue(sig.showToolbar)
+        // A pad with no multi-point strokes is empty.
+        assertTrue(upSignatureIsEmpty(emptyList()))
+        val drawn = UPSignatureStroke().apply { points.add(androidx.compose.ui.geometry.Offset(0f, 0f)); points.add(androidx.compose.ui.geometry.Offset(5f, 5f)) }
+        assertFalse(upSignatureIsEmpty(listOf(drawn)))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
