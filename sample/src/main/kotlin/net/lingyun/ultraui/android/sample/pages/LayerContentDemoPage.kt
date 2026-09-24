@@ -49,6 +49,8 @@ import net.lingyun.ultraui.android.components.UPImage
 import net.lingyun.ultraui.android.components.UPImageProps
 import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
+import net.lingyun.ultraui.android.components.UPGoodsSku
+import net.lingyun.ultraui.android.components.UPGoodsSkuProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -78,6 +80,7 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
     var modalVisible by remember { mutableStateOf(false) }
     var networkConnected by remember { mutableStateOf(true) }
     var pullRefreshing by remember { mutableStateOf(false) }
+    var skuShow by remember { mutableStateOf(false) }
     var guideShow by remember { mutableStateOf(false) }
     val agreement = rememberUPAgreementController()
     var popupVisible by remember { mutableStateOf(true) }
@@ -278,6 +281,26 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
+                }
+
+                DemoSection(title = "商品规格") {
+                    UPButton(props = UPButtonProps(text = "选择规格", type = "primary", size = "small"), onClick = { skuShow = true })
+                    UPGoodsSku(
+                        props = UPGoodsSkuProps(
+                            show = skuShow,
+                            goodsInfo = mapOf("price" to 99, "stock" to 20),
+                            skuTree = listOf(
+                                mapOf("label" to "颜色", "name" to "color", "children" to listOf(mapOf("id" to "r", "name" to "红色"), mapOf("id" to "b", "name" to "蓝色"))),
+                                mapOf("label" to "尺寸", "name" to "size", "children" to listOf(mapOf("id" to "s", "name" to "S"), mapOf("id" to "m", "name" to "M"))),
+                            ),
+                            skuList = listOf(
+                                mapOf("color" to "r", "size" to "s", "price" to 88, "stock" to 5),
+                                mapOf("color" to "b", "size" to "m", "price" to 96, "stock" to 3),
+                            ),
+                        ),
+                        onUpdateShow = { skuShow = it },
+                        onConfirm = { _, num, text -> skuShow = false; eventText = "规格：$text ×$num" },
+                    )
                 }
 
                 DemoSection(title = "下拉刷新") {

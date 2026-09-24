@@ -376,6 +376,27 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun goodsSkuCombMatchesOnlyWhenFullySelected() {
+        val tree = listOf<Any?>(
+            mapOf("label" to "颜色", "name" to "color", "children" to listOf<Any?>(mapOf("id" to "r", "name" to "红"), mapOf("id" to "b", "name" to "蓝"))),
+            mapOf("label" to "尺寸", "name" to "size", "children" to listOf<Any?>(mapOf("id" to "s", "name" to "S"), mapOf("id" to "m", "name" to "M"))),
+        )
+        val list = listOf<Any?>(
+            mapOf("color" to "r", "size" to "s", "price" to 10, "stock" to 5),
+            mapOf("color" to "b", "size" to "m", "price" to 12, "stock" to 0),
+        )
+        // Partial selection -> null.
+        assertEquals(null, upGoodsSkuComb(tree, list, mapOf("color" to "r")))
+        // Full match.
+        assertEquals(10, upGoodsSkuComb(tree, list, mapOf("color" to "r", "size" to "s"))?.get("price"))
+        // Full but no matching row -> null.
+        assertEquals(null, upGoodsSkuComb(tree, list, mapOf("color" to "r", "size" to "m")))
+        // color=r keeps size=s reachable, size=m unreachable.
+        assertFalse(upGoodsSkuLeafDisabled(tree, list, mapOf("color" to "r"), "size", "s"))
+        assertTrue(upGoodsSkuLeafDisabled(tree, list, mapOf("color" to "r"), "size", "m"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
