@@ -325,6 +325,28 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun treeFlattenRespectsExpandedKeys() {
+        val fields = UPTreeFields()
+        val data = listOf<Any?>(
+            mapOf("id" to "a", "label" to "A", "children" to listOf<Any?>(
+                mapOf("id" to "a1", "label" to "A1"),
+                mapOf("id" to "a2", "label" to "A2"),
+            )),
+            mapOf("id" to "b", "label" to "B"),
+        )
+        // Collapsed: only the two roots are visible.
+        val collapsed = upTreeFlatten(data, fields, emptySet())
+        assertEquals(listOf("a", "b"), collapsed.map { it.key })
+        assertTrue(collapsed.first().hasChildren)
+        // Expanding "a" reveals its children between a and b.
+        val expanded = upTreeFlatten(data, fields, setOf("a"))
+        assertEquals(listOf("a", "a1", "a2", "b"), expanded.map { it.key })
+        assertEquals(1, expanded[1].level)
+        // defaultExpandAll seed collects every key.
+        assertEquals(setOf("a", "a1", "a2", "b"), upTreeAllKeys(data, fields).toSet())
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

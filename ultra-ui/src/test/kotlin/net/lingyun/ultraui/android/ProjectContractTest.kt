@@ -91,6 +91,7 @@ class ProjectContractTest {
             "UPDragsortProps",
             "UPWaterfallProps",
             "UPVirtualListProps",
+            "UPTreeProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

@@ -27,6 +27,8 @@ import net.lingyun.ultraui.android.components.UPButton
 import net.lingyun.ultraui.android.components.UPButtonProps
 import net.lingyun.ultraui.android.components.UPCircleProgress
 import net.lingyun.ultraui.android.components.UPCol
+import net.lingyun.ultraui.android.components.UPTree
+import net.lingyun.ultraui.android.components.UPTreeProps
 import net.lingyun.ultraui.android.components.UPVirtualList
 import net.lingyun.ultraui.android.components.UPVirtualListProps
 import net.lingyun.ultraui.android.components.UPWaterfall
@@ -104,6 +106,25 @@ public fun LayoutProgressDemoPage(onBack: () -> Unit, modifier: Modifier = Modif
                 UPBox(
                     props = UPBoxProps(leftTitle = "推荐", rightTopTitle = "热门", rightBottomTitle = "新品"),
                     onClick = { eventText = "盒子：点击" },
+                )
+            }
+
+            DemoSection(title = "树形控件") {
+                UPTree(
+                    props = UPTreeProps(
+                        defaultExpandAll = false,
+                        data = listOf(
+                            mapOf(
+                                "id" to "a", "label" to "一级 A",
+                                "children" to listOf(
+                                    mapOf("id" to "a1", "label" to "二级 A-1"),
+                                    mapOf("id" to "a2", "label" to "二级 A-2"),
+                                ),
+                            ),
+                            mapOf("id" to "b", "label" to "一级 B"),
+                        ),
+                    ),
+                    onNodeClick = { eventText = "树：${it["label"]}" },
                 )
             }
 
