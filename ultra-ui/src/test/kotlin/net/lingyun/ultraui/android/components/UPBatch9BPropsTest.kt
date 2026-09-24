@@ -347,6 +347,21 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun pullRefreshDefaultsAndStatusMatchUview() {
+        val pr = UPPullRefreshProps()
+        assertEquals(80, pr.threshold)
+        assertEquals(120, pr.maxDistance)
+        // distance = min(diff * damping, maxDistance).
+        assertEquals(40f, upPullRefreshDistance(100f, 0.4f, 120), 0.001f)
+        assertEquals(120f, upPullRefreshDistance(1000f, 0.4f, 120), 0.001f)
+        assertEquals(0f, upPullRefreshDistance(-50f, 0.4f, 120), 0.001f)
+        // status: refreshing dominates, else release past threshold, else pull.
+        assertEquals(UPPullRefreshStatus.Pull, upPullRefreshStatus(40f, 80, false))
+        assertEquals(UPPullRefreshStatus.Release, upPullRefreshStatus(90f, 80, false))
+        assertEquals(UPPullRefreshStatus.Refreshing, upPullRefreshStatus(10f, 80, true))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

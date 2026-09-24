@@ -49,6 +49,8 @@ import net.lingyun.ultraui.android.components.UPImage
 import net.lingyun.ultraui.android.components.UPImageProps
 import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
+import net.lingyun.ultraui.android.components.UPPullRefresh
+import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
 import net.lingyun.ultraui.android.components.UPLoadmoreProps
 import net.lingyun.ultraui.android.components.UPCopy
@@ -75,6 +77,7 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
     var eventText by remember { mutableStateOf("等待弹层与内容交互") }
     var modalVisible by remember { mutableStateOf(false) }
     var networkConnected by remember { mutableStateOf(true) }
+    var pullRefreshing by remember { mutableStateOf(false) }
     var guideShow by remember { mutableStateOf(false) }
     val agreement = rememberUPAgreementController()
     var popupVisible by remember { mutableStateOf(true) }
@@ -275,6 +278,16 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
+                }
+
+                DemoSection(title = "下拉刷新") {
+                    UPPullRefresh(
+                        props = UPPullRefreshProps(refreshing = pullRefreshing),
+                        onRefresh = { pullRefreshing = true; eventText = "下拉刷新：触发" },
+                    ) {
+                        Text("下拉此区域触发刷新", color = UPTheme.Content, modifier = Modifier.padding(16.dp))
+                    }
+                    UPButton(props = UPButtonProps(text = "结束刷新", size = "mini"), onClick = { pullRefreshing = false })
                 }
 
                 DemoSection(title = "加载更多") {
