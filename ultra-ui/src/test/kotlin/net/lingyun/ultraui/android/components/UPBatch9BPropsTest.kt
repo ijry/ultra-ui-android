@@ -439,6 +439,28 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun qrcodeDefaultsAndFinderCenterMatchUview() {
+        val qr = UPQrcodeProps()
+        assertEquals(200, qr.size)
+        assertEquals("px", qr.unit)
+        assertEquals(true, qr.show)
+        assertEquals("#ffffff", qr.background)
+        assertEquals("#000000", qr.foreground)
+        assertEquals("#000000", qr.pdground)
+        assertEquals(40, qr.iconSize)
+        assertEquals(3, qr.lv)
+        assertEquals(0, qr.quietZone)
+        assertEquals("生成中", qr.loadingText)
+        assertEquals(false, qr.allowPreview)
+        // Finder-pattern centres (3x3) of the three corners use pdground; a v1 (21x21) grid.
+        assert(upQrcodeIsFinderCenter(3, 3, 21))
+        assert(upQrcodeIsFinderCenter(3, 17, 21))
+        assert(upQrcodeIsFinderCenter(17, 3, 21))
+        assert(!upQrcodeIsFinderCenter(10, 10, 21))
+        assert(!upQrcodeIsFinderCenter(3, 10, 21))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

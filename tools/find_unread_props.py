@@ -130,6 +130,12 @@ KNOWN_INERT: dict[str, str] = {
     "Waterfall.addTime": "staggered per-item append interval; the port lays out all at once",
     "Waterfall.idKey": "identifies items for upstream remove(id); callers edit modelValue instead",
     "VirtualList.buffer": "manual overscan hint; LazyColumn manages its own recycling window",
+    "Qrcode.cid": "H5/App canvas element id; Android has no canvas node to bind",
+    "Qrcode.onval": "auto-redraw-on-val-change flag; Compose recomposes on prop change automatically",
+    "Qrcode.loadMake": "generate-on-mount flag; the port always renders synchronously when shown",
+    "Qrcode.usingComponents": "H5 custom-component draw-delay hint; there is no async canvas draw on Android",
+    "Qrcode.showLoading": "loading overlay while the canvas draws async; matrix generation is synchronous here",
+    "Qrcode.loadingText": "text for the async-draw loading overlay; no such loading phase on Android",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

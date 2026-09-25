@@ -57,6 +57,8 @@ import net.lingyun.ultraui.android.components.UPGoodsSku
 import net.lingyun.ultraui.android.components.UPGoodsSkuProps
 import net.lingyun.ultraui.android.components.UPPdfReader
 import net.lingyun.ultraui.android.components.UPPdfReaderProps
+import net.lingyun.ultraui.android.components.UPQrcode
+import net.lingyun.ultraui.android.components.UPQrcodeProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -354,6 +356,18 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             src = "https://uview-plus.jiangruyi.com/uview-plus.pdf",
                             height = "360px",
                         ),
+                    )
+                }
+
+                DemoSection(title = "二维码") {
+                    UPQrcode(
+                        props = UPQrcodeProps(
+                            `val` = "https://uview-plus.jiangruyi.com",
+                            size = 180,
+                            foreground = "#3c9cff",
+                            allowPreview = true,
+                        ),
+                        onPreview = { eventText = "二维码：预览" },
                     )
                 }
             }

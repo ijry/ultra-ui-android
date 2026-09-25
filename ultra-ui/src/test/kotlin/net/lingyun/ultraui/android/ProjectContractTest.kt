@@ -100,6 +100,7 @@ class ProjectContractTest {
             "UPSignatureProps",
             "UPColorPickerProps",
             "UPPdfReaderProps",
+            "UPQrcodeProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",
