@@ -55,6 +55,8 @@ import net.lingyun.ultraui.android.components.UPSignature
 import net.lingyun.ultraui.android.components.UPSignatureProps
 import net.lingyun.ultraui.android.components.UPGoodsSku
 import net.lingyun.ultraui.android.components.UPGoodsSkuProps
+import net.lingyun.ultraui.android.components.UPPdfReader
+import net.lingyun.ultraui.android.components.UPPdfReaderProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -343,6 +345,15 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             loadmoreStatus = if (loadmoreStatus == "loadmore") "loading" else "loadmore"
                             eventText = "加载更多：$loadmoreStatus"
                         },
+                    )
+                }
+
+                DemoSection(title = "PDF 阅读器") {
+                    UPPdfReader(
+                        props = UPPdfReaderProps(
+                            src = "https://uview-plus.jiangruyi.com/uview-plus.pdf",
+                            height = "360px",
+                        ),
                     )
                 }
             }

@@ -427,6 +427,18 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun pdfReaderDefaultsAndViewerUrlMatchUview() {
+        val pdf = UPPdfReaderProps()
+        assertEquals("500px", pdf.height)
+        assertEquals("https://uview-plus.jiangruyi.com/h5", pdf.baseUrl)
+        // viewerUrl = baseUrl + viewer path + encoded src.
+        assertEquals(
+            "https://host/static/pdfjs/web/viewer.html?file=https%3A%2F%2Fx.com%2Fa.pdf",
+            upPdfReaderViewerUrl("https://host", "https://x.com/a.pdf"),
+        )
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
