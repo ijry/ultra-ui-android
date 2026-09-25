@@ -409,6 +409,24 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun colorPickerHslHexRoundTripMatchesUview() {
+        val cp = UPColorPickerProps()
+        assertEquals("#ff0000", cp.modelValue)
+        // Primary hues.
+        assertEquals("#ff0000", upColorHslToHex(0f, 100f, 50f))
+        assertEquals("#00ff00", upColorHslToHex(120f, 100f, 50f))
+        assertEquals("#0000ff", upColorHslToHex(240f, 100f, 50f))
+        assertEquals("#ffffff", upColorHslToHex(0f, 0f, 100f))
+        // hex -> hsl round trip stays in family.
+        val hsl = upColorHexToHsl("#0000ff")
+        assertEquals(240f, hsl.h, 1f)
+        assertEquals(100f, hsl.s, 1f)
+        assertEquals(50f, hsl.l, 1f)
+        // 3-digit shorthand.
+        assertEquals(0f, upColorHexToHsl("#f00").h, 1f)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

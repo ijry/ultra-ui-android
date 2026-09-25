@@ -98,6 +98,7 @@ class ProjectContractTest {
             "UPThProps",
             "UPGoodsSkuProps",
             "UPSignatureProps",
+            "UPColorPickerProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

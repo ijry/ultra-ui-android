@@ -49,6 +49,8 @@ import net.lingyun.ultraui.android.components.UPImage
 import net.lingyun.ultraui.android.components.UPImageProps
 import net.lingyun.ultraui.android.components.UPLoadingPage
 import net.lingyun.ultraui.android.components.UPLoadingPageProps
+import net.lingyun.ultraui.android.components.UPColorPicker
+import net.lingyun.ultraui.android.components.UPColorPickerProps
 import net.lingyun.ultraui.android.components.UPSignature
 import net.lingyun.ultraui.android.components.UPSignatureProps
 import net.lingyun.ultraui.android.components.UPGoodsSku
@@ -83,6 +85,7 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
     var networkConnected by remember { mutableStateOf(true) }
     var pullRefreshing by remember { mutableStateOf(false) }
     var skuShow by remember { mutableStateOf(false) }
+    var colorShow by remember { mutableStateOf(false) }
     var guideShow by remember { mutableStateOf(false) }
     val agreement = rememberUPAgreementController()
     var popupVisible by remember { mutableStateOf(true) }
@@ -283,6 +286,15 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
+                }
+
+                DemoSection(title = "颜色选择器") {
+                    UPButton(props = UPButtonProps(text = "选择颜色", type = "primary", size = "small"), onClick = { colorShow = true })
+                    UPColorPicker(
+                        props = UPColorPickerProps(show = colorShow, modelValue = "#3c9cff", commonColors = listOf("#ff0000", "#00ff00", "#0000ff", "#ffcc00")),
+                        onUpdateShow = { colorShow = it },
+                        onConfirm = { colorShow = false; eventText = "颜色：$it" },
+                    )
                 }
 
                 DemoSection(title = "手写签名") {
