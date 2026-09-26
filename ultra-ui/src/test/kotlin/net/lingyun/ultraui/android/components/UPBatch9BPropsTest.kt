@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import androidx.compose.ui.unit.dp
 import net.lingyun.ultraui.android.core.upIntOrDefault
+import net.lingyun.ultraui.android.core.UPRawValue
 import org.junit.Test
 
 class UPBatch9BPropsTest {
@@ -712,6 +713,21 @@ class UPBatch9BPropsTest {
         // Content normalizes across strings and lists, splitting on line breaks.
         assertEquals(listOf("a", "b", "c"), upNovelParagraphs("a\nb\nc"))
         assertEquals(listOf("x", "y", "z"), upNovelParagraphs(listOf("x", "y\nz")))
+    }
+
+    @Test
+    fun actionSheetDataDefaultsAndLabelMatchUview() {
+        val a = UPActionSheetDataProps()
+        assertEquals("value", a.valueKey)
+        assertEquals("name", a.labelKey)
+        val options = listOf<UPRawValue>(
+            mapOf<String, UPRawValue>("value" to 1, "name" to "北京"),
+            mapOf<String, UPRawValue>("value" to 2, "name" to "上海"),
+        )
+        assertEquals("上海", upActionSheetDataLabel(options, 2, "value", "name"))
+        assertEquals("北京", upActionSheetDataLabel(options, "1", "value", "name"))
+        assertEquals("", upActionSheetDataLabel(options, "", "value", "name"))
+        assertEquals("", upActionSheetDataLabel(options, 9, "value", "name"))
     }
 
     @Test

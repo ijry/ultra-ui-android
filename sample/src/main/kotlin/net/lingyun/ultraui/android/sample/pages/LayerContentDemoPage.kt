@@ -86,6 +86,8 @@ import net.lingyun.ultraui.android.components.UPShortVideo
 import net.lingyun.ultraui.android.components.UPShortVideoProps
 import net.lingyun.ultraui.android.components.UPNovelReader
 import net.lingyun.ultraui.android.components.UPNovelReaderProps
+import net.lingyun.ultraui.android.components.UPActionSheetData
+import net.lingyun.ultraui.android.components.UPActionSheetDataProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -494,6 +496,20 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "动作面板选择") {
+                    UPActionSheetData(
+                        props = UPActionSheetDataProps(
+                            title = "请选择城市",
+                            options = listOf(
+                                mapOf("value" to 1, "name" to "北京"),
+                                mapOf("value" to 2, "name" to "上海"),
+                                mapOf("value" to 3, "name" to "广州"),
+                            ),
+                        ),
+                        onUpdateModelValue = { eventText = "动作面板：选中 value=$it" },
                     )
                 }
 
