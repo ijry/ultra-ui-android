@@ -175,6 +175,7 @@ KNOWN_INERT: dict[str, str] = {
     "Upload.getVideoThumb": "local video thumbnail extraction; host media concern",
     "Upload.videoPreviewObjectFit": "video preview object-fit; the port previews images, not video",
     "Album.stop": "stops DOM tap-event bubbling; Compose gestures are consumed at the node",
+    "Canvas.canvasId": "H5/mini-program canvas element id; the port draws via the onDraw lambda, not a ref-bound id",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

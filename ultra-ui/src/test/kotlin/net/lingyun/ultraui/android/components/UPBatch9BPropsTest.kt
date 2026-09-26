@@ -658,6 +658,17 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun canvasDefaultsMatchUview() {
+        val c = UPCanvasProps()
+        assertEquals(300, c.width.upIntOrDefault(0))
+        assertEquals(300, c.height.upIntOrDefault(0))
+        assertEquals("px", c.unit)
+        assertEquals("#ffffff", c.bgColor)
+        assertEquals(false, c.useRootHeightAndWidth)
+        assertEquals(false, c.disableScroll)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

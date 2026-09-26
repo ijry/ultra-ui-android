@@ -78,6 +78,8 @@ import net.lingyun.ultraui.android.components.UPUpload
 import net.lingyun.ultraui.android.components.UPUploadProps
 import net.lingyun.ultraui.android.components.UPAlbum
 import net.lingyun.ultraui.android.components.UPAlbumProps
+import net.lingyun.ultraui.android.components.UPCanvas
+import net.lingyun.ultraui.android.components.UPCanvasProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -486,6 +488,17 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "画布") {
+                    UPCanvas(
+                        props = UPCanvasProps(width = 300, height = 140, bgColor = "#f2f6ff"),
+                        onDraw = {
+                            drawCircle(color = androidx.compose.ui.graphics.Color(0xFF3C9CFF), radius = size.minDimension / 3f, center = center)
+                            drawRect(color = androidx.compose.ui.graphics.Color(0x8034C759), topLeft = androidx.compose.ui.geometry.Offset(12f, 12f), size = androidx.compose.ui.geometry.Size(80f, 80f))
+                        },
+                        onTouchStart = { x, y -> eventText = "画布：按下 (${x.toInt()}, ${y.toInt()})" },
                     )
                 }
 
