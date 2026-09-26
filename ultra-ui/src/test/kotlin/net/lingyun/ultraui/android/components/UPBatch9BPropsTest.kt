@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import androidx.compose.ui.unit.dp
+import net.lingyun.ultraui.android.core.upIntOrDefault
 import org.junit.Test
 
 class UPBatch9BPropsTest {
@@ -618,6 +619,24 @@ class UPBatch9BPropsTest {
         assertEquals(14f, upPosterFontSizeSp("28rpx").value, 0.01f)
         assertEquals(16f, upPosterFontSizeSp("16px").value, 0.01f)
         assertEquals(14f, upPosterFontSizeSp("").value, 0.01f)
+    }
+
+    @Test
+    fun uploadDefaultsAndItemSourceMatchUview() {
+        val u = UPUploadProps()
+        assertEquals("image", u.accept)
+        assertEquals("camera-fill", u.uploadIcon)
+        assertEquals("#D3D4D6", u.uploadIconColor)
+        assertEquals(true, u.previewFullImage)
+        assertEquals(true, u.deletable)
+        assertEquals(true, u.previewImage)
+        assertEquals(false, u.disabled)
+        assertEquals("aspectFill", u.imageMode)
+        assertEquals(52, u.maxCount.upIntOrDefault(0))
+        // thumb wins over url; falls back to url.
+        assertEquals("t.png", upUploadItemSource(mapOf("thumb" to "t.png", "url" to "u.png")))
+        assertEquals("u.png", upUploadItemSource(mapOf("url" to "u.png")))
+        assertEquals("", upUploadItemSource(emptyMap()))
     }
 
     @Test

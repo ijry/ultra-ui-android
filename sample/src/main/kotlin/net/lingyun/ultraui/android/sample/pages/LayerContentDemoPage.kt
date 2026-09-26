@@ -74,6 +74,8 @@ import net.lingyun.ultraui.android.components.UPTable2
 import net.lingyun.ultraui.android.components.UPTable2Props
 import net.lingyun.ultraui.android.components.UPPoster
 import net.lingyun.ultraui.android.components.UPPosterProps
+import net.lingyun.ultraui.android.components.UPUpload
+import net.lingyun.ultraui.android.components.UPUploadProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -482,6 +484,15 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "上传") {
+                    var uploadFiles by remember { mutableStateOf(listOf<Map<String, Any?>>(mapOf("url" to "/sdcard/demo1.png"), mapOf("url" to "/sdcard/demo2.png", "status" to "uploading"))) }
+                    UPUpload(
+                        props = UPUploadProps(fileList = uploadFiles, uploadText = "上传"),
+                        onAddClick = { eventText = "上传：请在宿主打开选择器" },
+                        onDelete = { idx -> uploadFiles = uploadFiles.filterIndexed { i, _ -> i != idx }; eventText = "上传：删除第 $idx 项" },
                     )
                 }
 
