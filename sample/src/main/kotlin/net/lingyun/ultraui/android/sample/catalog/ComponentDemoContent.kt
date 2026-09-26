@@ -69,7 +69,8 @@ public fun ComponentDemoContent(id: String, onEvent: (String) -> Unit) {
         "loading-page" -> LoadingPageDemo()
         else -> if (!renderFormGroup(id, onEvent) &&
             !renderDataGroup(id, onEvent) &&
-            !renderFeedbackGroup(id, onEvent)
+            !renderFeedbackGroup(id, onEvent) &&
+            !renderLayoutGroup(id, onEvent)
         ) {
             PendingDemo()
         }
