@@ -43,6 +43,7 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 python3 tools/find_unread_props.py               # 声明了但组件从不读取的字段（当前 0 个）
 python3 tools/compare_uview_defaults.py          # 默认值漂移（当前 0 处未解释漂移）
 python3 tools/audit_status_claims.py             # 进度文档的标注是否有证据支撑（当前 0 行偏乐观）
+python3 tools/find_missing_upstream_props.py     # 上游有、Android 未建模且未在文档点名的 props（当前 0 个）
 python3 tools/inspect_screenshot.py --list       # 截图参考图的配色直方图 / 字形字符画
 ```
 
