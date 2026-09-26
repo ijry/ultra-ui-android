@@ -64,6 +64,8 @@ import net.lingyun.ultraui.android.components.UPBarcodeProps
 import net.lingyun.ultraui.android.components.UPRefreshVirtualList
 import net.lingyun.ultraui.android.components.UPRefreshVirtualListProps
 import net.lingyun.ultraui.android.components.rememberUPRefreshVirtualListController
+import net.lingyun.ultraui.android.components.UPTransition
+import net.lingyun.ultraui.android.components.UPTransitionProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -402,6 +404,29 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                     Row {
                         UPButton(props = UPButtonProps(text = "结束刷新", size = "mini"), onClick = { rvController.finishRefresh() })
                         UPButton(props = UPButtonProps(text = "回到顶部", size = "mini"), onClick = { rvController.scrollToTop() })
+                    }
+                }
+
+                DemoSection(title = "过渡动画") {
+                    var transShow by remember { mutableStateOf(true) }
+                    UPButton(
+                        props = UPButtonProps(text = if (transShow) "隐藏" else "显示", size = "small", type = "primary"),
+                        onClick = { transShow = !transShow },
+                    )
+                    UPTransition(
+                        props = UPTransitionProps(show = transShow, mode = "fade-up", duration = 300),
+                        onAfterEnter = { eventText = "过渡：进入完成" },
+                        onAfterLeave = { eventText = "过渡：离开完成" },
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .background(UPTheme.Primary, RoundedCornerShape(8.dp)),
+                            contentAlignment = androidx.compose.ui.Alignment.Center,
+                        ) {
+                            Text("fade-up 过渡内容", color = androidx.compose.ui.graphics.Color.White)
+                        }
                     }
                 }
             }

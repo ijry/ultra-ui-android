@@ -103,6 +103,7 @@ class ProjectContractTest {
             "UPQrcodeProps",
             "UPBarcodeProps",
             "UPRefreshVirtualListProps",
+            "UPTransitionProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

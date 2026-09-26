@@ -505,6 +505,32 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun transitionDefaultsSpecAndDurationMatchUview() {
+        val tr = UPTransitionProps()
+        assertEquals(false, tr.show)
+        assertEquals("fade", tr.mode)
+        assertEquals("300", tr.duration)
+        assertEquals("ease-out", tr.timingFunction)
+        // fade only.
+        assertEquals(UPTransitionSpec(fade = true, scale = false, offsetXSign = 0, offsetYSign = 0), upTransitionSpec("fade"))
+        assertEquals(UPTransitionSpec(fade = true, scale = true, offsetXSign = 0, offsetYSign = 0), upTransitionSpec("fade-zoom"))
+        // fade-up rises from below (positive Y), fade-down drops from above (negative Y).
+        assertEquals(1, upTransitionSpec("fade-up").offsetYSign)
+        assertEquals(-1, upTransitionSpec("fade-down").offsetYSign)
+        assertEquals(-1, upTransitionSpec("fade-left").offsetXSign)
+        assertEquals(1, upTransitionSpec("fade-right").offsetXSign)
+        // slide variants do not fade.
+        assertEquals(false, upTransitionSpec("slide-up").fade)
+        assertEquals(1, upTransitionSpec("slide-up").offsetYSign)
+        // Unknown mode falls back to fade.
+        assertEquals(UPTransitionSpec(fade = true, scale = false, offsetXSign = 0, offsetYSign = 0), upTransitionSpec("nope"))
+        // Duration parses String|Number ms.
+        assertEquals(300, upTransitionDurationMillis("300"))
+        assertEquals(450, upTransitionDurationMillis(450))
+        assertEquals(300, upTransitionDurationMillis(null))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
