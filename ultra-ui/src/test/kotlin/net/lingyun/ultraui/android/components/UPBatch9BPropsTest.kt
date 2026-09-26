@@ -688,6 +688,16 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun shortVideoDefaultsMatchUview() {
+        val sv = UPShortVideoProps()
+        assertEquals(0, sv.currentTab)
+        assertEquals(0, sv.currentVideo)
+        assertEquals(4, sv.tabsList.size)
+        assertTrue(sv.videoList.isEmpty())
+        assertEquals("推荐", sv.tabsList[0].upStringKeyMapOrEmpty()["name"].upStringValueOrEmpty())
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

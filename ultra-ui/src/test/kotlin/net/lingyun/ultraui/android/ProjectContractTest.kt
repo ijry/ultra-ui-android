@@ -112,6 +112,7 @@ class ProjectContractTest {
             "UPAlbumProps",
             "UPCanvasProps",
             "UPCropperProps",
+            "UPShortVideoProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

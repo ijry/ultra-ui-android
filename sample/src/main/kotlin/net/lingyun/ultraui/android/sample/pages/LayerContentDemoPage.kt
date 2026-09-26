@@ -82,6 +82,8 @@ import net.lingyun.ultraui.android.components.UPCanvas
 import net.lingyun.ultraui.android.components.UPCanvasProps
 import net.lingyun.ultraui.android.components.UPCropper
 import net.lingyun.ultraui.android.components.UPCropperProps
+import net.lingyun.ultraui.android.components.UPShortVideo
+import net.lingyun.ultraui.android.components.UPShortVideoProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -491,6 +493,21 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
                     )
+                }
+
+                DemoSection(title = "短视频") {
+                    Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
+                        UPShortVideo(
+                            props = UPShortVideoProps(
+                                videoList = listOf(
+                                    mapOf("poster" to "/sdcard/v1.jpg", "title" to "第一条短视频", "likeCount" to "1.2w", "commentCount" to "320", "shareCount" to "88", "collectCount" to "45", "author" to mapOf("name" to "@作者甲", "desc" to "记录生活")),
+                                    mapOf("poster" to "/sdcard/v2.jpg", "title" to "第二条短视频", "likeCount" to "8621", "commentCount" to "210", "shareCount" to "33", "collectCount" to "12", "author" to mapOf("name" to "@作者乙", "desc" to "旅行日记")),
+                                ),
+                            ),
+                            onLike = { _, i -> eventText = "短视频：点赞第 $i 条" },
+                            onVideoChange = { eventText = "短视频：切到第 $it 条" },
+                        )
+                    }
                 }
 
                 DemoSection(title = "图片裁剪") {
