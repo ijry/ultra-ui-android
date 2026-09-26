@@ -113,6 +113,7 @@ class ProjectContractTest {
             "UPCanvasProps",
             "UPCropperProps",
             "UPShortVideoProps",
+            "UPNovelReaderProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

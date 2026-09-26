@@ -84,6 +84,8 @@ import net.lingyun.ultraui.android.components.UPCropper
 import net.lingyun.ultraui.android.components.UPCropperProps
 import net.lingyun.ultraui.android.components.UPShortVideo
 import net.lingyun.ultraui.android.components.UPShortVideoProps
+import net.lingyun.ultraui.android.components.UPNovelReader
+import net.lingyun.ultraui.android.components.UPNovelReaderProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -493,6 +495,28 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
                     )
+                }
+
+                DemoSection(title = "小说阅读器") {
+                    val novelChapters = listOf(
+                        mapOf("id" to "c1", "index" to 0, "title" to "第一章 山雨欲来"),
+                        mapOf("id" to "c2", "index" to 1, "title" to "第二章 风满楼"),
+                    )
+                    Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
+                        UPNovelReader(
+                            props = UPNovelReaderProps(
+                                chapters = novelChapters,
+                                currentChapter = mapOf(
+                                    "id" to "c1", "index" to 0, "title" to "第一章 山雨欲来",
+                                    "content" to "夜色深沉，风穿过长街。\n他站在屋檐下，望着远处的灯火，久久不语。\n这一夜注定无眠。",
+                                ),
+                                controlsAutoHide = 4000,
+                            ),
+                            onSettingsChange = { eventText = "阅读器：设置 ${it["theme"]} ${it["fontSize"]}" },
+                            onChapterRequest = { eventText = "阅读器：切到 ${it["title"]}" },
+                            onBack = { eventText = "阅读器：返回" },
+                        )
+                    }
                 }
 
                 DemoSection(title = "短视频") {

@@ -181,6 +181,16 @@ KNOWN_INERT: dict[str, str] = {
     "Cropper.stretch": "crop-frame stretch mode; not modelled (fixed frame)",
     "Cropper.lock": "locks the crop frame; not modelled (fixed frame)",
     "Cropper.canChangeSize": "lets the user resize the crop frame; the port uses a fixed frame",
+    "NovelReader.bookId": "book identifier for persistence; local persistence is a host concern",
+    "NovelReader.storageKey": "local-storage key for progress/settings; persistence is a host concern",
+    "NovelReader.persist": "toggles local persistence; storing progress/settings is a host concern",
+    "NovelReader.initialProgress": "restores an exact char-offset; needs the pagination engine, so restore is host-managed",
+    "NovelReader.progress": "controlled reading progress; exact char-offset restore needs the pagination engine",
+    "NovelReader.initialBookmarks": "seed bookmarks; bookmark storage is a host concern",
+    "NovelReader.bookmarks": "controlled bookmark list; bookmark storage is a host concern",
+    "NovelReader.preloadThreshold": "chapters-ahead prefetch trigger; prefetch/loading is a host concern",
+    "NovelReader.pageAnimation": "page-turn animation; only meaningful for the unported page-mode engine",
+    "NovelReader.autoBack": "auto-return at the end of the book; belongs to host navigation",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

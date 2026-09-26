@@ -698,6 +698,23 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun novelReaderDefaultsThemeAndParagraphsMatchUview() {
+        val nr = UPNovelReaderProps()
+        assertEquals("scroll", nr.mode)
+        assertEquals(true, nr.showBack)
+        assertEquals("arrow-left", nr.backIcon)
+        assertEquals(18, nr.defaultSettings["fontSize"].upIntOrDefault(0))
+        assertEquals("day", nr.defaultSettings["theme"].upStringValueOrEmpty())
+        // Theme palette table (day/night) mirrors theme-vars.scss.
+        assertEquals(0xFFF7F8FA, upNovelReaderTheme("day").background)
+        assertEquals(0xFF202124, upNovelReaderTheme("night").background)
+        assertEquals(upNovelReaderTheme("day"), upNovelReaderTheme("unknown"))
+        // Content normalizes across strings and lists, splitting on line breaks.
+        assertEquals(listOf("a", "b", "c"), upNovelParagraphs("a\nb\nc"))
+        assertEquals(listOf("x", "y", "z"), upNovelParagraphs(listOf("x", "y\nz")))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
