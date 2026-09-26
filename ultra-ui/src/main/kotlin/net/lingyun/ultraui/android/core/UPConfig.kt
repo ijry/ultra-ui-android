@@ -38,6 +38,7 @@ public object UPConfig {
     public val radioGroup: UPRadioGroupDefaults = UPRadioGroupDefaults()
     public val row: UPRowDefaults = UPRowDefaults()
     public val col: UPColDefaults = UPColDefaults()
+    public val flex: UPFlexDefaults = UPFlexDefaults()
     public val grid: UPGridDefaults = UPGridDefaults()
     public val gridItem: UPGridItemDefaults = UPGridItemDefaults()
     public val lineProgress: UPLineProgressDefaults = UPLineProgressDefaults()
@@ -700,6 +701,14 @@ public data class UPRadioGroupDefaults(
     val borderBottom: Boolean = false,
     val iconPlacement: String = "left",
     val gap: UPRawValue = "10px",
+)
+
+public data class UPFlexDefaults(
+    val direction: String = "row",
+    val justify: String = "flex-start",
+    val align: String = "stretch",
+    val wrap: Boolean = false,
+    val gap: UPRawValue = 0,
 )
 
 public data class UPRowDefaults(
