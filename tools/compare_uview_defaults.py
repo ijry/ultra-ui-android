@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Compare uview-plus upstream prop defaults against the Android port's defaults.
 
-Upstream declares defaults either in ``components/u-<name>/<name>.js`` or, for the
-components that never got one, as inline ``default:`` literals in ``props.js``. The
+Upstream declares defaults in ``components/u-<name>/<name>.js``, or as inline
+``default:`` literals in ``props.js``, or — for the ~30 components that got neither —
+directly in the ``props: {}`` block of the single-file ``<name>.vue``. The
 Android port mirrors them either as ``UP<Name>Defaults`` in ``core/UPConfig.kt`` or
 as literals on the ``UP<Name>Props`` data class. This script diffs both shapes so a
 default cannot drift silently the way ``u-tabbar-item``'s icon size did.
@@ -87,15 +88,13 @@ def upstream_defaults(path: Path) -> dict[str, str] | None:
     return fields
 
 
-def props_js_defaults(path: Path) -> dict[str, str] | None:
-    """Read inline `default:` literals from a component's props.js.
+def _inline_defaults(src: str) -> dict[str, str]:
+    """Parse `name: { ... default: <literal> }` pairs out of a JS/props source.
 
-    Components without a `<name>.js` defaults file (u-popover, u-tabs-item, ...)
-    declare defaults directly in the props mixin. Entries that delegate to
-    `defProps.<x>.<y>` are skipped — those resolve through a defaults file this
-    component does not have, so there is no literal to compare.
+    Entries that delegate to `defProps.<x>.<y>` or a function factory are skipped —
+    those resolve through a defaults file this component does not have, so there is
+    no literal to compare.
     """
-    src = path.read_text(encoding="utf-8", errors="replace")
     src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
     src = re.sub(r"//[^\n]*", "", src)
     fields = {}
@@ -104,7 +103,46 @@ def props_js_defaults(path: Path) -> dict[str, str] | None:
         if "defProps" in value or value.startswith("()"):
             continue
         fields[match.group(1)] = value
-    return fields or None
+    return fields
+
+
+def props_js_defaults(path: Path) -> dict[str, str] | None:
+    """Read inline `default:` literals from a component's props.js.
+
+    Components without a `<name>.js` defaults file (u-popover, u-tabs-item, ...)
+    declare defaults directly in the props mixin.
+    """
+    return _inline_defaults(path.read_text(encoding="utf-8", errors="replace")) or None
+
+
+def vue_props_defaults(path: Path) -> dict[str, str] | None:
+    """Read inline `default:` literals from a component's `<name>.vue` script.
+
+    ~30 components (u-pagination, u-coupon, u-tree, u-select, ...) never got a
+    `<name>.js` or `props.js`; they declare `props: { field: { default: ... } }`
+    directly in the single-file component. Only the `props: { ... }` block inside
+    `<script>` is scanned, so CSS/template text can never masquerade as a default.
+    """
+    src = path.read_text(encoding="utf-8", errors="replace")
+    script = re.search(r"<script[^>]*>(.*?)</script>", src, flags=re.S)
+    if script:
+        src = script.group(1)
+    start = re.search(r"props\s*:\s*\{", src)
+    if not start:
+        return None
+    idx = src.index("{", start.start())
+    depth = 0
+    end = idx
+    for pos in range(idx, len(src)):
+        ch = src[pos]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = pos + 1
+                break
+    return _inline_defaults(src[idx:end]) or None
 
 
 def upstream_source(comp: Path) -> Path | None:
@@ -246,6 +284,11 @@ def main() -> int:
             # No defaults file: fall back to inline `default:` literals in props.js.
             props_js = comp / "props.js"
             upstream = props_js_defaults(props_js) if props_js.exists() else None
+        if not upstream:
+            # Still nothing: many components declare props inline in the .vue itself.
+            vue = comp / f"{comp.name}.vue"
+            if vue.exists():
+                upstream = vue_props_defaults(vue)
         key = stem.replace("-", "")
         # UPConfig wins where it exists; inline Props defaults fill in the rest.
         fields = {**inline.get(key, {}), **android.get(key, {})}
