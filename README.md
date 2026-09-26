@@ -51,22 +51,19 @@ python3 tools/inspect_screenshot.py --list       # 截图参考图的配色直�
 
 完整的上游组件全集、Android 映射、复刻进度、接口兼容性和下一批优先级见：[uview-plus Android 组件复刻进度](docs/uview-plus-android-component-progress.md)。当前 140 个组件已建立 Props/API（全部基本完成，其中 u-section 为上游无模板下的推定实现），所有声明字段都已被读取或登记为按设计不生效。
 
-示例工程复刻 uview-plus 演示工程的分组体验，并保留已有独立示例：
+示例工程 1:1 复刻 uview-plus 演示工程（`src/pages/example/components`）的结构：首页是一个可搜索的**组件索引**，分组名、组件标题与顺序均取自上游 `components.config.js`（7 个分组、105 个条目），点任一条目进入该组件的**独立 demo 页**。
 
-| 路由标题 | 覆盖组件 |
-| --- | --- |
-| 基础展示 | 按钮、标签、徽标、分割线、间隔、线条、链接、文本、标题 |
-| 弹层与内容 | 遮罩、弹窗、模态框、轻提示、单元格、单元格组、图片、头像、头像组、空状态、加载页、加载更多 |
-| 输入与选择 | 输入框、文本域、搜索框、验证码输入、开关、评分、步进器、复选框、复选框组、单选框、单选框组 |
-| 布局与进度 | 行布局、列布局、栅格、栅格项、线性进度、环形进度 |
-| 原生交互 | 警告提示、操作菜单、通知、返回顶部、卡片、折叠面板、折叠项、下拉菜单、下拉项、滚动通知 |
-| 导航与更多 | 导航栏、迷你导航栏、状态栏、底部安全区、标签页、标签项、分段器、步骤条、步骤项、列表、列表项、索引列表、索引项、索引锚点、滚动列表、气泡弹出、文字提示、吸顶、滑动操作、滑动操作项、轮播图、轮播指示器、骨架屏、展开阅读、纵向通知、横向通知、数字滚动、倒计时、选择器、选择器列、分页、下拉选择 |
-| 选择与底部导航 | 日历、日期时间选择器、级联选择器、滑块、底部导航、底部导航项 |
-| 表单与校验 | 表单、表单项 |
-| 图标 | 图标 |
-| 加载中图标 | 加载中图标 |
+| 分组 | 条目数 | 说明 |
+| --- | --- | --- |
+| 基础组件 | 11 | Color、Icon、Image、Button、Text、Layout、Cell、Badge、Tag、Loading、Loading page |
+| 表单组件 | 20 | Form、Calendar、Keyboard、Picker、Select、Cascader、Choose、DatetimePicker、Rate、Search、NumberBox、Upload、Code、Input、Textarea、Checkbox、Radio、Switch、Slider、Album |
+| 数据组件 | 7 | List、VirtualList、Progress、Table、Table2、CountDown、CountTo |
+| 反馈组件 | 18 | Tooltip、Guide、Popover、ActionSheet、Alert、Toast、NoticeBar、Notify、SwipeAction、Collapse、Popup、Modal、Copy、FloatButton、PullRefresh、Signature、Agreement、fullScreen（上游暂无） |
+| 布局组件 | 15 | ScrollList、Line、Card、Overlay、NoNetwork、Grid、Swiper、Skeleton、Sticky、Waterfall、Divider、Box、CateTab、Title、ShortVideo |
+| 导航组件 | 13 | Dropdown、Tabbar、BackTop、Navbar、NavbarMini、Tabs、TabsSwiper（上游暂无）、Subsection、IndexList、Steps、Empty、Pagination、Tree |
+| 其他组件 | 21 | Parse、Markdown、CodeInput、Dragsort、Cropper、Loadmore、ReadMore、LazyLoad、Gap、Avatar、Link、Transition、Qrcode、Coupon、Barcode、ColorPicker、Poster、GoodsSku、CityLocate、PdfReader、NovelReader |
 
-`原生交互` 页面展示 Batch 9A 的 10 个组件，`导航与更多` 页面展示 Batch 9B 的 32 个组件，`选择与底部导航` 页面展示 Batch 10 的 6 个组件，`表单与校验` 页面展示 Batch 11 的 `up-form`/`up-form-item`（规则校验、六个 ref 方法、`toast` 错误通道、顶部标签与三个插槽），并通过状态提升演示可见性、选择和受控值回调。`u-picker` 与 `u-datetime-picker` 在两个页面各增一个 `hasInput` 触发器示例：只读输入框展示已选文案，点击由覆盖层接管并开合面板。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
+其中 `fullScreen`（压窗屏）与 `TabsSwiper`（全屏选项卡）在上游即标注「暂无」，索引中保留但不可点。其余 103 个组件均有可交互的独立 demo 页，页顶提供事件反馈条。Android 端仍只接收后端生成的 Kotlin `UP*Props`；同一份后端 JSON 可分别生成 uni-app、iOS 和 Android 调用，不由 Android 运行时自行解析。
 
 ## 140 个组件目录
 
