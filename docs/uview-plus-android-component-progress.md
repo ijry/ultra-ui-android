@@ -29,6 +29,17 @@
 - **低**：只有部分接口或明显的兼容降级。
 - **暂无**：尚未建立 Android API。
 
+### 默认值校验口径
+
+- `tools/compare_uview_defaults.py` 逐字段比对上游与 Android 的默认值字面量，来源依次为 `<name>.js` → `props.js` → 单文件组件 `<name>.vue` 的 `props: {}` 块（新增 `.vue` 兜底后，`u-pagination`/`u-coupon`/`u-tree`/`u-select` 等把默认值写在 `.vue` 里的组件也纳入自动比对）。
+- 当前自动比对覆盖 132 个组件、1289 个默认值字面量，**无未解释漂移**；15 项刻意差异登记在脚本的 `ACCEPTED` 白名单。
+- 剩余 7 个组件「无可比字段」，已逐一人工核验确认不存在上游字面量可比对，非遗漏：
+  - `u-title`（`UPTitle`）：上游 `.vue` props 为空，Android 仅 `customStyle`。
+  - `u-view`（`UPView`）：上游 `.vue` props 无 `default:` 字面量；Android 的 `backgroundColor`/`flexDirection`/`width` 等便捷样式字段默认空串为 Android 侧新增。
+  - `u-safe-bottom`（`UPSafeBottom`）：上游 `props.js`/`.vue` 无 `default:` 字面量；`safeAreaInsetBottom=true` 为 Android 侧默认。
+  - `up-poster`（`UPPoster`）：仅 `json`（map）+ `customStyle`，无标量默认值（位图光栅化交宿主）。
+  - `u-picker` 列（`UPPickerColumn`）/`u-tabs-item`（`UPTabsItem`）/`u-index-item`（`UPIndexItem`）：均为仅 `customStyle` 的结构性子组件。
+
 ## 完整组件清单
 
 | # | 分类 | uview-plus 组件 | Android API | 复刻进度 | 接口兼容性 | 复刻方式与备注 |
