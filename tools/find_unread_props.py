@@ -176,6 +176,11 @@ KNOWN_INERT: dict[str, str] = {
     "Upload.videoPreviewObjectFit": "video preview object-fit; the port previews images, not video",
     "Album.stop": "stops DOM tap-event bubbling; Compose gestures are consumed at the node",
     "Canvas.canvasId": "H5/mini-program canvas element id; the port draws via the onDraw lambda, not a ref-bound id",
+    "Cropper.lockWidth": "locks the crop-frame width; the port uses a fixed areaWidth frame",
+    "Cropper.lockHeight": "locks the crop-frame height; the port uses a fixed areaHeight frame",
+    "Cropper.stretch": "crop-frame stretch mode; not modelled (fixed frame)",
+    "Cropper.lock": "locks the crop frame; not modelled (fixed frame)",
+    "Cropper.canChangeSize": "lets the user resize the crop frame; the port uses a fixed frame",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

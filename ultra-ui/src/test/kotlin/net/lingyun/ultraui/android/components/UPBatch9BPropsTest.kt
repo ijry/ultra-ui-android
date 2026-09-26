@@ -669,6 +669,25 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun cropperDefaultsScaleBoundsAndQualityMatchUview() {
+        val cr = UPCropperProps()
+        assertEquals(true, cr.canScale)
+        assertEquals(true, cr.canRotate)
+        assertEquals(true, cr.noTab)
+        assertEquals(false, cr.inner)
+        assertEquals("300rpx", cr.areaWidth)
+        assertEquals("260rpx", cr.exportWidth)
+        assertEquals("transparent", cr.fillColor)
+        // Empty min/max fall back to 0.3 / 4.
+        assertEquals(0.3f to 4f, upCropperScaleBounds(UPRawValueBoundsInput(""), UPRawValueBoundsInput("")))
+        assertEquals(0.5f to 3f, upCropperScaleBounds(UPRawValueBoundsInput("0.5"), UPRawValueBoundsInput("3")))
+        // quality: parseInt(q) || 0.9.
+        assertEquals(0.9f, upCropperQuality(""), 0.001f)
+        assertEquals(0.9f, upCropperQuality("0.9"), 0.001f)
+        assertEquals(80f, upCropperQuality("80"), 0.001f)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

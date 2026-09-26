@@ -80,6 +80,8 @@ import net.lingyun.ultraui.android.components.UPAlbum
 import net.lingyun.ultraui.android.components.UPAlbumProps
 import net.lingyun.ultraui.android.components.UPCanvas
 import net.lingyun.ultraui.android.components.UPCanvasProps
+import net.lingyun.ultraui.android.components.UPCropper
+import net.lingyun.ultraui.android.components.UPCropperProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -488,6 +490,15 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "图片裁剪") {
+                    UPCropper(
+                        src = "/sdcard/sample.jpg",
+                        props = UPCropperProps(noTab = false, areaWidth = "220px", areaHeight = "180px", fillColor = "#1a1a1a"),
+                        onConfirm = { eventText = "裁剪：缩放 ${(it.scale * 100).toInt()}% 旋转 ${it.rotation.toInt()}°" },
+                        onCancel = { eventText = "裁剪：取消" },
                     )
                 }
 
