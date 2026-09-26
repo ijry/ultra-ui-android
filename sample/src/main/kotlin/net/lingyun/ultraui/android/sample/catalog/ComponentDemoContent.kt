@@ -71,7 +71,8 @@ public fun ComponentDemoContent(id: String, onEvent: (String) -> Unit) {
             !renderDataGroup(id, onEvent) &&
             !renderFeedbackGroup(id, onEvent) &&
             !renderLayoutGroup(id, onEvent) &&
-            !renderNavigationGroup(id, onEvent)
+            !renderNavigationGroup(id, onEvent) &&
+            !renderOtherGroup(id, onEvent)
         ) {
             PendingDemo()
         }
