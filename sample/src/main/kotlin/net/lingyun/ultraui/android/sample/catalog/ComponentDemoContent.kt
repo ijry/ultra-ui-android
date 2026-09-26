@@ -70,7 +70,8 @@ public fun ComponentDemoContent(id: String, onEvent: (String) -> Unit) {
         else -> if (!renderFormGroup(id, onEvent) &&
             !renderDataGroup(id, onEvent) &&
             !renderFeedbackGroup(id, onEvent) &&
-            !renderLayoutGroup(id, onEvent)
+            !renderLayoutGroup(id, onEvent) &&
+            !renderNavigationGroup(id, onEvent)
         ) {
             PendingDemo()
         }
