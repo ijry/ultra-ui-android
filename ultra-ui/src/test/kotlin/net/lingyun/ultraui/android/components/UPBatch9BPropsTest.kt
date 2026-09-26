@@ -531,6 +531,31 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun parseDefaultsUrlResolutionAndInlineHelpersMatchUview() {
+        val pr = UPParseProps()
+        assertEquals(true, pr.copyLink)
+        assertEquals(true, pr.previewImg)
+        assertEquals(true, pr.setTitle)
+        assertEquals(true, pr.showImgMenu)
+        assertEquals(false, pr.lazyLoad)
+        assertEquals(false, pr.selectable)
+        assertEquals(true, pr.pauseVideo)
+        // URL resolution against a domain.
+        assertEquals("https://x.com/a.png", upParseResolveUrl("https://cdn.io", "https://x.com/a.png"))
+        assertEquals("https://cdn.io/a.png", upParseResolveUrl("https://cdn.io/", "/a.png"))
+        assertEquals("https://cdn.io/img/a.png", upParseResolveUrl("https://cdn.io", "img/a.png"))
+        assertEquals("https://x.com/a.png", upParseResolveUrl("https://cdn.io", "//x.com/a.png"))
+        assertEquals("rel.png", upParseResolveUrl("", "rel.png"))
+        // Inline text flatten + style map.
+        val nodes = upParseHtml("<p>Hi <b>bold</b><br>next</p>")
+        assertEquals("Hi bold\nnext", upParseInlineText(nodes))
+        assertEquals(mapOf("color" to "red", "font-size" to "12px"), upParseStyleMap("color: red; font-size:12px;"))
+        // Inline span: bold for <b>, null for a plain <span>.
+        assertEquals(androidx.compose.ui.text.font.FontWeight.Bold, upParseInlineSpan(UPParseElement("b", emptyMap(), emptyList()), emptyMap())?.fontWeight)
+        assertEquals(null, upParseInlineSpan(UPParseElement("span", emptyMap(), emptyList()), emptyMap()))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

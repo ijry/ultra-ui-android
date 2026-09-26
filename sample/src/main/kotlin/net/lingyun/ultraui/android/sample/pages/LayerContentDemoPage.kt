@@ -66,6 +66,8 @@ import net.lingyun.ultraui.android.components.UPRefreshVirtualListProps
 import net.lingyun.ultraui.android.components.rememberUPRefreshVirtualListController
 import net.lingyun.ultraui.android.components.UPTransition
 import net.lingyun.ultraui.android.components.UPTransitionProps
+import net.lingyun.ultraui.android.components.UPParse
+import net.lingyun.ultraui.android.components.UPParseProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -428,6 +430,19 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             Text("fade-up 过渡内容", color = androidx.compose.ui.graphics.Color.White)
                         }
                     }
+                }
+
+                DemoSection(title = "富文本解析") {
+                    UPParse(
+                        props = UPParseProps(
+                            content = "<h3>Ultra UI</h3>" +
+                                "<p>支持 <b>加粗</b>、<i>斜体</i>、<u>下划线</u> 与 <a href=\"https://uview-plus.jiangruyi.com\">链接</a>。</p>" +
+                                "<ul><li>列表项一</li><li>列表项二</li></ul>" +
+                                "<blockquote>引用文本块</blockquote>",
+                            selectable = true,
+                        ),
+                        onLinkTap = { eventText = "富文本：点击链接 $it" },
+                    )
                 }
             }
 

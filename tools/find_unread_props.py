@@ -138,6 +138,13 @@ KNOWN_INERT: dict[str, str] = {
     "Qrcode.loadingText": "text for the async-draw loading overlay; no such loading phase on Android",
     "Barcode.fontOptions": "upstream stores this font-style string but never applies it to the canvas",
     "Barcode.useCanvas": "the port always paints to a Compose canvas; the image-file branch needs host export",
+    "Parse.errorImg": "custom error-placeholder image URL; the host UPImageLoader owns (remote) image loading",
+    "Parse.loadingImg": "custom loading-placeholder image URL; the host UPImageLoader owns (remote) image loading",
+    "Parse.pauseVideo": "auto-pause other videos on play; the port renders no video players",
+    "Parse.setTitle": "sets the page <title>; no page-title concept on Android in-tree",
+    "Parse.showImgMenu": "WeChat long-press image save menu; no equivalent on Android",
+    "Parse.useAnchor": "in-page #anchor jump; the port renders a flat block list without anchors",
+    "Parse.scrollTable": "per-table horizontal scroll layer; tables render inline without their own scroller",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is
