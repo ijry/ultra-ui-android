@@ -67,7 +67,7 @@ public fun ComponentDemoContent(id: String, onEvent: (String) -> Unit) {
         "tag" -> TagDemo(onEvent)
         "loading-icon" -> LoadingIconDemo()
         "loading-page" -> LoadingPageDemo()
-        else -> PendingDemo()
+        else -> if (!renderFormGroup(id, onEvent)) PendingDemo()
     }
 }
 
