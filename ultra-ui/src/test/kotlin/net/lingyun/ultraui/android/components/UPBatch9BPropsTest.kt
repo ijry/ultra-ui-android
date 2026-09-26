@@ -556,6 +556,30 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun markdownDefaultsAndConversionMatchPipeline() {
+        val md = UPMarkdownProps()
+        assertEquals(true, md.previewImg)
+        assertEquals(true, md.copyLink)
+        assertEquals(false, md.showLineNumber)
+        assertEquals("light", md.theme)
+        // Headings, emphasis, inline code.
+        assertEquals("<h1>Title</h1>", upMarkdownToHtml("# Title"))
+        assertEquals("<p><strong>b</strong> and <em>i</em> and <code>c</code></p>", upMarkdownToHtml("**b** and *i* and `c`"))
+        // Links and images.
+        assertEquals("<p><a href=\"http://x.com\">go</a></p>", upMarkdownToHtml("[go](http://x.com)"))
+        assertEquals("<p><img src=\"a.png\" alt=\"alt\"></p>", upMarkdownToHtml("![alt](a.png)"))
+        // Lists.
+        assertEquals("<ul><li>a</li><li>b</li></ul>", upMarkdownToHtml("- a\n- b"))
+        assertEquals("<ol><li>one</li><li>two</li></ol>", upMarkdownToHtml("1. one\n2. two"))
+        // Blockquote + hr.
+        assertEquals("<blockquote>quote</blockquote>", upMarkdownToHtml("> quote"))
+        assertEquals("<hr>", upMarkdownToHtml("---"))
+        // Fenced code escapes HTML and, with line numbers, prefixes each line.
+        assertEquals("<pre><code class=\"language-js\">a&lt;b</code></pre>", upMarkdownToHtml("```js\na<b\n```"))
+        assertEquals("<pre><code>1 x\n2 y</code></pre>", upMarkdownToHtml("```\nx\ny\n```", showLineNumber = true))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

@@ -68,6 +68,8 @@ import net.lingyun.ultraui.android.components.UPTransition
 import net.lingyun.ultraui.android.components.UPTransitionProps
 import net.lingyun.ultraui.android.components.UPParse
 import net.lingyun.ultraui.android.components.UPParseProps
+import net.lingyun.ultraui.android.components.UPMarkdown
+import net.lingyun.ultraui.android.components.UPMarkdownProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -442,6 +444,16 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             selectable = true,
                         ),
                         onLinkTap = { eventText = "富文本：点击链接 $it" },
+                    )
+                }
+
+                DemoSection(title = "Markdown") {
+                    UPMarkdown(
+                        props = UPMarkdownProps(
+                            content = "# Ultra UI\n\n支持 **加粗**、*斜体* 与 `code`。\n\n- 列表一\n- 列表二\n\n> 引用块\n\n```kotlin\nval x = 1\n```",
+                            showLineNumber = true,
+                        ),
+                        onLinkTap = { eventText = "Markdown：链接 $it" },
                     )
                 }
             }

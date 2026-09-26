@@ -183,6 +183,7 @@ private class UPParseContext(
     val props: UPParseProps,
     val tagStyle: Map<String, String>,
     val lazyLoad: Boolean,
+    val contentColor: Color,
     val onLinkTap: (String) -> Unit,
     val onImgTap: (String) -> Unit,
 )
@@ -197,7 +198,7 @@ private fun UPParseBlocks(nodes: List<UPParseNode>, ctx: UPParseContext) {
         val snapshot = inlineBuffer.toList()
         inlineBuffer.clear()
         if (upParseInlineText(snapshot).isBlank()) return
-        flushed.add { UPParseParagraph(snapshot, ctx, TextStyle(color = UPTheme.Content, fontSize = 14.sp)) }
+        flushed.add { UPParseParagraph(snapshot, ctx, TextStyle(color = ctx.contentColor, fontSize = 14.sp)) }
     }
 
     for (node in nodes) {
@@ -225,7 +226,7 @@ private fun UPParseBlockElement(el: UPParseElement, ctx: UPParseContext) {
             val scale = HEADING_SCALE[el.name] ?: 1f
             UPParseParagraph(
                 el.children, ctx,
-                TextStyle(color = UPTheme.Main, fontSize = (14f * scale).sp, fontWeight = FontWeight.Bold),
+                TextStyle(color = ctx.contentColor, fontSize = (14f * scale).sp, fontWeight = FontWeight.Bold),
                 Modifier.padding(vertical = 4.dp),
             )
         }
@@ -236,7 +237,7 @@ private fun UPParseBlockElement(el: UPParseElement, ctx: UPParseContext) {
         ) { UPParseBlocks(el.children, ctx) }
         "pre" -> UPParseParagraph(
             el.children, ctx,
-            TextStyle(color = UPTheme.Content, fontSize = 13.sp, fontFamily = FontFamily.Monospace),
+            TextStyle(color = ctx.contentColor, fontSize = 13.sp, fontFamily = FontFamily.Monospace),
             Modifier.fillMaxWidth().padding(vertical = 4.dp).background(Color(0xFFF2F2F2)).padding(8.dp),
         )
         "ul", "ol" -> {
@@ -249,7 +250,7 @@ private fun UPParseBlockElement(el: UPParseElement, ctx: UPParseContext) {
                         Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
                             UPParseParagraph(
                                 listOf(UPParseText(marker)), ctx,
-                                TextStyle(color = UPTheme.Content, fontSize = 14.sp),
+                                TextStyle(color = ctx.contentColor, fontSize = 14.sp),
                             )
                             Box(Modifier.weight(1f)) { UPParseBlocks(child.children, ctx) }
                         }
@@ -339,6 +340,7 @@ public fun UPParse(
     modifier: Modifier = Modifier,
     onLinkTap: ((String) -> Unit)? = null,
     onImgTap: ((String) -> Unit)? = null,
+    contentColor: Color = UPTheme.Content,
     diagnostics: UPCompatibilityDiagnostics = UPCompatibilityDiagnostics.None,
 ) {
     val style = rememberUPResolvedStyle(props.customStyle, diagnostics, "UPParse")
@@ -352,11 +354,12 @@ public fun UPParse(
     var previewSrc by remember { mutableStateOf<String?>(null) }
     val tagStyle = remember(props.tagStyle) { DEFAULT_TAG_STYLE + props.tagStyle }
 
-    val ctx = remember(props, tagStyle, onLinkTap, onImgTap) {
+    val ctx = remember(props, tagStyle, onLinkTap, onImgTap, contentColor) {
         UPParseContext(
             props = props,
             tagStyle = tagStyle,
             lazyLoad = props.lazyLoad,
+            contentColor = contentColor,
             onLinkTap = { href ->
                 val resolved = upParseResolveUrl(props.domain, href)
                 if (props.copyLink) clipboard.setText(AnnotatedString(resolved))
