@@ -18,16 +18,6 @@ import androidx.navigation.navArgument
 import net.lingyun.ultraui.android.core.UPTheme
 import net.lingyun.ultraui.android.sample.catalog.ComponentDemoScreen
 import net.lingyun.ultraui.android.sample.catalog.ComponentIndexPage
-import net.lingyun.ultraui.android.sample.pages.FormValidationDemoPage
-import net.lingyun.ultraui.android.sample.pages.FoundationDemoPage
-import net.lingyun.ultraui.android.sample.pages.IconDemoPage
-import net.lingyun.ultraui.android.sample.pages.InputSelectionDemoPage
-import net.lingyun.ultraui.android.sample.pages.LayerContentDemoPage
-import net.lingyun.ultraui.android.sample.pages.LayoutProgressDemoPage
-import net.lingyun.ultraui.android.sample.pages.LoadingIconDemoPage
-import net.lingyun.ultraui.android.sample.pages.NativeInteractionDemoPage
-import net.lingyun.ultraui.android.sample.pages.NavigationMoreDemoPage
-import net.lingyun.ultraui.android.sample.pages.SelectionNavigationDemoPage
 
 private val sampleColorScheme = lightColorScheme(
     primary = UPTheme.Primary,
@@ -40,7 +30,10 @@ private val sampleColorScheme = lightColorScheme(
     onSurfaceVariant = UPTheme.Content,
 )
 
-/** Root of the deterministic UltraUI Android sample app. */
+/**
+ * Root of the UltraUI Android sample app — a 1:1 reproduction of the uview-plus demo app:
+ * a searchable component index home that navigates to per-component demo pages.
+ */
 @Composable
 public fun SampleApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
@@ -57,7 +50,6 @@ public fun SampleApp(modifier: Modifier = Modifier) {
                 composable(SampleRoutes.Index) {
                     ComponentIndexPage(
                         onOpen = { id -> navController.navigate(SampleRoutes.demoRoute(id)) },
-                        onOpenLegacy = { navController.navigate(SampleRoutes.Catalog) },
                     )
                 }
                 composable(
@@ -66,41 +58,6 @@ public fun SampleApp(modifier: Modifier = Modifier) {
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id").orEmpty()
                     ComponentDemoScreen(id = id, onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.Catalog) {
-                    SampleCatalog(onDestinationClick = { destination ->
-                        navController.navigate(destination.route)
-                    })
-                }
-                composable(SampleRoutes.Foundation) {
-                    FoundationDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.LayerContent) {
-                    LayerContentDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.InputSelection) {
-                    InputSelectionDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.LayoutProgress) {
-                    LayoutProgressDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.NativeInteraction) {
-                    NativeInteractionDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.NavigationMore) {
-                    NavigationMoreDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.SelectionNavigation) {
-                    SelectionNavigationDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.FormValidation) {
-                    FormValidationDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.Icon) {
-                    IconDemoPage(onBack = { navController.popBackStack() })
-                }
-                composable(SampleRoutes.LoadingIcon) {
-                    LoadingIconDemoPage(onBack = { navController.popBackStack() })
                 }
             }
         }

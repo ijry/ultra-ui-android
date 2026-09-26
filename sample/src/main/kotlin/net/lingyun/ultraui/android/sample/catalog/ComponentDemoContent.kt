@@ -234,7 +234,7 @@ private fun LoadingPageDemo() {
 private fun PendingDemo() {
     DemoSection(title = "演示迁移中") {
         Text(
-            text = "该组件的独立演示页正在从旧版分组示例逐步迁移。可先在首页底部「查看旧版分组示例」中体验。",
+            text = "该组件暂无独立演示。",
             color = UPTheme.Content,
             fontSize = 14.sp,
             lineHeight = 22.sp,

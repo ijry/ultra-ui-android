@@ -37,7 +37,6 @@ import net.lingyun.ultraui.android.core.UPTheme
 @Composable
 public fun ComponentIndexPage(
     onOpen: (String) -> Unit,
-    onOpenLegacy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -78,21 +77,6 @@ public fun ComponentIndexPage(
         }
         HorizontalDivider(color = UPTheme.Border)
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item(key = "legacy-grouped") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .clickable(role = Role.Button, onClick = onOpenLegacy)
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = "查看旧版分组示例", color = UPTheme.Primary)
-                    Text(text = "›", color = UPTheme.Tips, fontSize = 18.sp)
-                }
-                HorizontalDivider(color = UPTheme.Border)
-            }
             filtered.forEach { group ->
                 item(key = "group-" + group.name) {
                     Text(
