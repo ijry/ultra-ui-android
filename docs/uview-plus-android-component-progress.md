@@ -8,9 +8,9 @@
 - 上游固定提交：`b32377ce0500579830e537a20eef1a7c6c9cf806`
 - 扫描日期：2026-08-30
 - 上游目录总数：141 个
-- 当前 Android 公开 `UP*Props`：138 个
-- 当前 Android 已有公开 Compose 组件入口：139 个（含 `u-tr` 无 Props；另有 `UPToastHost` 等宿主辅助 API）
-- 当前目标组件完成度：139 / 140 个可直接使用的上游 UI 组件目录，约 99.3%。其中 1 个是辅助模块目录（库入口空组件），暂不计入 UI 组件分母。
+- 当前 Android 公开 `UP*Props`：139 个
+- 当前 Android 已有公开 Compose 组件入口：140 个（含 `u-tr` 无 Props；另有 `UPToastHost` 等宿主辅助 API）
+- 当前目标组件完成度：140 / 140 个可直接使用的上游 UI 组件目录（100%，其中 `u-section` 为推定实现——上游无 `.vue` 模板）。另有 1 个辅助模块目录（`uview-plus` 库入口空组件）不计入 UI 组件分母，且无可复刻内容。
 
 ### 复刻进度定义
 
@@ -134,7 +134,7 @@
 | 99 | 导航 | `u-safe-bottom` | `UPSafeBottom` / `UPSafeBottomProps` | 基本完成 | 高（Props） | 上游契约本就只有 `customStyle` 与底部安全区占位（`u-safe-area-inset-bottom` = `padding-bottom: env(safe-area-inset-bottom)`，nvue 下改用 `getWindowInfo().safeAreaInsets.bottom` 显式填高）。Android 用 `navigationBarsPadding()` 作语义等价填充，`safeAreaInsetBottom=false` 时不占位，`customStyle` 逐字段覆盖，已逐项与上游对齐、无字段缺口。有真机断言验证占位高度等于导航栏 inset。 |
 | 100 | 列表与索引 | `u-scroll-list` | `UPScrollList` / `UPScrollListProps` | 基本完成 | 中 | 内容已可横向滚动，并按上游默认（`indicator: true`）渲染指示器：`indicatorWidth` 定轨道宽、`indicatorBarWidth` 定滑块宽、`indicatorColor`/`indicatorActiveColor` 分别着色轨道与滑块、`indicatorStyle` 可再覆盖样式，滑块位置跟随滚动进度；均有真机断言。此前既不滚动也不渲染指示器。 |
 | 101 | 键盘与输入 | `u-search` | `UPSearch` / `UPSearchProps` | 基本完成 | 高（Props） | 输入、清除、搜索按钮和受控值已有实现。 |
-| 102 | 基础展示 | `u-section` | — | 未开始 | 暂无 | 区块标题组件待建立。 |
+| 102 | 基础展示 | `u-section` | `UPSection` | 基本完成 | `UPSectionProps` | 区块标题栏。**说明：本快照上游 `u-section` 目录只有 `section.js`（props 配置）、无 `.vue` 模板（git 历史/编译产物/demo 均无痕迹），故此为按 props 语义的合理推定实现，非模板级忠实移植**（已在组件 KDoc 显式标注）。按 `section.js` 复刻 props 与默认值：左侧强调竖条(`showLine`，`lineColor` 空则回落主题色)、标题(`color`/`fontSize`/`bold`)、右侧区域(`right` 显隐，`subTitle` 用 `subColor` + `arrow` 箭头，点击发右侧点击回调)。十个 props 全读、无 inert。有默认值单测与 1 项真机断言（标题 + 竖条 + 右侧点击）。 |
 | 103 | 选择 | `u-select` | `UPSelect` / `UPSelectProps` | 基本完成 | 高（Props） | options、current、select/update 事件与 `showOptionsLabel`/`optionsWidth` 之外，本轮补齐面板自身的全部字段：`maxHeight` 支持 `90vh` 视口单位（按窗口高度折算，另接受 px/rpx/数值）并配 `overflowY: auto` 滚动、`zIndex` 按上游 `zIndex + 1` 抬高选项层、`itemColor`/`iconColor`/`iconSize` 分别作用于选项文字与触发器箭头、`border` 给触发器 1px 描边 + 4px 圆角 + 36dp 最小高度、`duration` 驱动面板淡入（上游把它交给遮罩，内联无遮罩故由面板承载）。未完成：`overlay`/`overlayStyle`/`overlayOpacity` 与「面板浮在后续内容之上」都依赖把选项面板搬进窗口级 `Popup`（该层已证明可用，见 `u-tooltip`）；当前内联渲染会把后续内容顶下去。 |
 | 104 | 媒体与内容 | `u-short-video` | `UPShortVideo` | 基本完成 | `UPShortVideoProps` | 竖屏短视频信息流外壳：顶部 `tabsList` 标签(`currentTab`→`tabChange`)，`VerticalPager` 竖滑浏览 `videoList`(`currentVideo`→`videoChange`)，每页海报 `poster`/`cover` + 居中播放/暂停覆盖层(点击切换发 `videoPlay`/`videoPause`)、作者块(`author.avatar`/`name`/`desc` + 关注)、右侧操作栏(点赞/评论/分享/收藏及计数与实心切换 → `like`/`comment`/`share`/`collect`)、底部进度 `UPSlider`(`progress`→`progressChanging`/`progressChange`)。四个 props 全读、无 inert。降级：真实视频解码/播放需原生播放器(ExoPlayer/VideoView)、属宿主职责，本组件以海报 + 播放覆盖层呈现。有默认值单测与 1 项真机断言(信息流渲染 + 暂停 + 点赞)。 |
 | 105 | 原生能力 | `u-signature` | `UPSignature` / `UPSignatureProps` | 基本完成 | 中 | 手写签名板：在 `bgColor` 画布上拖动记录笔画，按 `color`/`thickness`（圆头圆角）用 Compose `Canvas` 绘制；工具条（`showToolbar`）含清空（重置并发 `clear`）与确认（非空即发 `confirm`，空画布发 `error`）；`width`/`height` 定尺寸。空判定抽成纯函数 `upSignatureIsEmpty` 并单测，另有 2 项真机断言（清空/空画布确认报错、`showToolbar=false` 不显工具条）。降级：上游写临时文件并回传路径，Android 无常驻临时文件出口，`onConfirm` 只发成功信号、由宿主自行捕获签名板（如在外层套 graphics layer）持久化。 |
@@ -182,11 +182,11 @@
 | 上游目录总数 | 141 |
 | 可直接使用的 UI 组件目录 | 140 |
 | 辅助模块目录 | 1 |
-| Android 已建立 Props/API | 107 |
-| 基本完成 | 139 |
+| Android 已建立 Props/API | 108 |
+| 基本完成 | 140 |
 | 基础可用 | 0 |
 | Props 已建 | 0 |
-| 未开始（含辅助模块） | 34 |
+| 未开始（含辅助模块） | 33 |
 | 完整兼容 | 0 |
 
 ## 当前已实现组件分批
@@ -206,7 +206,7 @@
 
 未读字段已归零，下一阶段的瓶颈从「字段是否接上」变成「行为是否对得上」，因此建议按下列顺序推进：
 
-1. **真机执行现有断言**：库内 393 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
+1. **真机执行现有断言**：库内 394 项 androidTest 目前只有编译级证据。先在真机上跑一遍，把编译级证据升级为运行级证据，这比新增组件更能暴露问题。
 2. **视觉回归的可用性**：已经解决。参考图一直都在画文本与填色，此前"渲染环境不画文本"的判断是错的（见下文《截图内容核查》）。现有 30 项像素级断言**逐组件覆盖全部 28 张参考图**的关键颜色与几何，另有一项遍历全部参考图做非空校验。下一步可做的是把断言从"颜色在不在、比例对不对"推进到与上游真机截图的像素对照。
 3. **原「基础可用」的 3 行已收口（本轮）**：`u-safe-bottom`、`u-status-bar`、`u-tabs-item` 三者上游 props 契约本就近乎为空，此前记为「没有可复刻字段」。本轮把它们逐一对齐到上游全部语义后升到「基本完成」：`u-status-bar` 补 `emits: ['update:height']`（新增 `onUpdateHeight` 回传实测状态栏 inset 或显式高度）与默认 `<slot />`（新增 `content` 插槽）；`u-safe-bottom` 以 `navigationBarsPadding()` 作 `env(safe-area-inset-bottom)` 的语义等价、`customStyle` 逐字段覆盖；`u-tabs-item` 是 `<swiper-item><slot /></swiper-item>` 纯壳、`content` 插槽透传即等价。各补真机断言。至此清单再无「基础可用」行。**此前归纳的三大类「基础设施缺失」全部证伪**：其一，「窗口级弹层」——Compose 自带 `androidx.compose.ui.window.Popup`，`u-tooltip`/`u-popover` 已据此落地；其二，「宿主滚动回传」——吸顶带自己就能读到自身在窗口中的位置，`u-sticky` 已据此实现真实吸顶；其三，「滚轮视觉」——`LazyColumn` + `rememberSnapFlingBehavior` 就是滚轮，`u-picker` 已据此实现吸附选中。三次都是把「还没做」误当成了「做不到」，**判断某件事做不到之前，先去查平台到底提供了什么**。`u-count-down`（缺命令式 ref 方法）、`u-calendar`/`u-select`/`u-tabbar`（缺自身字段）、`u-alert`/`u-collapse`（缺过渡与分隔线）、`u-index-list` 系列（缺手势换算而非滚动基础设施——索引条自己就是滚动容器）、`u-card`（缺分区事件与 hairline 语义）、`u-notify`（缺 ref 调用与图标表）、`u-swiper-indicator`/`u-tabbar-item`（缺过渡与尺寸语义）、`u-tooltip`/`u-popover`（缺窗口级弹层）、`u-sticky`（缺自身位置观测）、`u-picker-column`（缺吸附滚轮）、`u-action-sheet`（缺结构与可达性规则）、`u-back-top`（缺一个 `scrollState` 参数）本轮已补齐并升到「基本完成」——**先把这类「不依赖基础设施」的行挑出来单独收口，是性价比最高的推进方式**。
 4. **组件复刻已全部收口**：上表原先罗列的「表单体系 / 列表与数据展示 / 原生能力 / 内容解析与复杂业务 / 选择增强」各批组件均已实现并升到「基本完成」。141 行里仅剩 2 个天然无法忠实复刻的条目——`uview-plus`（入口 `.vue` 为空组件，仅聚合导出）与 `u-section`（上游只有 `section.js` props 配置、从无 `.vue` 模板，git 历史确认）。凡涉及原生播放/裁剪/媒体选择/位图导出/本地持久化的能力均以宿主回调 + 诚实降级承接（见各行降级说明与 `tools/find_unread_props.py` 的 inert 登记）。
@@ -229,7 +229,7 @@ export ANDROID_SERIAL=emulator-5554        # 锁定手机 AVD：配对启动的 
   -Pandroid.testInstrumentationRunnerArguments.class=net.lingyun.ultraui.android.components.UPFormBehaviorTest
 ```
 
-当前状态：库内共 **393 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
+当前状态：库内共 **394 个行为测试**（`ultra-ui/src/androidTest` 的 `@Test` 静态计数；上一次
 `connectedDebugAndroidTest` 在 162 项时报告的 `Starting 162 tests` 与静态计数一致）。最近一批为
 `u-color-picker` 新增 1 项回归（`UPColorPickerBehaviorTest`），覆盖点预设色更新值、确认回传 hex。再往前一批为
 `u-signature` 新增 2 项回归（`UPSignatureBehaviorTest`），覆盖清空/空画布确认报错、`showToolbar=false` 不显工具条。再往前一批为
@@ -406,7 +406,7 @@ python3 tools/audit_status_claims.py --all      # 同时列出证据齐备的行
 判定依据直接取自本文《维护规则》：「基础可用」至少需要一组真机或截图证据；「基本完成」
 还需常用字段全部生效（未读字段为 0）并有真机行为测试。
 
-当前状态：139 个已实现组件行中，**139 行证据齐备、0 行标注超出证据**，脚本保持全绿。最后 10 行
+当前状态：140 个已实现组件行中，**140 行证据齐备、0 行标注超出证据**，脚本保持全绿。最后 10 行
 （`u-cell`、`u-modal`、`u-navbar`、`u-navbar-mini`、`u-number-box`、`u-radio`、`u-radio-group`、
 `u-checkbox-group`、`u-overlay`、`u-badge`、`u-tag`）在本轮补齐了实现或登记为按设计不生效，
 其中 `u-navbar`、`u-navbar-mini` 由「基础可用」升级为「基本完成」；再往前一批的 `u-tabs`、
@@ -548,7 +548,7 @@ python3 tools/find_unread_props.py                # 列出无人读取的字段�
 python3 tools/find_unread_props.py --show-inert    # 同时列出按设计不生效的字段及原因
 ```
 
-当前状态：138 个 Props 类中有 **0 个字段无人读取**，另有 139 个已记录为按设计不生效
+当前状态：139 个 Props 类中有 **0 个字段无人读取**，另有 139 个已记录为按设计不生效
 （uni-app / 微信小程序 / nvue 专有开关、DOM 事件语义、内联渲染没有窗口级遮罩可作用的字段，
 以及上游自己也从不读取的字段，仅保留接口兼容）。已消化的批次：13 个组件曾声明
 `customStyle` 却从不应用（`UPSwitch`、`UPRate`、`UPBadge` 等）、`UPSticky` 的

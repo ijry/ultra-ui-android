@@ -116,6 +116,7 @@ class ProjectContractTest {
             "UPNovelReaderProps",
             "UPActionSheetDataProps",
             "UPPickerDataProps",
+            "UPSectionProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

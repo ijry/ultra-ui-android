@@ -746,6 +746,20 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun sectionDefaultsMatchSectionJs() {
+        val sec = UPSectionProps()
+        assertEquals("更多", sec.subTitle)
+        assertEquals(true, sec.right)
+        assertEquals(15, sec.fontSize.upIntOrDefault(0))
+        assertEquals(true, sec.bold)
+        assertEquals("#303133", sec.color)
+        assertEquals("#909399", sec.subColor)
+        assertEquals(true, sec.showLine)
+        assertEquals("", sec.lineColor)
+        assertEquals(true, sec.arrow)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

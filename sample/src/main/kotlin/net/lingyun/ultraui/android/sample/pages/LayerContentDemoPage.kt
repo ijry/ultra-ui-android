@@ -90,6 +90,8 @@ import net.lingyun.ultraui.android.components.UPActionSheetData
 import net.lingyun.ultraui.android.components.UPActionSheetDataProps
 import net.lingyun.ultraui.android.components.UPPickerData
 import net.lingyun.ultraui.android.components.UPPickerDataProps
+import net.lingyun.ultraui.android.components.UPSection
+import net.lingyun.ultraui.android.components.UPSectionProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -498,6 +500,13 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "区块标题") {
+                    UPSection(
+                        props = UPSectionProps(title = "热门推荐", subTitle = "查看全部"),
+                        onClick = { eventText = "区块标题：查看全部" },
                     )
                 }
 
