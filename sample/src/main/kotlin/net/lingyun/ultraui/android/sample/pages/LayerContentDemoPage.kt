@@ -72,6 +72,8 @@ import net.lingyun.ultraui.android.components.UPMarkdown
 import net.lingyun.ultraui.android.components.UPMarkdownProps
 import net.lingyun.ultraui.android.components.UPTable2
 import net.lingyun.ultraui.android.components.UPTable2Props
+import net.lingyun.ultraui.android.components.UPPoster
+import net.lingyun.ultraui.android.components.UPPosterProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -480,6 +482,22 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "海报") {
+                    UPPoster(
+                        props = UPPosterProps(
+                            json = mapOf(
+                                "css" to mapOf("width" to "600rpx", "height" to "760rpx", "background" to "linear-gradient(135deg, #3c9cff, #5ac8fa)", "radius" to "16rpx"),
+                                "views" to listOf(
+                                    mapOf("type" to "text", "text" to "Ultra UI 海报", "css" to mapOf("left" to "40rpx", "top" to "48rpx", "color" to "#ffffff", "fontSize" to "44rpx", "fontWeight" to "bold")),
+                                    mapOf("type" to "view", "css" to mapOf("left" to "40rpx", "top" to "140rpx", "width" to "520rpx", "height" to "1rpx", "background" to "#ffffff")),
+                                    mapOf("type" to "text", "text" to "扫码体验原生 Compose 组件库", "css" to mapOf("left" to "40rpx", "top" to "180rpx", "color" to "#eef6ff", "fontSize" to "28rpx")),
+                                    mapOf("type" to "qrcode", "text" to "https://uview-plus.jiangruyi.com", "css" to mapOf("left" to "200rpx", "top" to "300rpx", "width" to "200rpx", "height" to "200rpx")),
+                                ),
+                            ),
+                        ),
                     )
                 }
             }

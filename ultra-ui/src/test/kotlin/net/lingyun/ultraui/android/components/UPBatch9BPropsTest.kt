@@ -608,6 +608,19 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun posterHelpersMatchUpstream() {
+        assertEquals(true, upPosterIsGradient("linear-gradient(135deg, #ff0000, #0000ff)"))
+        assertEquals(true, upPosterIsGradient("radial-gradient(#fff, #000)"))
+        assertEquals(false, upPosterIsGradient("#ff0000"))
+        assertEquals(listOf("#ff0000", "#0000ff"), upPosterExtractColors("linear-gradient(135deg, #ff0000, #0000ff)"))
+        assertEquals(listOf("rgba(0,0,0,0.5)", "#fff"), upPosterExtractColors("linear-gradient(rgba(0,0,0,0.5), #fff)"))
+        // rpx halves to sp; px/number as-is; blank defaults to 14sp.
+        assertEquals(14f, upPosterFontSizeSp("28rpx").value, 0.01f)
+        assertEquals(16f, upPosterFontSizeSp("16px").value, 0.01f)
+        assertEquals(14f, upPosterFontSizeSp("").value, 0.01f)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
