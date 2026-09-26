@@ -731,6 +731,21 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun pickerDataDefaultsAndSelectionMatchUview() {
+        val pd = UPPickerDataProps()
+        assertEquals("id", pd.valueKey)
+        assertEquals("name", pd.labelKey)
+        val options = listOf<UPRawValue>(
+            mapOf<String, UPRawValue>("id" to 10, "name" to "语文"),
+            mapOf<String, UPRawValue>("id" to 20, "name" to "数学"),
+        )
+        assertEquals("数学" to 1, upPickerDataSelection(options, 20, "id", "name"))
+        assertEquals("语文" to 0, upPickerDataSelection(options, "10", "id", "name"))
+        assertEquals("" to -1, upPickerDataSelection(options, "", "id", "name"))
+        assertEquals("" to -1, upPickerDataSelection(options, 99, "id", "name"))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

@@ -191,6 +191,7 @@ KNOWN_INERT: dict[str, str] = {
     "NovelReader.preloadThreshold": "chapters-ahead prefetch trigger; prefetch/loading is a host concern",
     "NovelReader.pageAnimation": "page-turn animation; only meaningful for the unported page-mode engine",
     "NovelReader.autoBack": "auto-return at the end of the book; belongs to host navigation",
+    "PickerData.description": "declared upstream but never passed to up-picker, so it renders nothing",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

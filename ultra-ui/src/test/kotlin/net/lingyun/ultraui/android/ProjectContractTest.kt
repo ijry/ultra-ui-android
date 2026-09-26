@@ -115,6 +115,7 @@ class ProjectContractTest {
             "UPShortVideoProps",
             "UPNovelReaderProps",
             "UPActionSheetDataProps",
+            "UPPickerDataProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

@@ -88,6 +88,8 @@ import net.lingyun.ultraui.android.components.UPNovelReader
 import net.lingyun.ultraui.android.components.UPNovelReaderProps
 import net.lingyun.ultraui.android.components.UPActionSheetData
 import net.lingyun.ultraui.android.components.UPActionSheetDataProps
+import net.lingyun.ultraui.android.components.UPPickerData
+import net.lingyun.ultraui.android.components.UPPickerDataProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -496,6 +498,20 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "选择器表单") {
+                    UPPickerData(
+                        props = UPPickerDataProps(
+                            title = "请选择科目",
+                            options = listOf(
+                                mapOf("id" to 10, "name" to "语文"),
+                                mapOf("id" to 20, "name" to "数学"),
+                                mapOf("id" to 30, "name" to "英语"),
+                            ),
+                        ),
+                        onUpdateModelValue = { eventText = "选择器：选中 id=$it" },
                     )
                 }
 
