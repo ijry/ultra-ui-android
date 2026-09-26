@@ -461,6 +461,30 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun barcodeDefaultsAndLayoutMatchUview() {
+        val bc = UPBarcodeProps()
+        assertEquals("auto", bc.format)
+        assertEquals(200, bc.width)
+        assertEquals(80, bc.height)
+        assertEquals(true, bc.displayValue)
+        assertEquals("monospace", bc.font)
+        assertEquals("center", bc.textAlign)
+        assertEquals("bottom", bc.textPosition)
+        assertEquals(2, bc.textMargin)
+        assertEquals(14, bc.fontSize)
+        assertEquals(10, bc.margin)
+        // width 200 + margins 10*2 = 220; height 80 + textHeight(14+2=16) + margins 20 = 116.
+        val layout = upBarcodeLayout(200, 80, true, 14, 2, "bottom", 10, 10, 10, 10)
+        assertEquals(220, layout.canvasWidth)
+        assertEquals(116, layout.canvasHeight)
+        assertEquals(16, layout.textHeight)
+        // No text band when displayValue=false; height floored at 60.
+        val bare = upBarcodeLayout(50, 30, false, 14, 2, "bottom", 0, 0, 0, 0)
+        assertEquals(100, bare.canvasWidth)
+        assertEquals(60, bare.canvasHeight)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

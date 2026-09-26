@@ -136,6 +136,8 @@ KNOWN_INERT: dict[str, str] = {
     "Qrcode.usingComponents": "H5 custom-component draw-delay hint; there is no async canvas draw on Android",
     "Qrcode.showLoading": "loading overlay while the canvas draws async; matrix generation is synchronous here",
     "Qrcode.loadingText": "text for the async-draw loading overlay; no such loading phase on Android",
+    "Barcode.fontOptions": "upstream stores this font-style string but never applies it to the canvas",
+    "Barcode.useCanvas": "the port always paints to a Compose canvas; the image-file branch needs host export",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

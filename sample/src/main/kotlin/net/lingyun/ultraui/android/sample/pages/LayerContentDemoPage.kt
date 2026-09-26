@@ -59,6 +59,8 @@ import net.lingyun.ultraui.android.components.UPPdfReader
 import net.lingyun.ultraui.android.components.UPPdfReaderProps
 import net.lingyun.ultraui.android.components.UPQrcode
 import net.lingyun.ultraui.android.components.UPQrcodeProps
+import net.lingyun.ultraui.android.components.UPBarcode
+import net.lingyun.ultraui.android.components.UPBarcodeProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -368,6 +370,16 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             allowPreview = true,
                         ),
                         onPreview = { eventText = "二维码：预览" },
+                    )
+                }
+
+                DemoSection(title = "条形码") {
+                    UPBarcode(
+                        props = UPBarcodeProps(value = "ULTRA-UI-123", format = "CODE128"),
+                        onError = { eventText = "条形码：$it" },
+                    )
+                    UPBarcode(
+                        props = UPBarcodeProps(value = "5901234123457", format = "EAN13"),
                     )
                 }
             }
