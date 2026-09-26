@@ -76,6 +76,8 @@ import net.lingyun.ultraui.android.components.UPPoster
 import net.lingyun.ultraui.android.components.UPPosterProps
 import net.lingyun.ultraui.android.components.UPUpload
 import net.lingyun.ultraui.android.components.UPUploadProps
+import net.lingyun.ultraui.android.components.UPAlbum
+import net.lingyun.ultraui.android.components.UPAlbumProps
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -484,6 +486,16 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                         onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
                         onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
                         onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
+                    )
+                }
+
+                DemoSection(title = "相册") {
+                    UPAlbum(
+                        props = UPAlbumProps(
+                            urls = listOf("/sdcard/p1.png", "/sdcard/p2.png", "/sdcard/p3.png", "/sdcard/p4.png", "/sdcard/p5.png", "/sdcard/p6.png", "/sdcard/p7.png"),
+                            maxCount = 6,
+                        ),
+                        onClick = { eventText = "相册：点击第 $it 张" },
                     )
                 }
 

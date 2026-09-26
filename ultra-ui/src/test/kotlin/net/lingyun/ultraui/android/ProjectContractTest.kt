@@ -109,6 +109,7 @@ class ProjectContractTest {
             "UPTable2Props",
             "UPPosterProps",
             "UPUploadProps",
+            "UPAlbumProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

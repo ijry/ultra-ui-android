@@ -640,6 +640,24 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun albumDefaultsAndSrcResolutionMatchUview() {
+        val a = UPAlbumProps()
+        assertEquals(9, a.maxCount.upIntOrDefault(0))
+        assertEquals(3, a.rowCount.upIntOrDefault(0))
+        assertEquals("scaleToFill", a.singleMode)
+        assertEquals("aspectFill", a.multipleMode)
+        assertEquals(true, a.previewFullImage)
+        assertEquals(true, a.showMore)
+        assertEquals("square", a.shape)
+        assertEquals("px", a.unit)
+        // src resolution: plain string, keyName, then url/src fallbacks.
+        assertEquals("a.png", upAlbumSrc("a.png", ""))
+        assertEquals("k.png", upAlbumSrc(mapOf("photo" to "k.png"), "photo"))
+        assertEquals("u.png", upAlbumSrc(mapOf("url" to "u.png"), ""))
+        assertEquals("s.png", upAlbumSrc(mapOf("src" to "s.png"), ""))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)
