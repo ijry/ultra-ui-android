@@ -1,0 +1,162 @@
+package net.lingyun.ultraui.android.sample.catalog
+
+/**
+ * 1:1 复刻 uview-plus 演示工程 `src/pages/example/components.config.js` 的首页组件索引：
+ * 分组名、组件标题与顺序均与上游一致，作为组件索引首页与逐组件 demo 页的唯一数据源。
+ */
+public data class DemoEntry(
+    val id: String,
+    val title: String,
+    val available: Boolean = true,
+)
+
+public data class DemoGroup(
+    val name: String,
+    val entries: List<DemoEntry>,
+)
+
+public val demoGroups: List<DemoGroup> = listOf(
+    DemoGroup(
+        name = "基础组件",
+        entries = listOf(
+            DemoEntry(id = "color", title = "Color 色彩"),
+            DemoEntry(id = "icon", title = "Icon 图标"),
+            DemoEntry(id = "image", title = "Image 图片"),
+            DemoEntry(id = "button", title = "Button 按钮"),
+            DemoEntry(id = "text", title = "Text 文本"),
+            DemoEntry(id = "layout", title = "Layout 布局"),
+            DemoEntry(id = "cell", title = "Cell 单元格"),
+            DemoEntry(id = "badge", title = "Badge 徽标数"),
+            DemoEntry(id = "tag", title = "Tag 标签"),
+            DemoEntry(id = "loading-icon", title = "Loading 加载动画"),
+            DemoEntry(id = "loading-page", title = "Loading page 加载页"),
+        ),
+    ),
+    DemoGroup(
+        name = "表单组件",
+        entries = listOf(
+            DemoEntry(id = "form", title = "Form 表单"),
+            DemoEntry(id = "calendar", title = "Calendar 日历"),
+            DemoEntry(id = "keyboard", title = "Keyboard 键盘"),
+            DemoEntry(id = "picker", title = "Picker 选择器"),
+            DemoEntry(id = "select", title = "Select 经典下拉框"),
+            DemoEntry(id = "cascader", title = "Cascader 级联选择器"),
+            DemoEntry(id = "choose", title = "Choose 选项选择器"),
+            DemoEntry(id = "datetime-picker", title = "DatetimePicker 时间选择器"),
+            DemoEntry(id = "rate", title = "Rate 评分"),
+            DemoEntry(id = "search", title = "Search 搜索"),
+            DemoEntry(id = "number-box", title = "NumberBox 步进器"),
+            DemoEntry(id = "upload", title = "Upload 上传"),
+            DemoEntry(id = "code", title = "Code 验证码倒计时"),
+            DemoEntry(id = "input", title = "Input 输入框"),
+            DemoEntry(id = "textarea", title = "Textarea 文本域"),
+            DemoEntry(id = "checkbox", title = "Checkbox 复选框"),
+            DemoEntry(id = "radio", title = "Radio 单选框"),
+            DemoEntry(id = "switch", title = "Switch 开关选择器"),
+            DemoEntry(id = "slider", title = "Slider 滑动选择器"),
+            DemoEntry(id = "album", title = "Album 相册"),
+        ),
+    ),
+    DemoGroup(
+        name = "数据组件",
+        entries = listOf(
+            DemoEntry(id = "list", title = "List 列表"),
+            DemoEntry(id = "virtual-list", title = "VirtualList 虚拟列表"),
+            DemoEntry(id = "progress", title = "Progress 进度条"),
+            DemoEntry(id = "table", title = "Table 表格"),
+            DemoEntry(id = "table2", title = "Table2 表格2"),
+            DemoEntry(id = "count-down", title = "CountDown 倒计时"),
+            DemoEntry(id = "count-to", title = "CountTo 数字滚动"),
+        ),
+    ),
+    DemoGroup(
+        name = "反馈组件",
+        entries = listOf(
+            DemoEntry(id = "tooltip", title = "Tooltip 长按提示"),
+            DemoEntry(id = "guide", title = "Guide 首屏引导"),
+            DemoEntry(id = "popover", title = "Popover 弹窗提示"),
+            DemoEntry(id = "action-sheet", title = "ActionSheet 上拉菜单"),
+            DemoEntry(id = "alert", title = "Alert 警告提示"),
+            DemoEntry(id = "toast", title = "Toast 消息提示"),
+            DemoEntry(id = "notice-bar", title = "NoticeBar 滚动通知"),
+            DemoEntry(id = "notify", title = "Notify 消息提示"),
+            DemoEntry(id = "swipe-action", title = "SwipeAction 滑动单元格"),
+            DemoEntry(id = "collapse", title = "Collapse 折叠面板"),
+            DemoEntry(id = "popup", title = "Popup 弹出层"),
+            DemoEntry(id = "modal", title = "Modal 模态框"),
+            DemoEntry(id = "copy", title = "Copy 复制"),
+            DemoEntry(id = "float-button", title = "FloatButton 悬浮按钮"),
+            DemoEntry(id = "pull-refresh", title = "PullRefresh 下拉刷新"),
+            DemoEntry(id = "signature", title = "Signature 签名签字"),
+            DemoEntry(id = "agreement", title = "agreement 弹窗协议"),
+            DemoEntry(id = "full-screen", title = "fullScreen 压窗屏（暂无）", available = false),
+        ),
+    ),
+    DemoGroup(
+        name = "布局组件",
+        entries = listOf(
+            DemoEntry(id = "scroll-list", title = "ScrollList 横向滚动列表"),
+            DemoEntry(id = "line", title = "Line 线条"),
+            DemoEntry(id = "card", title = "Card 卡片"),
+            DemoEntry(id = "overlay", title = "Overlay 遮罩层"),
+            DemoEntry(id = "no-network", title = "NoNetwork 无网络提示"),
+            DemoEntry(id = "grid", title = "Grid 宫格布局"),
+            DemoEntry(id = "swiper", title = "Swiper 轮播图"),
+            DemoEntry(id = "skeleton", title = "Skeleton 骨架屏"),
+            DemoEntry(id = "sticky", title = "Sticky 吸顶"),
+            DemoEntry(id = "waterfall", title = "Waterfall 瀑布流"),
+            DemoEntry(id = "divider", title = "Divider 分割线"),
+            DemoEntry(id = "box", title = "Box 盒子"),
+            DemoEntry(id = "cate-tab", title = "CateTab 垂直TAB"),
+            DemoEntry(id = "title", title = "Title 标题"),
+            DemoEntry(id = "short-video", title = "ShortVideo 短视频切换"),
+        ),
+    ),
+    DemoGroup(
+        name = "导航组件",
+        entries = listOf(
+            DemoEntry(id = "dropdown", title = "Dropdown 下拉菜单"),
+            DemoEntry(id = "tabbar", title = "Tabbar 底部导航栏"),
+            DemoEntry(id = "backtop", title = "BackTop 返回顶部"),
+            DemoEntry(id = "navbar", title = "Navbar 导航栏"),
+            DemoEntry(id = "navbar-mini", title = "NavbarMini 迷你导航栏"),
+            DemoEntry(id = "tabs", title = "Tabs 标签"),
+            DemoEntry(id = "order", title = "TabsSwiper 全屏选项卡（暂无）", available = false),
+            DemoEntry(id = "subsection", title = "Subsection 分段器"),
+            DemoEntry(id = "index-list", title = "IndexList 索引列表"),
+            DemoEntry(id = "steps", title = "Steps 步骤条"),
+            DemoEntry(id = "empty", title = "Empty 内容为空"),
+            DemoEntry(id = "pagination", title = "Pagination 分页器"),
+            DemoEntry(id = "tree", title = "Tree 树形"),
+        ),
+    ),
+    DemoGroup(
+        name = "其他组件",
+        entries = listOf(
+            DemoEntry(id = "parse", title = "Parse 富文本解析器"),
+            DemoEntry(id = "markdown", title = "Markdown 解析器"),
+            DemoEntry(id = "code-input", title = "CodeInput 验证码输入"),
+            DemoEntry(id = "dragsort", title = "Dragsort 拖动排序"),
+            DemoEntry(id = "cropper", title = "cropper 图片裁剪"),
+            DemoEntry(id = "loadmore", title = "Loadmore 加载更多"),
+            DemoEntry(id = "read-more", title = "ReadMore 展开阅读更多"),
+            DemoEntry(id = "lazy-load", title = "LazyLoad 懒加载"),
+            DemoEntry(id = "gap", title = "Gap 间隔槽"),
+            DemoEntry(id = "avatar", title = "Avatar 头像"),
+            DemoEntry(id = "link", title = "Link 超链接"),
+            DemoEntry(id = "transition", title = "transition 动画"),
+            DemoEntry(id = "qrcode", title = "Qrcode 二维码"),
+            DemoEntry(id = "coupon", title = "Coupon 优惠券"),
+            DemoEntry(id = "barcode", title = "Barcode 条码"),
+            DemoEntry(id = "color-picker", title = "ColorPicker 颜色选择器"),
+            DemoEntry(id = "poster", title = "Poster 海报生成"),
+            DemoEntry(id = "goods-sku", title = "GoodsSku 商品SKU"),
+            DemoEntry(id = "city-locate", title = "CityLocate 城市定位"),
+            DemoEntry(id = "pdf-reader", title = "PdfReader PDF阅读器"),
+            DemoEntry(id = "novel-reader", title = "NovelReader 小说阅读器"),
+        ),
+    ),
+)
+
+public val demoEntryById: Map<String, DemoEntry> =
+    demoGroups.flatMap { it.entries }.associateBy { it.id }

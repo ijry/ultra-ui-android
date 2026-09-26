@@ -29,6 +29,9 @@ public data class SampleDestination(
 
 /** Stable route identifiers reserved for the first UltraUI Android milestone. */
 public object SampleRoutes {
+    public const val Index: String = "index"
+    public const val Demo: String = "demo/{id}"
+    public fun demoRoute(id: String): String = "demo/$id"
     public const val Catalog: String = "catalog"
     public const val Foundation: String = "foundation"
     public const val LayerContent: String = "layer-content"

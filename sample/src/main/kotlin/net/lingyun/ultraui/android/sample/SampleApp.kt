@@ -10,10 +10,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import net.lingyun.ultraui.android.core.UPTheme
+import net.lingyun.ultraui.android.sample.catalog.ComponentDemoScreen
+import net.lingyun.ultraui.android.sample.catalog.ComponentIndexPage
 import net.lingyun.ultraui.android.sample.pages.FormValidationDemoPage
 import net.lingyun.ultraui.android.sample.pages.FoundationDemoPage
 import net.lingyun.ultraui.android.sample.pages.IconDemoPage
@@ -45,11 +49,24 @@ public fun SampleApp(modifier: Modifier = Modifier) {
         Surface(modifier = modifier.fillMaxSize(), color = Color.White) {
             NavHost(
                 navController = navController,
-                startDestination = SampleRoutes.Catalog,
+                startDestination = SampleRoutes.Index,
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
+                composable(SampleRoutes.Index) {
+                    ComponentIndexPage(
+                        onOpen = { id -> navController.navigate(SampleRoutes.demoRoute(id)) },
+                        onOpenLegacy = { navController.navigate(SampleRoutes.Catalog) },
+                    )
+                }
+                composable(
+                    route = SampleRoutes.Demo,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id").orEmpty()
+                    ComponentDemoScreen(id = id, onBack = { navController.popBackStack() })
+                }
                 composable(SampleRoutes.Catalog) {
                     SampleCatalog(onDestinationClick = { destination ->
                         navController.navigate(destination.route)
