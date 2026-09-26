@@ -580,6 +580,34 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun table2DefaultsAndSortHelpersMatchUview() {
+        val t = UPTable2Props()
+        assertEquals("id", t.rowKey)
+        assertEquals(true, t.showHeader)
+        assertEquals(true, t.fixedHeader)
+        assertEquals("暂无数据", t.emptyText)
+        assertEquals("36px", t.rowHeight)
+        assertEquals(listOf<Any?>("ascending", "descending"), t.sortOrders)
+        // Sort-order cycle: none -> ascending -> descending -> none.
+        val orders = listOf("ascending", "descending")
+        assertEquals("ascending", upTable2NextSortOrder("", orders))
+        assertEquals("descending", upTable2NextSortOrder("ascending", orders))
+        assertEquals("", upTable2NextSortOrder("descending", orders))
+        // Numeric-aware sort by key.
+        val data = listOf<Any?>(
+            mapOf<String, Any?>("id" to 1, "age" to 30),
+            mapOf<String, Any?>("id" to 2, "age" to 9),
+            mapOf<String, Any?>("id" to 3, "age" to 21),
+        )
+        val asc = upTable2SortData(data, "age", "ascending").map { (it as Map<*, *>)["age"] }
+        assertEquals(listOf<Any?>(9, 21, 30), asc)
+        val desc = upTable2SortData(data, "age", "descending").map { (it as Map<*, *>)["age"] }
+        assertEquals(listOf<Any?>(30, 21, 9), desc)
+        // Unknown order leaves input untouched.
+        assertEquals(data, upTable2SortData(data, "age", ""))
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

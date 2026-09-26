@@ -70,6 +70,8 @@ import net.lingyun.ultraui.android.components.UPParse
 import net.lingyun.ultraui.android.components.UPParseProps
 import net.lingyun.ultraui.android.components.UPMarkdown
 import net.lingyun.ultraui.android.components.UPMarkdownProps
+import net.lingyun.ultraui.android.components.UPTable2
+import net.lingyun.ultraui.android.components.UPTable2Props
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -454,6 +456,30 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                             showLineNumber = true,
                         ),
                         onLinkTap = { eventText = "Markdown：链接 $it" },
+                    )
+                }
+
+                DemoSection(title = "数据表格 2") {
+                    UPTable2(
+                        props = UPTable2Props(
+                            data = listOf(
+                                mapOf("id" to 1, "name" to "张三", "age" to 28, "city" to "北京"),
+                                mapOf("id" to 2, "name" to "李四", "age" to 34, "city" to "上海"),
+                                mapOf("id" to 3, "name" to "王五", "age" to 22, "city" to "广州"),
+                            ),
+                            columns = listOf(
+                                mapOf("type" to "selection", "width" to "48px"),
+                                mapOf("key" to "name", "title" to "姓名", "width" to "90px"),
+                                mapOf("key" to "age", "title" to "年龄", "width" to "80px", "sortable" to true, "align" to "center"),
+                                mapOf("key" to "city", "title" to "城市", "width" to "90px"),
+                            ),
+                            stripe = true,
+                            border = true,
+                            highlightCurrentRow = true,
+                        ),
+                        onCurrentChange = { eventText = "表格：选中 ${it["name"]}" },
+                        onSortChange = { k, o -> eventText = "表格：排序 $k $o" },
+                        onSelectionChange = { eventText = "表格：勾选 ${it.size} 行" },
                     )
                 }
             }

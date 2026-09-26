@@ -145,6 +145,16 @@ KNOWN_INERT: dict[str, str] = {
     "Parse.showImgMenu": "WeChat long-press image save menu; no equivalent on Android",
     "Parse.useAnchor": "in-page #anchor jump; the port renders a flat block list without anchors",
     "Parse.scrollTable": "per-table horizontal scroll layer; tables render inline without their own scroller",
+    "Table2.lazy": "lazy tree child loading; the port renders the flat data list only",
+    "Table2.treeProps": "tree children/hasChildren keys; tree expansion is not modelled",
+    "Table2.defaultExpandAll": "tree expand-all; tree expansion is not modelled",
+    "Table2.expandRowKeys": "initially expanded tree rows; tree expansion is not modelled",
+    "Table2.mainCol": "column hosting the tree expand icon; tree expansion is not modelled",
+    "Table2.expandWidth": "width of the tree expand-icon column; tree expansion is not modelled",
+    "Table2.multiSort": "multi-column sort; the port sorts a single column at a time",
+    "Table2.sortBy": "custom sort field/accessor; the port sorts by the column key",
+    "Table2.filters": "per-column filter UI; not modelled",
+    "Table2.showOverflowTooltip": "hover tooltip for overflowing cells; no hover on touch",
     # These sheets still render inline, so there is no full-screen scrim to tint, size or
     # dismiss. This is unfinished work rather than a platform limit: `u-tooltip` and
     # `u-popover` now use `androidx.compose.ui.window.Popup`, which proves the layer is

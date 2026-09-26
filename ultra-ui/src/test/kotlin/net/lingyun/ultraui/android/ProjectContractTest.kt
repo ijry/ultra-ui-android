@@ -106,6 +106,7 @@ class ProjectContractTest {
             "UPTransitionProps",
             "UPParseProps",
             "UPMarkdownProps",
+            "UPTable2Props",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",
