@@ -485,6 +485,26 @@ class UPBatch9BPropsTest {
     }
 
     @Test
+    fun refreshVirtualListDefaultsAndControllerMatchUview() {
+        val rv = UPRefreshVirtualListProps()
+        assertEquals(50, rv.itemHeight)
+        assertEquals("100%", rv.height)
+        assertEquals(4, rv.buffer)
+        assertEquals("id", rv.keyField)
+        val controller = UPRefreshVirtualListController()
+        controller.beginRefresh()
+        assertEquals(true, controller.refreshing)
+        controller.finishRefresh()
+        assertEquals(false, controller.refreshing)
+        controller.scrollTo(120)
+        assertEquals(120, controller.scrollTop)
+        val token = controller.remountToken
+        controller.scrollToTop()
+        assertEquals(0, controller.scrollTop)
+        assert(controller.remountToken > token)
+    }
+
+    @Test
     fun popupStatusAndNumericPropsPreserveRawValuesAndAliases() {
         val style = mapOf<String, Any?>("padding" to "8px")
         val popover = UPPopoverProps(text = "更多", placement = "bottom", customStyle = style)

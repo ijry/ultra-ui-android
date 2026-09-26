@@ -102,6 +102,7 @@ class ProjectContractTest {
             "UPPdfReaderProps",
             "UPQrcodeProps",
             "UPBarcodeProps",
+            "UPRefreshVirtualListProps",
             "UPSubsectionProps",
             "UPStepsProps",
             "UPStepsItemProps",

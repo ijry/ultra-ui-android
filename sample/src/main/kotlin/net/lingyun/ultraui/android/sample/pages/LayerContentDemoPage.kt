@@ -61,6 +61,9 @@ import net.lingyun.ultraui.android.components.UPQrcode
 import net.lingyun.ultraui.android.components.UPQrcodeProps
 import net.lingyun.ultraui.android.components.UPBarcode
 import net.lingyun.ultraui.android.components.UPBarcodeProps
+import net.lingyun.ultraui.android.components.UPRefreshVirtualList
+import net.lingyun.ultraui.android.components.UPRefreshVirtualListProps
+import net.lingyun.ultraui.android.components.rememberUPRefreshVirtualListController
 import net.lingyun.ultraui.android.components.UPPullRefresh
 import net.lingyun.ultraui.android.components.UPPullRefreshProps
 import net.lingyun.ultraui.android.components.UPLoadmore
@@ -381,6 +384,25 @@ public fun LayerContentDemoPage(onBack: () -> Unit, modifier: Modifier = Modifie
                     UPBarcode(
                         props = UPBarcodeProps(value = "5901234123457", format = "EAN13"),
                     )
+                }
+
+                DemoSection(title = "刷新虚拟列表") {
+                    val rvController = rememberUPRefreshVirtualListController()
+                    val rvData = (0 until 40).map { mapOf<Any?, Any?>("id" to it, "label" to "列表项 #$it") }
+                    Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+                        UPRefreshVirtualList(
+                            props = UPRefreshVirtualListProps(listData = rvData, itemHeight = 44),
+                            controller = rvController,
+                            onRefresh = { eventText = "刷新虚拟列表：下拉刷新" },
+                            onScroll = { },
+                        ) { item, _ ->
+                            Text(item["label"].toString(), color = UPTheme.Content, modifier = Modifier.padding(12.dp))
+                        }
+                    }
+                    Row {
+                        UPButton(props = UPButtonProps(text = "结束刷新", size = "mini"), onClick = { rvController.finishRefresh() })
+                        UPButton(props = UPButtonProps(text = "回到顶部", size = "mini"), onClick = { rvController.scrollToTop() })
+                    }
                 }
             }
 
